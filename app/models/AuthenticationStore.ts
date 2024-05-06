@@ -4,17 +4,19 @@ export const AuthenticationStoreModel = types
   .model("AuthenticationStore")
   .props({
     authToken: types.maybe(types.string),
-    authEmail: "",
+    username: types.maybe(types.string),
+    password: types.maybe(types.string),
+    timeout: types.maybe(types.boolean),
   })
   .views((store) => ({
     get isAuthenticated() {
       return !!store.authToken
     },
     get validationError() {
-      if (store.authEmail.length === 0) return "can't be blank"
-      if (store.authEmail.length < 6) return "must be at least 6 characters"
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(store.authEmail))
-        return "must be a valid email address"
+      if (store.username.length === 0) return "can't be blank"
+      if (store.username.length < 3) return "must be at least 3 characters"
+      // if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(store.authEmail))
+      //   return "must be a valid email address"
       return ""
     },
   }))
@@ -22,14 +24,23 @@ export const AuthenticationStoreModel = types
     setAuthToken(value?: string) {
       store.authToken = value
     },
-    setAuthEmail(value: string) {
-      store.authEmail = value.replace(/ /g, "")
+    setUsername(value: string) {
+      store.username = value.replace(/ /g, "")
     },
     logout() {
       store.authToken = undefined
-      store.authEmail = ""
+      store.username = ""
+      
+      // store.isAuthenticated = false
+      // storage.remove("token")
+      // store.authInfo = undefined
+      
+      // store.login = undefined
     },
+    setTimeout(timeout: boolean) {
+      store.timeout = timeout
+    }
   }))
 
-export interface AuthenticationStore extends Instance<typeof AuthenticationStoreModel> {}
-export interface AuthenticationStoreSnapshot extends SnapshotOut<typeof AuthenticationStoreModel> {}
+export interface AuthenticationStore extends Instance<typeof AuthenticationStoreModel> { }
+export interface AuthenticationStoreSnapshot extends SnapshotOut<typeof AuthenticationStoreModel> { }

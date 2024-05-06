@@ -5,6 +5,12 @@
  *
  * https://reactnative.dev/docs/security#storing-sensitive-info
  */
+const PROTOCOL = 'http'
+
+export const IP = '10.0.12.247'
+const PORT = '85'
+
 export default {
-  API_URL: "CHANGEME",
+  API_URL: `${PROTOCOL}://${IP}:${PORT}`,
+  KEYCLOAK_CLIENT_ID: 'mobile_app'
 }

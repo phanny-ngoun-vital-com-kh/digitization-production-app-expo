@@ -72,3 +72,14 @@ export function getGeneralApiProblem(response: ApiResponse<any>): GeneralApiProb
 
   return null
 }
+
+
+export function generalApiExHandler(e: any): GeneralApiProblem {
+  __DEV__ && console.tron.log(e.message)
+  return { kind: "bad-data" }
+}
+
+export function generalApiRsHandler(message: string): GeneralApiProblem {
+  __DEV__ && console.tron.log(message)
+  return { kind: "bad-data" }
+}

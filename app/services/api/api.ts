@@ -2,7 +2,7 @@
  * This Api class lets you define an API endpoint and methods to request
  * data and process it.
  *
- * See the [Backend API Integration](https://docs.infinite.red/ignite-cli/boilerplate/app/services/#backend-api-integration)
+ * See the [Backend API Integration](https://github.com/infinitered/ignite/blob/master/docs/Backend-API-Integration.md)
  * documentation for more details.
  */
 import { ApiResponse, ApisauceInstance, create } from "apisauce"
@@ -10,7 +10,16 @@ import Config from "../../config"
 import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem"
 import type { ApiConfig, ApiFeedResponse } from "./api.types"
 import type { EpisodeSnapshotIn } from "../../models/Episode"
+import { IRequestService, RequestService } from "./request-util"
+import { showPopup } from "app/utils-v2/popup-ui"
 
+export type ApiInitConfigType = {
+  token: () => string | undefined;
+  clearToken: () => void;
+  login: () => Promise<void>;
+  waiting: (wait: boolean) => void,
+  sessionTimeout: () => void
+}
 /**
  * Configuring the apisauce instance.
  */
@@ -26,7 +35,8 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
 export class Api {
   apisauce: ApisauceInstance
   config: ApiConfig
-
+  initConf?: ApiInitConfigType
+  requestService: IRequestService = RequestService(this)
   /**
    * Set up our API instance. Keep this lightweight!
    */
@@ -39,8 +49,60 @@ export class Api {
         Accept: "application/json",
       },
     })
+
+    this.apisauce.axiosInstance.interceptors.request.use(config => {
+      const token = this.initConf?.token()
+
+      __DEV__ && console.log("URL", config.url);
+      
+      if (config.url && !config.url.includes("login")) {
+        return {
+          ...config,
+          headers: {
+            ...config.headers,
+            Authorization: `Bearer ${token}`,
+          } as any
+        }
+      }
+      return config
+    })
+    this.apisauce.addMonitor((response: any) => {
+
+      const { status, url, config } = response;
+      const urlCheck = url || config.url
+
+      __DEV__ && console.log(status, urlCheck);
+
+      if (status == 401 && !(urlCheck).includes("logout")) {
+        showPopup({
+          title: "Session expired", textBody: "សូមចូលក្នុងប្រពន្ធ័ម្តងទៀត", callback: async () => {
+            try {
+              await this.login()
+            } catch (error) {
+              this.clearToken()
+            }
+          }
+        })
+      }
+    })
+
   }
 
+  clearToken() {
+    this.initConf?.clearToken()
+  }
+
+  async login() {
+    await this.initConf?.login()
+  }
+  
+  timeOut() {
+    this.initConf?.sessionTimeout()
+  }
+
+  setAppInitConfig(config: ApiInitConfigType) {
+    this.initConf = config
+  }
   /**
    * Gets a list of recent React Native Radio episodes.
    */

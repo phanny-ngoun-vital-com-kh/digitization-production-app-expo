@@ -48,3 +48,11 @@ export interface ApiConfig {
    */
   timeout: number
 }
+
+
+export interface Page<T> {
+  page: number;
+  items: T[];
+  pageSize: number;
+  total: number;
+}
