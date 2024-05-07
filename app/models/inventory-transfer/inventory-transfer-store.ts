@@ -12,7 +12,7 @@ export const ItemTranderModel = types
         itemReceive:types.number,
         remark: types.string,
         total: types.string,
-        transfer_request: types.string,
+        // transfer_request: types.string,
         uom: types.string,
         is_receive: types.string,
         supplier: types.string
