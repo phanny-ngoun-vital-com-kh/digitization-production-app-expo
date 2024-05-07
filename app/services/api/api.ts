@@ -12,6 +12,7 @@ import type { ApiConfig, ApiFeedResponse } from "./api.types"
 import type { EpisodeSnapshotIn } from "../../models/Episode"
 import { IRequestService, RequestService } from "./request-util"
 import { showPopup } from "app/utils-v2/popup-ui"
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 export type ApiInitConfigType = {
   token: () => string | undefined;
@@ -74,14 +75,13 @@ export class Api {
       __DEV__ && console.log(status, urlCheck);
 
       if (status == 401 && !(urlCheck).includes("logout")) {
-        showPopup({
-          title: "Session expired", textBody: "សូមចូលក្នុងប្រពន្ធ័ម្តងទៀត", callback: async () => {
-            try {
-              await this.login()
-            } catch (error) {
-              this.clearToken()
-            }
-          }
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'Session expired',
+          textBody: 'សូមចូលក្នុងប្រពន្ធ័ម្តងទៀត',
+          button: 'close',
+          onPressButton:()=> this.clearToken()
+          // autoClose: 100
         })
       }
     })

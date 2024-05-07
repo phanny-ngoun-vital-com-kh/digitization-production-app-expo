@@ -137,20 +137,20 @@ export const InventoryTransferScreen: FC<InventoryTransferScreenProps> = observe
                       setShowModal(true);
                       setGetEachItem(item);
                       setSapDocEntry(item.sapDocEntry)
-                      const itemcode = item.item.map((it) => it.item_code)
-                      for (let i = 0; i < itemcode.length; i++) {
-                        const receive = await inventoryTransferStore.getreceivedata(itemcode[i], item.id)
-                        const val = receive.map(v => parseFloat(v.received))
+                      // const itemcode = item.item.map((it) => it.item_code)
+                      // for (let i = 0; i < itemcode.length; i++) {
+                      //   const receive = await inventoryTransferStore.getreceivedata(itemcode[i], item.id)
+                      //   const val = receive.map(v => parseFloat(v.received))
   
-                        let total = 0
-                        for (let r = 0; r < val.length; r++) {
-                          total += val[r]
-                        }
-                        setGetTotal(prevState => ({
-                          ...prevState,
-                          [itemcode[i]]: total
-                        }));
-                      }
+                      //   let total = 0
+                      //   for (let r = 0; r < val.length; r++) {
+                      //     total += val[r]
+                      //   }
+                      //   setGetTotal(prevState => ({
+                      //     ...prevState,
+                      //     [itemcode[i]]: total
+                      //   }));
+                      // }
                     }catch (error){
                       console.log(error)
                     }finally{
@@ -233,7 +233,7 @@ export const InventoryTransferScreen: FC<InventoryTransferScreenProps> = observe
         }}
         isVisible={showModal}
         data={getEachItem}
-        total={gettotal}
+        // total={gettotal}
         isLoading={isLoading}
         sapDoc={sapDocEntry}
         />

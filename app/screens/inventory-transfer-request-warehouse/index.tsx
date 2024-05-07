@@ -447,7 +447,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                         <View style={styles.divider} />
                         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%' }}>
 
-                            <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer') }}>Transfer</Button>
+                            <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer', { id: selectedItem.id }) }}>Transfer</Button>
                         </View>
                         {/* <View style={styles.divider} /> */}
                     </>

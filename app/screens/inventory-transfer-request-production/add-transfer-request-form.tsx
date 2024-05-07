@@ -25,6 +25,7 @@ import { ItemList } from "app/models/item/item-model"
 import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
 import { Dropdown } from 'react-native-element-dropdown';
+import { sendPushNotification } from "app/utils-v2/push-notification-helper"
 
 interface AddTransferRequestFormProps extends AppStackScreenProps<"AddTransferRequestForm"> { }
 
@@ -278,7 +279,8 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         .then()
         .catch((e) => console.log(e)))
       {
-        sendNotification('New Transfer Request','You have new transfer request from '+getLine, allFcm)
+        sendPushNotification(allFcm, 'New Transfer Request','You have new transfer request from '+getLine);
+        // sendNotification('New Transfer Request','You have new transfer request from '+getLine, allFcm)
         // droplineRef.current.reset();
         // droptypeRef.current.reset();
         // dropshiftRef.current.reset();

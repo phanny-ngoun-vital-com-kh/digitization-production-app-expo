@@ -49,9 +49,9 @@ export const SAPItemModel = types
         toWarehouse: types.string,
     })
 
-type SAPItemType = Instance<typeof ItemModel>
+type SAPItemType = Instance<typeof SAPItemModel>
 export interface SAPItem extends SAPItemType { }
-type SAPItemSnapshotType = SnapshotOut<typeof ItemModel>
+type SAPItemSnapshotType = SnapshotOut<typeof SAPItemModel>
 export interface SAPItemSnapshot extends SAPItemSnapshotType { }
 
 export const ActivitiesModel = types
@@ -81,7 +81,6 @@ export const ActivitiesModel = types
                     console.log('Success')
                 else {
                     console.log('Error')
-                    console.log('hi')
                     throw Error(rs.kind)
 
                 }
@@ -98,3 +97,60 @@ type ActivitiesModelType = Instance<typeof ActivitiesModel>
 export interface Activities extends ActivitiesModelType { }
 type ActivitiesModelSnapshotType = SnapshotOut<typeof ActivitiesModel>
 export interface ActivitiesModelSnapshot extends ActivitiesModelSnapshotType { }
+
+export const ProvidedListModel = types
+    .model("ProvidedListModel")
+    .props({
+        id: types.maybeNull(types.number),
+        provided:types.maybeNull(types.string),
+        remark:types.maybeNull(types.string),
+        status:types.maybeNull(types.string),
+        transfer_request_id:types.maybeNull(types.number),
+        createdBy:types.maybeNull(types.string),
+        createdDate:types.maybeNull(types.string),
+        lastModifiedBy:types.maybeNull(types.string),
+        lastModifiedDate:types.maybeNull(types.string),
+    })
+    .views((self) => {
+        return {
+            updatestatus: async () => {
+                const rs = await inventorytransferrequestApi.updateProvided(
+                    self.provided,
+                    self.remark,
+                    self.status,
+                )
+                if (rs.kind === 'ok')
+                    console.log('Success')
+                else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+
+                }
+            },
+        }
+    })
+
+type ProvidedListType = Instance<typeof ProvidedListModel>
+export interface ProvidedList extends ProvidedListType { }
+type ProvidedListSnapshotType = SnapshotOut<typeof ProvidedListModel>
+export interface ProvidedListSnapshot extends ProvidedListSnapshotType { }
+
+export const ProvidedItemModel = types
+    .model("ProvidedItemModel")
+    .props({
+        id: types.maybeNull(types.number),
+        item_code:types.maybeNull(types.string),
+        item_name:types.maybeNull(types.string),
+        provided:types.maybeNull(types.string),
+        quantity:types.maybeNull(types.string),
+        received:types.maybeNull(types.string),
+        remark:types.maybeNull(types.string),
+        supplier:types.maybeNull(types.string),
+        total:types.maybeNull(types.string),
+        uom:types.maybeNull(types.string)
+    })
+
+type ProvidedItemType = Instance<typeof ProvidedItemModel>
+export interface ProvidedItem extends ProvidedItemType { }
+type ProvidedItemSnapshotType = SnapshotOut<typeof ProvidedItemModel>
+export interface ProvidedItemSnapshot extends ProvidedItemSnapshotType { }
