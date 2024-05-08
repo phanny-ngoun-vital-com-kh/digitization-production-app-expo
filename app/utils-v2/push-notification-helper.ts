@@ -54,31 +54,53 @@
 //   return messaging().onMessage(listener)
 // }
 
-import { scheduleNotificationAsync } from 'expo-notifications';
+import axios from 'axios';
+import { addNotificationReceivedListener } from 'expo-notifications';
 
-// Function to send a push notification to multiple devices
-export const sendPushNotification = async (expoPushTokens: string[], title: string, body: string) => {
+interface Notification {
+  to: string;
+  title: string;
+  body: string;
+}
+
+const sendPushNotification = async (recipientTokens: string[], title: string, body: string): Promise<void> => {
+  const expoPushEndpoint = 'https://exp.host/--/api/v2/push/send';
+
+  // Create an array of notification objects for each recipient token
+  const notifications: Notification[] = recipientTokens.map(token => ({
+    to: token,
+    title: title,
+    body: body,
+  }));
+
   try {
-    const messages = expoPushTokens.map(token => ({
-      to: token,
-      title,
-      body,
-      sound: 'default',
-    }));
-
-    const responses = await Promise.all(messages.map(message => scheduleNotificationAsync({
-      content: message,
-      trigger: null, // Send immediately
-    })));
+    // Send the notifications asynchronously
+    const responses = await Promise.all(
+      notifications.map(notification =>
+        axios.post(expoPushEndpoint, notification, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip, deflate',
+          },
+        })
+      )
+    );
 
     responses.forEach((response, index) => {
-      if (response.status === 'ok') {
-        console.log(`Push notification sent successfully to ${expoPushTokens[index]}`);
-      } else {
-        console.error(`Error sending push notification to ${expoPushTokens[index]}:`, response);
-      }
+      console.log(`Notification sent successfully to ${recipientTokens[index]}:`, response.data);
     });
   } catch (error) {
-    console.error('Error sending push notification:', error);
+    console.error('Error sending notifications:', error);
   }
+
+  // Add a listener to handle foreground notifications
+  const notificationListener = addNotificationReceivedListener(notification => {
+    console.log('Received notification while app is in foreground:', notification);
+    // Handle foreground notification here
+  });
+  notificationListener
+  
 };
+
+export default sendPushNotification;

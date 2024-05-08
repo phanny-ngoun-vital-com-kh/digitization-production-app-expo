@@ -25,7 +25,7 @@ import { ItemList } from "app/models/item/item-model"
 import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
 import { Dropdown } from 'react-native-element-dropdown';
-import { sendPushNotification } from "app/utils-v2/push-notification-helper"
+import sendPushNotification from "app/utils-v2/push-notification-helper"
 
 interface AddTransferRequestFormProps extends AppStackScreenProps<"AddTransferRequestForm"> { }
 
@@ -69,6 +69,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
   const [getToWarehouseCode, setGetToWarehouseCode] = useState('')
   const [isLoading, setIsLoading] = useState(false);
   const [allFcm, setAllFcm] = useState([])
+  const [isNotiVisible, setNotiVisible] = useState(false);
   const [act, setAct] = useState([{
     activities_name: 'Start',
     action: 'Start Request',
@@ -180,39 +181,48 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
     { id: '6', name: 'Line 6' }
   ]
 
-  async function sendNotification(title, body, deviceTokens, sound = 'default') {
-    const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+  async function sendNotification(recipientTokens, title, body) {
+    // const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
 
-    try {
-      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `key=${SERVER_KEY}`
-        },
-        body: JSON.stringify({
-          registration_ids: deviceTokens,
-          notification: {
-            title: title,
-            body: body,
-            sound: sound,
-          },
-          android: {
-            notification: {
-              sound: sound,
-              priority: 'high',
-              vibrate: true,
-            }
-          }
+    // try {
+    //   const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'Authorization': `key=${SERVER_KEY}`
+    //     },
+    //     body: JSON.stringify({
+    //       registration_ids: deviceTokens,
+    //       notification: {
+    //         title: title,
+    //         body: body,
+    //         sound: sound,
+    //       },
+    //       android: {
+    //         notification: {
+    //           sound: sound,
+    //           priority: 'high',
+    //           vibrate: true,
+    //         }
+    //       }
 
-        }),
+    //     }),
+    //   });
+
+    //   const responseData = await response.json();
+    //   console.log('Notification sent successfully:', responseData);
+    // } catch (error) {
+    //   console.error('Error sending notification:', error);
+    // }
+    await sendPushNotification(recipientTokens, title, body)
+      .then(() => {
+        setNotiVisible(true);
+        console.log('Push notifications sent successfully!');
+      })
+      .catch((error) => {
+        console.error('Error sending push notifications:', error);
       });
 
-      const responseData = await response.json();
-      console.log('Notification sent successfully:', responseData);
-    } catch (error) {
-      console.error('Error sending notification:', error);
-    }
   }
 
 
@@ -279,7 +289,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         .then()
         .catch((e) => console.log(e)))
       {
-        sendPushNotification(allFcm, 'New Transfer Request','You have new transfer request from '+getLine);
+        sendNotification(allFcm, 'New Transfer Request','You have new transfer request from '+getLine);
         // sendNotification('New Transfer Request','You have new transfer request from '+getLine, allFcm)
         // droplineRef.current.reset();
         // droptypeRef.current.reset();

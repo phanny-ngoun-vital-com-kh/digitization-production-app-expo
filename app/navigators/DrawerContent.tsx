@@ -8,10 +8,10 @@ import { DrawerActions } from "@react-navigation/native";
 import { MobileUserModel } from "app/models/auth/AuthStore";
 
 interface DrawersProps {
-  navigation: any; // Adjust the type accordingly
-  username: string; // Adjust the type accordingly
+    navigation: any; // Adjust the type accordingly
+    username: string; // Adjust the type accordingly
 }
-const Drawers: React.FC<DrawersProps> = ({ navigation, username,...props }) => {
+const Drawers: React.FC<DrawersProps> = ({ navigation, username, ...props }) => {
     const {
         authenticationStore: { logout }, authStore
     } = useStores()
@@ -37,15 +37,20 @@ const Drawers: React.FC<DrawersProps> = ({ navigation, username,...props }) => {
                                 fcm_token: '',
                                 // authorities: authoritie
                             })
-                            authStore
+                            await authStore
                                 .saveUser(data)
                                 .saveMobileUser()
                                 .then()
                                 .catch((e) => console.log(e))
+                            await logout(),
+                                await navigation.dispatch(DrawerActions.closeDrawer)
+                        } else {
+                            await logout(),
+                                await navigation.dispatch(DrawerActions.closeDrawer)
                         }
 
-                        logout(),
-                            navigation.dispatch(DrawerActions.closeDrawer)
+                        // await logout(),
+                        //     await navigation.dispatch(DrawerActions.closeDrawer)
                     }
                 }
             ]
