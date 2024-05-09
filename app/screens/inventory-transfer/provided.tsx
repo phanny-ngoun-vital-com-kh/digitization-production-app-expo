@@ -47,7 +47,7 @@ const ProvidedView = ({ data, index, style, transferItem,onSuccess }: Props) => 
                 isVisible={isModalVisible}
                 provided={data.provided != null ? data.provided : ''}
                 provided_status={data.status!= null ? data.status : ''}
-                onSuccess={(t)=>onSuccess(t)}
+                onSuccess={(t)=>{onSuccess(t)}}
             />
         </>
     )

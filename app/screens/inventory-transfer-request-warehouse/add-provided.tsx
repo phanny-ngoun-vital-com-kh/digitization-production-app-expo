@@ -46,7 +46,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
     //     const val = receive.map(v => parseFloat(v.received));
 
     //     let total = 0;
-    //     for (let r = 0; r < val.length; r++) {
+    //     for (let r = 0; r < val?.length; r++) {
     //         total += val[r];
     //     }
     //     return total;
@@ -77,7 +77,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
                 const val = receive.map(v => parseFloat(v.received));
 
                 let total = 0;
-                for (let r = 0; r < val.length; r++) {
+                for (let r = 0; r < val?.length; r++) {
                     total += val[r];
                 }
 
@@ -103,10 +103,10 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
                 button: 'បិទ',
             })
             setIsSubmit(true)
-            setNewItem([])
+            // setNewItem([])
             return
         }
-        if (!newItem.length) {
+        if (!newItem?.length) {
             Dialog.show({
                 type: ALERT_TYPE.DANGER,
                 title: 'បរាជ័យ',

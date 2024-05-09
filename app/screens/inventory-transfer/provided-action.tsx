@@ -23,7 +23,7 @@ interface ModalProps {
     //   onSubmit:()=>void
 }
 
-const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, transferItem, provided_status,onSuccess }) => {
+const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, transferItem, provided_status, onSuccess }) => {
     const { colors } = useTheme()
     const { inventoryRequestStore, inventoryTransferStore, authStore } = useStores()
     const [item, setItem] = useState(null)
@@ -36,6 +36,8 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
     const [newItem, setNewItem] = useState(null)
     const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
     const [loading, setLoading] = useState(false)
+    const [isRejectConfirmationVisible, setIsRejectConfirmationVisible] = useState(false);
+
 
     useEffect(() => {
         const role = async () => {
@@ -69,7 +71,7 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                 const val = receive.map(v => parseFloat(v.received));
 
                 let total = 0;
-                for (let r = 0; r < val.length; r++) {
+                for (let r = 0; r < val?.length; r++) {
                     total += val[r];
                 }
 
@@ -138,16 +140,47 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                 transfer_request: transferItem.id
             })
             const providedstatus = ProvidedListModel.create({
-                provided:provided,
-                remark:'',
-                status:"done"
+                provided: provided,
+                remark: '',
+                status: "done"
             })
-            await inventoryTransferStore.addTransfer(it).savetransfer();
-            await inventoryTransferStore.addReceiveChange(da).receivestatuschange();
-            await inventoryRequestStore.upstatus(providedstatus).updatestatus()
+            // await inventoryTransferStore.addTransfer(it).savetransfer();
+            // await inventoryTransferStore.addReceiveChange(da).receivestatuschange();
+            // await inventoryRequestStore.upstatus(providedstatus).updatestatus()
             onSuccess(true)
             setNewItem(null)
             setIsConfirmationVisible(false)
+            onClose()
+            Dialog.show({
+                type: ALERT_TYPE.SUCCESS,
+                title: 'ជោគជ័យ',
+                textBody: 'រក្សាទុកបានជោគជ័យ',
+                // button: 'close',
+                autoClose: 100
+            })
+        } catch (e) {
+            console.log(e)
+            Dialog.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'បរាជ័យ',
+                textBody: 'បរាជ័យ',
+                button: 'បិទ',
+            })
+        }
+
+    }
+
+    const onReject = async () => {
+        try {
+            const providedstatus = ProvidedListModel.create({
+                provided: provided,
+                remark: '',
+                status: "cancel"
+            })
+            // await inventoryRequestStore.upstatus(providedstatus).updatestatus()
+            onSuccess(true)
+            setNewItem(null)
+            setIsRejectConfirmationVisible(false)
             onClose()
             Dialog.show({
                 type: ALERT_TYPE.SUCCESS,
@@ -205,13 +238,13 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                     {transferItem?.transfer_type == 'PM/RM' && (isProdAdm || isProdUser) && (provided_status !== "done" && provided_status !== "cancel") ?
                         < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>
                             <Button style={{ width: '13%', backgroundColor: '#fff', borderColor: 'gray', borderWidth: 1 }} styleText={{ color: '#000', fontSize: 15 }} onPress={onClose}>Cancel</Button>
-                            <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => { }}>Reject</Button>
-                            <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => { }}>Receive</Button>
+                            <Button style={{ width: '13%', marginLeft: 20, backgroundColor: '#fff', borderColor: 'red', borderWidth: 1 }} styleText={{ color: 'red', fontSize: 15 }} onPress={() => setIsRejectConfirmationVisible(true)}>Reject</Button>
+                            <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => setIsConfirmationVisible(true)}>Receive</Button>
                         </View>
                         : transferItem?.transfer_type == 'FG' && (isWareAdm || isWareUser) && (provided_status !== "done" && provided_status !== "cancel") ?
                             < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>
                                 <Button style={{ width: '13%', backgroundColor: '#fff', borderColor: 'gray', borderWidth: 1 }} styleText={{ color: '#000', fontSize: 15 }} onPress={onClose}>Cancel</Button>
-                                <Button style={{ width: '13%', marginLeft: 20, backgroundColor: '#fff', borderColor: 'red', borderWidth: 1 }} styleText={{ color: 'red', fontSize: 15 }} onPress={() => { }}>Reject</Button>
+                                <Button style={{ width: '13%', marginLeft: 20, backgroundColor: '#fff', borderColor: 'red', borderWidth: 1 }} styleText={{ color: 'red', fontSize: 15 }} onPress={() => setIsRejectConfirmationVisible(true)}>Reject</Button>
                                 <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => { setIsConfirmationVisible(true) }}>Receive</Button>
                             </View> :
                             < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>
@@ -233,6 +266,16 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                     ]}
                 />
             )}
+            {isRejectConfirmationVisible &&
+                <ConfirmDialog
+                    title="Reject"
+                    message="Are you sure ?"
+                    buttons={[
+                        { text: 'បិទ', onPress: () => setIsRejectConfirmationVisible(false), backgroundColor: 'white', borderWidth: 1, color: 'gray' },
+                        { text: 'បាទ', onPress: onReject, backgroundColor: colors.primary, color: 'white', isLoading: loading }
+                    ]}
+                />
+            }
         </Modal>
     );
 };

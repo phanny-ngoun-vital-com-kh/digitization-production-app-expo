@@ -7,6 +7,8 @@ import IconMaterialCommunityIcons from 'react-native-vector-icons/MaterialCommun
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card, Title, Paragraph } from 'react-native-paper';
+import NotificSoundModal from "app/components/v2/NotificSoundModal";
+import CustomAudioPlayer from "app/components/v2/NotificSoundModal/CustomAudioPlayer";
 // import HomeCard from "app/components/v2/HomeCard"
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> { }
@@ -61,9 +63,9 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
   // }, [isWareAdm, isProdAdm, role])
 
   const formatData = (data, numColumns) => {
-    const numberOfFullRows = Math.floor(data.length / numColumns);
+    const numberOfFullRows = Math.floor(data?.length / numColumns);
 
-    let numberOfElementsLastRow = data.length - (numberOfFullRows * numColumns);
+    let numberOfElementsLastRow = data?.length - (numberOfFullRows * numColumns);
     while (numberOfElementsLastRow !== numColumns && numberOfElementsLastRow !== 0) {
       data.push({ key: `blank-${numberOfElementsLastRow}`, empty: true });
       numberOfElementsLastRow++;
@@ -124,7 +126,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         renderItem={ItemList}
       />
       {/* <TouchableOpacity onPress={() => setNotiVisible(true)} >
-        <Text style={{ paddingTop: 15 }}>Test Noti</Text>
+        <Text style={{ paddingTop: 150 }}>Test Noti</Text>
       </TouchableOpacity>
       <NotificSoundModal
       color="red"

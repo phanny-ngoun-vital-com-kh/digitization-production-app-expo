@@ -27,6 +27,7 @@ import ModalApprove from "app/components/v2/ModalApprove"
 import { ActivitiesModel } from "app/models/inventory-transfer-request/inventory-transfer-request-model"
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
 import ModalReject from "app/components/v2/ModalReject"
+import sendPushNotification from "app/utils-v2/push-notification-helper"
 
 
 interface InventoryTransferRequestProductionScreenProps extends AppStackScreenProps<"InventoryTransferRequestProduction"> { }
@@ -153,37 +154,47 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
     }
   }
 
-  async function sendNotification(title, body, deviceTokens, sound = 'default') {
-    const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+  async function sendNotification(recipientTokens, title, body) {
+    // const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
 
-    try {
-      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `key=${SERVER_KEY}`
-        },
-        body: JSON.stringify({
-          registration_ids: deviceTokens,
-          notification: {
-            title: title,
-            body: body,
-            sound: sound
-          },
-          android: {
-            notification: {
-              sound: sound // Include the sound parameter for Android
-            }
-          }
+    // try {
+    //   const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'Authorization': `key=${SERVER_KEY}`
+    //     },
+    //     body: JSON.stringify({
+    //       registration_ids: deviceTokens,
+    //       notification: {
+    //         title: title,
+    //         body: body,
+    //         sound: sound,
+    //       },
+    //       android: {
+    //         notification: {
+    //           sound: sound,
+    //           priority: 'high',
+    //           vibrate: true,
+    //         }
+    //       }
 
-        }),
+    //     }),
+    //   });
+
+    //   const responseData = await response.json();
+    //   console.log('Notification sent successfully:', responseData);
+    // } catch (error) {
+    //   console.error('Error sending notification:', error);
+    // }
+    await sendPushNotification(recipientTokens, title, body)
+      .then(() => {
+        console.log('Push notifications sent successfully!');
+      })
+      .catch((error) => {
+        console.error('Error sending push notifications:', error);
       });
 
-      const responseData = await response.json();
-      console.log('Notification sent successfully:', responseData);
-    } catch (error) {
-      console.error('Error sending notification:', error);
-    }
   }
 
   const handleItemPress = (itemId, itemStatus) => {
@@ -217,8 +228,8 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
       .then()
       .catch((e) => console.log(e))
     ) {
-      sendNotification('Approved', 'Prodution approved your transfer request', requesterFcm)
-      sendNotification('New Transfer Request','You have new transfer reuquest', wareAdmFcm)
+      sendNotification(requesterFcm,'Approved', 'Prodution approved your transfer request')
+      sendNotification(wareAdmFcm,'New Transfer Request','You have new transfer reuquest')
       setModalApproveVisible(false)
       setSelectedItem(null)
       setSeletedStatus(null)
@@ -265,7 +276,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
       setSeletedStatus(null)
       setGetRemarkReject('')
       refresh()
-      sendNotification('Rejected', 'Your transfer request has been rejected', requesterFcm)
+      sendNotification(requesterFcm,'Rejected', 'Your transfer request has been rejected')
       setRequesterFcm([])
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
@@ -390,12 +401,20 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
                       </DataTable.Cell>
                     </DataTable.Row>
                     <DataTable.Row style={styles.row}>
+                    <DataTable.Cell textStyle={styles.item}>
+                          <Text style={styles.textTitle}>Remark: </Text>
+                          <Text style={styles.textBody}>{(selectedItem.remark == null || selectedItem.remark =='') ? '-' : selectedItem.remark}</Text>
+                        </DataTable.Cell>
                       {selectedItem.sapDocNo ?
                         <DataTable.Cell textStyle={styles.item}>
                           <Text style={styles.textTitle}>Sap Doc No: </Text>
                           <Text style={styles.textBody}>{selectedItem.sapDocNo}</Text>
                         </DataTable.Cell>
                         : <></>}
+                        <DataTable.Cell textStyle={styles.item}>
+                          <Text style={styles.textTitle}> </Text>
+                          <Text style={styles.textBody}> </Text>
+                        </DataTable.Cell>
                     </DataTable.Row>
                   </DataTable>
                 </View>
@@ -433,7 +452,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
           {selectedStatus == 'transfer-request' && isProdAdm ?
             <>
               <View style={styles.divider} />
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%',marginBottom:25 }}>
 
                 <Button style={{ width: '20%', }} onPress={() => setModalApproveVisible(true)} loading={loading}>Approve</Button>
                 <Button style={{ width: '20%', backgroundColor: 'red', marginLeft: 20 }} onPress={() => setModalRejectVisible(true)}>Reject</Button>

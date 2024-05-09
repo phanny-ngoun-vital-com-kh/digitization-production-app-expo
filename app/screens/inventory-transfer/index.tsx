@@ -138,12 +138,12 @@ export const InventoryTransferScreen: FC<InventoryTransferScreenProps> = observe
                       setGetEachItem(item);
                       setSapDocEntry(item.sapDocEntry)
                       // const itemcode = item.item.map((it) => it.item_code)
-                      // for (let i = 0; i < itemcode.length; i++) {
+                      // for (let i = 0; i < itemcode?.length; i++) {
                       //   const receive = await inventoryTransferStore.getreceivedata(itemcode[i], item.id)
                       //   const val = receive.map(v => parseFloat(v.received))
   
                       //   let total = 0
-                      //   for (let r = 0; r < val.length; r++) {
+                      //   for (let r = 0; r < val?.length; r++) {
                       //     total += val[r]
                       //   }
                       //   setGetTotal(prevState => ({
@@ -187,8 +187,8 @@ export const InventoryTransferScreen: FC<InventoryTransferScreenProps> = observe
       </View>
       <DataTable style={{ margin: 5 }}>
         <DataTable.Header >
+        <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Request ID</DataTable.Title>
           <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>ID</DataTable.Title>
-          <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Request ID</DataTable.Title>
           <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Type</DataTable.Title>
           <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Line</DataTable.Title>
           <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>Shift</DataTable.Title>

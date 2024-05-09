@@ -15,6 +15,7 @@ import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-no
 import { MobileUserModel } from "app/models/auth/AuthStore"
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import { nativeApplicationVersion } from 'expo-application'
 
 // const imageLogo = require("../../images/logo.png")
 
@@ -35,7 +36,7 @@ import Constants from 'expo-constants';
 // };
 
 // Initialize Firebase
-// if (!firebase.apps.length) {
+// if (!firebase.apps?.length) {
 //   console.log("Firebase not yet initialized. Initializing now...");
 //   firebase.initializeApp(firebaseConfig);
 // } else {
@@ -89,7 +90,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
   const handleNotification = (notification) => {
     console.log('Received notification:', notification);
   };
-  
+
   // const handleLogin = () => {
   //   setPassword('')
   //   setUsername('')
@@ -150,7 +151,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
   //     appId: "1:244489398431:web:bc0c9cbd2bfe58a2c75aaa",
   //     measurementId: "G-C2R27WBL7V"
   //   };
-  //   if (!firebase.apps.length) {
+  //   if (!firebase.apps?.length) {
   //     firebase.initializeApp(firebaseConfig);
   //   }
 
@@ -182,7 +183,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
     try {
       await authStore.doLogin(username, password)
       const rs = await authStore.getUserInfo();
-      const authoritie = rs.data.authorities.map((authority_name:any) => ({ user_id: rs.data.id, authority_name: authority_name }));
+      const authoritie = rs.data.authorities.map((authority_name: any) => ({ user_id: rs.data.id, authority_name: authority_name }));
       const data = MobileUserModel.create({
         user_id: rs.data.id,
         login: rs.data.login,
@@ -288,7 +289,11 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
               )}
 
             </TouchableOpacity>
-
+            <View style={{marginTop:'auto'}}>
+              <Text footnote grayColor accentColor light>
+                {`Version ${nativeApplicationVersion}`}
+              </Text>
+            </View>
           </View>
         </ImageBackground>
       </View>

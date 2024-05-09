@@ -106,7 +106,7 @@
 //       setIsSubmit(true)
 //       return
 //     }
-//     if (!newItem.length){
+//     if (!newItem?.length){
 //       Dialog.show({
 //         type: ALERT_TYPE.DANGER,
 //         title: 'បរាជ័យ',
@@ -578,7 +578,7 @@ const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose
   //     setIsSubmit(true)
   //     return
   //   }
-  //   if (!newItem.length){
+  //   if (!newItem?.length){
   //     Dialog.show({
   //       type: ALERT_TYPE.DANGER,
   //       title: 'បរាជ័យ',
@@ -735,7 +735,7 @@ const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose
                   //   />
                   // }
                   renderItem={({ item, index }) =>
-                    <ProvidedView data={item} index={index + 1} transferItem={data} onSuccess={()=>onClose}/>}
+                    <ProvidedView data={item} index={index + 1} transferItem={data} onSuccess={(t)=>{t == true ? (onClose()):undefined }}/>}
                 />
               {/* {data?.transfer_type == 'PM/RM' && (isProdAdm || isProdUser) ?
                 < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>

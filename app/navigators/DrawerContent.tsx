@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Alert } from 'react-native';
-import { Avatar, Title, Caption, Paragraph, Drawer, Text, TouchableRipple, Switch } from 'react-native-paper';
+import { Avatar, Title, Caption, Paragraph, Drawer, TouchableRipple, Switch } from 'react-native-paper';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { Icon } from 'react-native-elements'
 import { useStores } from "app/models";
 import { DrawerActions } from "@react-navigation/native";
 import { MobileUserModel } from "app/models/auth/AuthStore";
-
+import { nativeApplicationVersion } from 'expo-application'
+import { Text } from "../components/v2"
 interface DrawersProps {
     navigation: any; // Adjust the type accordingly
     username: string; // Adjust the type accordingly
@@ -104,7 +105,13 @@ const Drawers: React.FC<DrawersProps> = ({ navigation, username, ...props }) => 
                         onPress={() => { { } }}>
                     </Drawer.Item>
                 </Drawer.Section>
+                
             </DrawerContentScrollView>
+            <View style={{alignItems:'center'}}>
+              <Text footnote grayColor accentColor light>
+                {`Version ${nativeApplicationVersion}`}
+              </Text>
+            </View>
             <Drawer.Section style={styles.bottomDrawerSection}>
                 <DrawerItem
                     icon={({ color, size }) => (

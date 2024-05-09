@@ -6,7 +6,6 @@ import styles from './styles';
 import { Text, TextInput, Button } from '..';
 import { Bom, ItemList } from 'app/models/item/item-model';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import SelectDropdown from 'react-native-select-dropdown'
 import { useStores } from "app/models"
 import { Dropdown } from 'react-native-element-dropdown';
 
@@ -24,8 +23,6 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
   const {
     inventoryRequestStore
   } = useStores()
-
-  const dropfromwarehouseRef = useRef<SelectDropdown>(null);
 
   const FirstRoute = () => {
     const [textInputValue, setTextInputValue] = useState('');
@@ -130,7 +127,7 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
       }));
       // Update the subItem list with the calculated values
       setSubItem(calculatedValues);
-      for (let r = 0; r < calculatedValues.length; r++) {
+      for (let r = 0; r < calculatedValues?.length; r++) {
         onAddPress(calculatedValues[r]);
       }
     };
@@ -154,38 +151,7 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
                     onChangeText={(text:any) => setBomSearch(text)}
                     onChange={item => {
                       setFatherCode(item.product_code)
-                      // setSearchWarehouse('')
-                        // console.log(item)
-                        // console.log(item.title)
-
-                        // setSelected(item.title);
                     }} />
-            <SelectDropdown
-              data={bomList}
-              search={true}
-              onChangeSearchInputText={(text) => setBomSearch(text)}
-              defaultButtonText="Please Select"
-              ref={dropfromwarehouseRef}
-              onSelect={(selectedItem, index) => {
-                setFatherCode(selectedItem.product_code)
-              }}
-              buttonTextAfterSelection={(selectedItem, index) => {
-                return selectedItem.product_name
-              }}
-              rowTextForSelection={(item, index) => {
-                return item.product_name
-              }}
-              dropdownIconPosition='right'
-              renderDropdownIcon={() => (
-                <Icon name="angle-down" />
-              )}
-              renderSearchInputLeftIcon={() => (
-                <Icon name="search" />
-              )}
-              dropdownStyle={styles.dropdownStyle}
-              buttonStyle={styles.buttonStyle}
-              buttonTextStyle={styles.buttonTextStyle}
-            />
           </View>
           <View style={{ marginTop: 5, marginBottom: 20, width: '29%', marginLeft: 10 }}>
             <View style={{ flexDirection: 'row' }}>

@@ -6,7 +6,7 @@ export default StyleSheet.create({
         fontSize: 18,
     },
     displayButton: {
-        borderWidth: 1,
+        borderWidth: 3,
         margin: 5,
         padding: 10,
         borderRadius: 10,

@@ -7,7 +7,6 @@ import { Text, TextInput, Button } from '..';
 import IconAntDesign from 'react-native-vector-icons/AntDesign';
 import { Item } from 'app/models/inventory-transfer-request/inventory-transfer-request-model';
 import { DataTable } from 'react-native-paper';
-import SelectDropdown from 'react-native-select-dropdown'
 import { useStores } from 'app/models';
 
 interface ModalProps {
@@ -31,7 +30,6 @@ const ModalWarehouseApprove: React.FC<ModalProps> = ({ data, isVisible, onClose,
     const [suppilerSearch, setSupplierSearch] = useState('')
     const [supplier, setSupplier] = useState([])
     const [selectedSupplier, setSeletedSupplier] = useState('')
-    const droptypeRef = useRef<SelectDropdown>(null);
 
     useEffect(() => {
         const getsupplier = async () => {
@@ -95,37 +93,9 @@ const ModalWarehouseApprove: React.FC<ModalProps> = ({ data, isVisible, onClose,
                                     <DataTable.Cell style={{ flex: 1.3 }} textStyle={styles.textHeader}><Text style={styles.textHeader}>{i.item_name}</Text></DataTable.Cell>
                                     <DataTable.Cell style={{ flex: 0.6 }} textStyle={styles.textHeader}>{i.quantity}</DataTable.Cell>
                                     <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.uom}</DataTable.Cell>
-                                    <DataTable.Cell style={{ flex: 1, marginRight: 15 }} textStyle={styles.textHeader}>
-                                        <SelectDropdown
-                                            data={supplier}
-                                            ref={droptypeRef}
-                                            search={true}
-                                            defaultButtonText="Please Select"
-                                            onChangeSearchInputText={(text) => setSupplierSearch(text)}
-                                            renderSearchInputLeftIcon={() => (
-                                                <Icon name="search" />
-                                            )}
-                                            onSelect={(selectedItem) => {
-                                                handleSupplier(index,selectedItem.card_name)
-                                            }}
-                                            buttonTextAfterSelection={(selectedItem) => {
-                                                return selectedItem.card_name
-                                            }}
-                                            rowTextForSelection={(item) => {
-                                                return item.card_name
-                                            }}
-                                            dropdownIconPosition='right'
-                                            renderDropdownIcon={() => (
-                                                <Icon
-                                                    name="angle-down"
-                                                // style={styles.dropdownIconStyle}
-                                                />
-                                            )}
-                                            dropdownStyle={styles.dropdownStyle}
-                                            buttonStyle={styles.buttonStyle}
-                                            buttonTextStyle={styles.buttonTextStyle}
-                                        />
-                                    </DataTable.Cell>
+                                    {/* <DataTable.Cell style={{ flex: 1, marginRight: 15 }} textStyle={styles.textHeader}>
+                                        
+                                    </DataTable.Cell> */}
                                     <DataTable.Cell style={{}} textStyle={styles.textHeader}>
                                         <TextInput
                                             style={[styles.input, { height: 40, width: '100%' }]}

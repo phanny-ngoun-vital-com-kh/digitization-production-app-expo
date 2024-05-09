@@ -78,7 +78,7 @@ export const DemoPodcastListScreen: FC<DemoTabScreenProps<"DemoPodcastList">> = 
         <ListView<Episode>
           contentContainerStyle={$listContentContainer}
           data={episodeStore.episodesForList.slice()}
-          extraData={episodeStore.favorites.length + episodeStore.episodes.length}
+          extraData={episodeStore.favorites?.length + episodeStore.episodes?.length}
           refreshing={refreshing}
           estimatedItemSize={177}
           onRefresh={manualRefresh}
@@ -109,7 +109,7 @@ export const DemoPodcastListScreen: FC<DemoTabScreenProps<"DemoPodcastList">> = 
           ListHeaderComponent={
             <View style={$heading}>
               <Text preset="heading" tx="demoPodcastListScreen.title" />
-              {(episodeStore.favoritesOnly || episodeStore.episodesForList.length > 0) && (
+              {(episodeStore.favoritesOnly || episodeStore.episodesForList?.length > 0) && (
                 <View style={$toggle}>
                   <Toggle
                     value={episodeStore.favoritesOnly}
@@ -151,7 +151,7 @@ const EpisodeCard = observer(function EpisodeCard({
   const liked = useSharedValue(isFavorite ? 1 : 0)
 
   const imageUri = useMemo<ImageSourcePropType>(() => {
-    return rnrImages[Math.floor(Math.random() * rnrImages.length)]
+    return rnrImages[Math.floor(Math.random() * rnrImages?.length)]
   }, [])
 
   // Grey heart

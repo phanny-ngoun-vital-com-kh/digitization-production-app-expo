@@ -30,6 +30,7 @@ import ModalReject from "app/components/v2/ModalReject"
 import IconFontisto from 'react-native-vector-icons/Fontisto';
 import ModalWarehouseApprove from "app/components/v2/ModalWarehouseApprove"
 import { useNavigation } from "@react-navigation/native"
+import sendPushNotification from "app/utils-v2/push-notification-helper"
 
 
 interface InventoryTransferRequestWarehouseScreenProps extends AppStackScreenProps<"InventoryTransferRequestWarehouse"> { }
@@ -52,6 +53,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
     const [requesterFcm, setRequesterFcm] = useState([])
     const [prodAdmFcm, setProdAdmFcm] = useState([])
     const [isLoading, setIsLoading] = useState(false);
+    const [getRemark, setGetRemark] = useState('')
 
     useEffect(() => {
 
@@ -115,38 +117,16 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
         setNewItem(updatedList);
     };
 
-    async function sendNotification(title, body, deviceTokens, sound = 'default') {
-        const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
-
-        try {
-            const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `key=${SERVER_KEY}`
-                },
-                body: JSON.stringify({
-                    registration_ids: deviceTokens,
-                    notification: {
-                        title: title,
-                        body: body,
-                        sound: sound
-                    },
-                    android: {
-                        notification: {
-                            sound: sound
-                        }
-                    }
-
-                }),
-            });
-
-            const responseData = await response.json();
-            console.log('Notification sent successfully:', responseData);
-        } catch (error) {
-            console.error('Error sending notification:', error);
-        }
-    }
+    async function sendNotification(recipientTokens, title, body) {
+        await sendPushNotification(recipientTokens, title, body)
+          .then(() => {
+            console.log('Push notifications sent successfully!');
+          })
+          .catch((error) => {
+            console.error('Error sending push notifications:', error);
+          });
+    
+      }
 
     const reject = async () => {
         const data = InventoryTransferRequestModel.create({
@@ -177,8 +157,8 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
             setSeletedStatus(null)
             setGetRemarkReject('')
             refresh()
-            sendNotification('Rejected', 'Your transfer request has been rejected', prodAdmFcm)
-            sendNotification('Rejected', 'Warehouse rejected your transfer request', requesterFcm)
+            sendNotification(prodAdmFcm,'Rejected', 'Your transfer request has been rejected')
+            sendNotification(requesterFcm,'Rejected', 'Warehouse rejected your transfer request')
             setProdAdmFcm([])
             setRequesterFcm([])
             Dialog.show({
@@ -192,76 +172,32 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
     }
 
     const submit = async () => {
-        // const itemadd = ItemModelAdd.create({
-        //     item: newItem
-        // })
-
-
-        setIsLoading(true)
-        for (let i = 0; i < newItem.length; i++) {
-            const item = ItemModel.create({
-                supplier: newItem[i].supplier,
-                transfer_request: newItem[i].transfer_request,
-                item_code: newItem[i].item_code,
-                remark: newItem[i].remark
+        try {
+            setIsLoading(true)
+            const activities = ActivitiesModel.create({
+                action: "Approved",
+                activities_name: "Warehouse Approval",
+                remark: getRemark,
+                transfer_request: selectedItem.transfer_id
             })
 
-            try {
-                inventoryRequestStore
-                    .addSupp(item)
-                    .addsupplier()
-                    .then()
-                    .catch((e) => console.log(e))
-            } catch (error) {
-                console.log(error);
-                // Show error dialog
-                Dialog.show({
-                    type: ALERT_TYPE.DANGER,
-                    title: 'បរាជ័យ',
-                    textBody: 'សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ',
-                    button: 'បិទ',
-                });
-            } finally {
-                setIsLoading(false); // Reset loading state regardless of success or failure
-            }
+            const status = InventoryTransferRequestModel.create({
+                id: selectedItem.id,
+                remark: getRemark,
+                state: "in-progress",
+                statusChange: "request-warehouse-approve"
+            })
 
-        }
-        const activities = ActivitiesModel.create({
-            action: "Approved",
-            activities_name: "Warehouse Approval",
-            remark: '',
-            transfer_request: selectedItem.transfer_id
-        })
-
-        const status = InventoryTransferRequestModel.create({
-            id: selectedItem.id,
-            remark: '',
-            state: "in-progress",
-            statusChange: "request-warehouse-approve"
-        })
-        if (
-
-            await inventoryRequestStore
-                .approveReq(status)
-                .approverequest()
-                .then()
-                .catch((e) => console.log(e)) &&
-
-            await inventoryRequestStore
-                .addActivites(activities)
-                .addactivities()
-                .then()
-                .catch((e) => console.log(e))
-
-        ) {
+            await inventoryRequestStore.approveReq(status).approverequest().then().catch((e) => console.log(e))
+            await inventoryRequestStore.addActivites(activities).addactivities().then().catch((e) => console.log(e))
             setModalApproveVisible(false)
             setSelectedItem(null)
             setSeletedStatus(null)
             setNewItem([])
             // setGetRemarkReject('')
             refresh()
-            sendNotification('Accepted', 'Your transfer request has been accept', prodAdmFcm)
-            sendNotification('Accepted', 'Warehouse accepted your transfer request', requesterFcm)
+            sendNotification(prodAdmFcm,'Accepted', 'Your transfer request has been accept')
+            sendNotification(requesterFcm,'Accepted', 'Warehouse accepted your transfer request')
             setProdAdmFcm([])
             setRequesterFcm([])
             Dialog.show({
@@ -271,7 +207,18 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                 // button: 'close',
                 autoClose: 100
             })
+
+        } catch (e) {
+            console.log(e)
+            Dialog.show({
+                type: ALERT_TYPE.SUCCESS,
+                title: 'ជោគជ័យ',
+                textBody: 'រក្សាទុកបានជោគជ័យ',
+                // button: 'close',
+                autoClose: 100
+            })
         }
+
     }
 
     const handleItemPress = (itemId, itemStatus) => {
@@ -443,20 +390,20 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                             {/* <View style={styles.divider} /> */}
                         </>
                         : selectedStatus == 'request-warehouse-approve' ?
-                        <>
-                        <View style={styles.divider} />
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%' }}>
+                            <>
+                                <View style={styles.divider} />
+                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%' }}>
 
-                            <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer', { id: selectedItem.id }) }}>Transfer</Button>
-                        </View>
-                        {/* <View style={styles.divider} /> */}
-                    </>
-                        :<></>
+                                    <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer', { id: selectedItem.id }) }}>Transfer</Button>
+                                </View>
+                                {/* <View style={styles.divider} /> */}
+                            </>
+                            : <></>
 
                     }
                 </View>
             </View >
-            <ModalWarehouseApprove
+            {/* <ModalWarehouseApprove
                 onClose={() => setModalApproveVisible(false)}
                 isVisible={isModalApproveVisible}
                 data={selectedItem != null ? selectedItem.item : []}
@@ -464,8 +411,13 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                 onSubmit={submit}
                 remarkChange={(index, text) => updateRemark(index, text)}
                 tenden={selectedItem != null ? selectedItem.business_unit : ''}
+            /> */}
+            <ModalApprove
+                onClose={() => setModalApproveVisible(false)}
+                isVisible={isModalApproveVisible}
+                textChange={(text) => setGetRemark(text)}
+                onSubmit={submit}
             />
-
             <ModalReject
                 onClose={() => setModalRejectVisible(false)}
                 isVisible={isModalRejectVisible}

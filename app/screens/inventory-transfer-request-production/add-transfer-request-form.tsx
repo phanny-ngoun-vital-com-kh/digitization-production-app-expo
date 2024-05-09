@@ -14,7 +14,6 @@ import { useNavigation } from "@react-navigation/native"
 import DatePicker from '@react-native-community/datetimepicker';
 import { DataTable } from "react-native-paper"
 import { useTheme } from "app/theme-v2"
-import SelectDropdown from 'react-native-select-dropdown'
 import { useStores } from "app/models"
 // import { ActivitiesModel, ItemList, Warehouse } from "app/models/inventory-transfer-request/inventory-transfer-request-model"
 import { TransferRequestModel } from "app/models/inventory-transfer-request/inventory-transfer-request-store"
@@ -31,14 +30,9 @@ interface AddTransferRequestFormProps extends AppStackScreenProps<"AddTransferRe
 
 export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = observer(function AddTransferRequestFormScreen(
 ) {
-  const droptypeRef = useRef<SelectDropdown>(null);
-  const droplineRef = useRef<SelectDropdown>(null);
-  const dropshiftRef = useRef<SelectDropdown>(null);
-  const dropfromwarehouseRef = useRef<SelectDropdown>(null);
-  const droptowarehouseRef = useRef<SelectDropdown>(null);
   const {
     // inventoryRequestStore: { getWarehouseList, getItemList,addTransfer }
-    inventoryRequestStore,authStore
+    inventoryRequestStore, authStore
   } = useStores()
   const { colors } = useTheme()
   const navigation = useNavigation()
@@ -127,7 +121,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
       fromWarehouse: getfromWarehouseCode,
       toWarehouse: getToWarehouseCode
     })))
-  }, [listItem,getfromWarehouseCode,getToWarehouseCode])
+  }, [listItem, getfromWarehouseCode, getToWarehouseCode])
 
   useEffect(() => {
     const getToken = async () => {
@@ -216,7 +210,6 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
     // }
     await sendPushNotification(recipientTokens, title, body)
       .then(() => {
-        setNotiVisible(true);
         console.log('Push notifications sent successfully!');
       })
       .catch((error) => {
@@ -252,7 +245,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
       setIsSubmit(false)
       return
     }
-    if (newItem.length == 0) {
+    if (newItem?.length == 0) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: 'បរាជ័យ',
@@ -263,7 +256,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
     }
     setModalSubmitVisible(true)
   }
-  
+
 
   const saveTransferRequest = async () => {
     setIsLoading(true)
@@ -271,7 +264,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
       business_unit: warehouseTendency,
       docDueDate: dueDate.toISOString(),
       from_warehouse: fromWarehouse,
-      item_count: newItem.length,
+      item_count: newItem?.length,
       line: getLine,
       // postingDate:"2024-03-16T00:00:00",
       postingDate: postingDate.toISOString(),
@@ -289,7 +282,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         .then()
         .catch((e) => console.log(e)))
       {
-        sendNotification(allFcm, 'New Transfer Request','You have new transfer request from '+getLine);
+        sendNotification(allFcm, 'New Transfer Request', 'You have new transfer request from ' + getLine);
         // sendNotification('New Transfer Request','You have new transfer request from '+getLine, allFcm)
         // droplineRef.current.reset();
         // droptypeRef.current.reset();
@@ -313,7 +306,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         setListItem([])
         setAllFcm([])
         // navigation.goBack()
-        
+
         Dialog.show({
           type: ALERT_TYPE.SUCCESS,
           title: 'ជោគជ័យ',
@@ -346,46 +339,18 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
               <Text style={{ margin: 5, fontSize: 18 }}>Type</Text>
             </View>
             <Dropdown style={styles.dropdown}
-                    data={type}
-                    labelField="name"
-                    valueField="name"
-                    placeholder="Select Type"
-                    // onSelect={setSelected}
-
-                    value={transferType}
-                    onChange={item => {
-                      setTansferType(
-                            item.name
-                        );
-                        // console.log(item)
-                        // console.log(item.title)
-
-                        // setSelected(item.title);
-                    }} />
-            {/* <SelectDropdown
               data={type}
-              ref={droptypeRef}
-              onSelect={(selectedItem, index) => {
-                setTansferType(selectedItem.name)
-                // console.log(selectedItem.name, selectedItem.id, index)
-              }}
-              buttonTextAfterSelection={(selectedItem, index) => {
-                return selectedItem.name
-              }}
-              rowTextForSelection={(item, index) => {
-                return item.name
-              }}
-              defaultButtonText="PM/RM"
-              defaultValue="PM/RM"
-              dropdownStyle={styles.dropdownStyle}
-              buttonStyle={styles.buttonStyle}
-              buttonTextStyle={styles.buttonTextStyle}
-              renderDropdownIcon={() => (
-                <Icon
-                  name="angle-down"
-                />
-              )}
-            /> */}
+              labelField="name"
+              valueField="name"
+              placeholder="Select Type"
+              // onSelect={setSelected}
+
+              value={transferType}
+              onChange={item => {
+                setTansferType(
+                  item.name
+                );
+              }} />
           </View>
           <View style={{ width: '30%', marginLeft: 10, flexDirection: 'row' }}>
             <View style={{ width: '50%', marginRight: 2.5 }}>
@@ -394,47 +359,18 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
                 <Text style={{ margin: 5, fontSize: 18 }}>Line</Text>
               </View>
               <Dropdown style={styles.dropdown}
-                    data={line}
-                    labelField="name"
-                    valueField="name"
-                    placeholder="Select Line"
-                    // onSelect={setSelected}
-
-                    value={getLine}
-                    onChange={item => {
-                      setGetLine(
-                            item.name
-                        );
-                        // console.log(item)
-                        // console.log(item.title)
-
-                        // setSelected(item.title);
-                    }} />
-              {/* <SelectDropdown
                 data={line}
-                ref={droplineRef}
-                defaultButtonText="Please Select"
-                onSelect={(selectedItem, index) => {
-                  setGetLine(selectedItem.name)
-                  // console.log(selectedItem.name, selectedItem.id, index)
-                }}
-                buttonTextAfterSelection={(selectedItem, index) => {
-                  return selectedItem.name
-                }}
-                rowTextForSelection={(item, index) => {
-                  return item.name
-                }}
-                dropdownIconPosition='right'
-                renderDropdownIcon={() => (
-                  <Icon
-                    name="angle-down"
-                  // style={styles.dropdownIconStyle}
-                  />
-                )}
-                dropdownStyle={styles.dropdownStyle}
-                buttonStyle={styles.buttonStyle}
-                buttonTextStyle={styles.buttonTextStyle}
-              /> */}
+                labelField="name"
+                valueField="name"
+                placeholder="Select Line"
+                // onSelect={setSelected}
+
+                value={getLine}
+                onChange={item => {
+                  setGetLine(
+                    item.name
+                  );
+                }} />
               {!getLine && !isSubmit && (
                 <View style={{ width: '100%' }}>
                   <Text caption1 errorColor>
@@ -449,47 +385,16 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
                 <Text style={{ margin: 5, fontSize: 18 }}>Shift</Text>
               </View>
               <Dropdown style={styles.dropdown}
-                    data={shift}
-                    labelField="name"
-                    valueField="name"
-                    placeholder="Select Shift"
-                    // onSelect={setSelected}
-
-                    value={getShift}
-                    onChange={item => {
-                      setGetShift(
-                            item.name
-                        );
-                        // console.log(item)
-                        // console.log(item.title)
-
-                        // setSelected(item.title);
-                    }} />
-              {/* <SelectDropdown
                 data={shift}
-                ref={dropshiftRef}
-                defaultButtonText="Please Select"
-                onSelect={(selectedItem, index) => {
-                  setGetShift(selectedItem.name)
-                  // console.log(selectedItem.name, selectedItem.id, index)
-                }}
-                buttonTextAfterSelection={(selectedItem, index) => {
-                  return selectedItem.name
-                }}
-                rowTextForSelection={(item, index) => {
-                  return item.name
-                }}
-                dropdownIconPosition='right'
-                renderDropdownIcon={() => (
-                  <Icon
-                    name="angle-down"
-                  // style={styles.dropdownIconStyle}
-                  />
-                )}
-                dropdownStyle={styles.dropdownStyle}
-                buttonStyle={styles.buttonStyle}
-                buttonTextStyle={styles.buttonTextStyle}
-              /> */}
+                labelField="name"
+                valueField="name"
+                placeholder="Select Shift"
+                value={getShift}
+                onChange={item => {
+                  setGetShift(
+                    item.name
+                  );
+                }} />
               {!getShift && !isSubmit && (
                 <View style={{ width: '100%' }}>
                   <Text caption1 errorColor>
@@ -558,53 +463,18 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
               <Text style={{ margin: 5, fontSize: 18 }}>From Warehouse</Text>
             </View>
             <Dropdown style={styles.dropdown}
-                    data={warehouse}
-                    labelField="whsCode"
-                    valueField="id"
-                    placeholder="Select From Warehouse"
-                    // onSelect={setSelected}
-                    search
-                    value={warehouse}
-                    // onChangeText={(text) => setSearchWarehouse(text)}
-                    onChange={item => {
-                      setFromWarehouse(item.id)
-                      setGetFromWarehouseCode(item.whsCode)
-                      setWarehouseTendency(item.tendency)
-                      // setSearchWarehouse('')
-                        // console.log(item)
-                        // console.log(item.title)
-
-                        // setSelected(item.title);
-                    }} />
-            {/* <SelectDropdown
               data={warehouse}
-              search={true}
-              onChangeSearchInputText={(text) => setSearchWarehouse(text)}
-              defaultButtonText="Please Select"
-              ref={dropfromwarehouseRef}
-              onSelect={(selectedItem, index) => {
-                setFromWarehouse(selectedItem.id)
-                setGetFromWarehouseCode(selectedItem.whsCode)
-                setWarehouseTendency(selectedItem.tendency)
-                setSearchWarehouse('')
-              }}
-              buttonTextAfterSelection={(selectedItem, index) => {
-                return selectedItem.whsCode
-              }}
-              rowTextForSelection={(item, index) => {
-                return item.whsCode
-              }}
-              dropdownIconPosition='right'
-              renderDropdownIcon={() => (
-                <Icon name="angle-down" />
-              )}
-              renderSearchInputLeftIcon={() => (
-                <Icon name="search" />
-              )}
-              dropdownStyle={styles.dropdownStyle}
-              buttonStyle={styles.buttonStyle}
-              buttonTextStyle={styles.buttonTextStyle}
-            /> */}
+              labelField="whsCode"
+              valueField="id"
+              placeholder="Select From Warehouse"
+              // onSelect={setSelected}
+              search
+              value={warehouse}
+              onChange={item => {
+                setFromWarehouse(item.id)
+                setGetFromWarehouseCode(item.whsCode)
+                setWarehouseTendency(item.tendency)
+              }} />
             {!fromWarehouse && !isSubmit && (
               <View style={{ width: '100%' }}>
                 <Text caption1 errorColor>
@@ -619,57 +489,17 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
               <Text style={{ margin: 5, fontSize: 18 }}>To Warehouse</Text>
             </View>
             <Dropdown style={styles.dropdown}
-                    data={toWarehouse}
-                    labelField="whsCode"
-                    valueField="id"
-                    placeholder="Select To Warehouse"
-                    // onSelect={setSelected}
-                    search
-                    value={toWarehouse}
-                    // onChangeText={(text) => setSearchWarehouse(text)}
-                    onChange={item => {
-                      console.log(item)
-                      setGetToWarehouse(item.id)
-                      setGetToWarehouseCode(item.whsCode)
-                      // setSearchWarehouse('')
-                        // console.log(item)
-                        // console.log(item.title)
-
-                        // setSelected(item.title);
-                    }} />
-            {/* <SelectDropdown
               data={toWarehouse}
-              ref={droptowarehouseRef}
-              search={true}
-              defaultButtonText="Please Select"
-              onChangeSearchInputText={(text) => setSearchToWarehouse(text)}
-              renderSearchInputLeftIcon={() => (
-                <Icon name="search" />
-              )}
-              onSelect={(selectedItem, index) => {
-                setGetToWarehouse(selectedItem.id)
-                setSearchToWarehouse('')
-                console.log(selectedItem.whsCode)
-                setGetToWarehouseCode(selectedItem.whsCode)
-                // console.log(selectedItem.whsCode, selectedItem.id, index)
-              }}
-              buttonTextAfterSelection={(selectedItem, index) => {
-                return selectedItem.whsCode
-              }}
-              rowTextForSelection={(item, index) => {
-                return item.whsCode
-              }}
-              dropdownIconPosition='right'
-              renderDropdownIcon={() => (
-                <Icon
-                  name="angle-down"
-                // style={styles.dropdownIconStyle}
-                />
-              )}
-              dropdownStyle={styles.dropdownStyle}
-              buttonStyle={styles.buttonStyle}
-              buttonTextStyle={styles.buttonTextStyle}
-            /> */}
+              labelField="whsCode"
+              valueField="id"
+              placeholder="Select To Warehouse"
+              search
+              value={toWarehouse}
+              onChange={item => {
+                console.log(item)
+                setGetToWarehouse(item.id)
+                setGetToWarehouseCode(item.whsCode)
+              }} />
             {!getToWarehouse && !isSubmit && (
               <View style={{ width: '100%' }}>
                 <Text caption1 errorColor>
@@ -680,7 +510,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
           </View>
           <View style={{ width: '30%', marginRight: 10 }}>
             <Text style={{ margin: 5, fontSize: 18 }}>Remark</Text>
-            <TextInput multiline={true} value={remark} style={[styles.input,{width:'100%'}]} placeholder="Please Enter" placeholderTextColor="gray" onChangeText={(text) => setRemark(text)}></TextInput>
+            <TextInput multiline={true} value={remark} style={[styles.input, { width: '100%' }]} placeholder="Please Enter" placeholderTextColor="gray" onChangeText={(text) => setRemark(text)}></TextInput>
           </View>
         </View>
         <View style={[styles.divider, { marginTop: 30 }]}></View>
@@ -698,7 +528,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
               <DataTable.Title textStyle={styles.textHeader}>Remark</DataTable.Title>
               <DataTable.Title style={{ flex: 0, marginLeft: 30 }} textStyle={styles.textHeader}> </DataTable.Title>
             </DataTable.Header>
-            {newItem.length === 0 ?
+            {newItem?.length === 0 ?
               <View style={{ marginTop: '3%', alignItems: 'center' }}>
                 <Icon name='inbox' size={60} color={'#696969'} ></Icon>
                 <Text style={[styles.textHeader, { textAlign: 'center', color: '#696969', marginTop: 5 }]}>No Item Seleted</Text>
@@ -736,9 +566,9 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
                         name="trash"
                         size={20}
                         color={'red'}
-                        onPress={() => 
+                        onPress={() =>
                           setListItem(newItem.filter(value => value.key !== item.key))
-                            // setsapItem(sapItem.filter(value => value.key !== item.key))
+                          // setsapItem(sapItem.filter(value => value.key !== item.key))
                         }
                       />
                     </DataTable.Cell>
@@ -751,7 +581,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
           </DataTable>
         </ScrollView>
         <View style={styles.divider} />
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginRight: 20 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginRight: 20, marginBottom: 25 }}>
 
           <Button style={{ width: '20%', }} onPress={submit}>Submit</Button>
         </View>
