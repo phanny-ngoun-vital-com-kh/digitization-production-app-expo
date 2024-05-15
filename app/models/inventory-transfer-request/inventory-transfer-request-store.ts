@@ -1,5 +1,5 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
-import { Activities, ActivitiesModel, Item, ItemModel, SAPItemModel } from "./inventory-transfer-request-model"
+import { Activities, ActivitiesModel, Item, ItemModel, ProvidedList, ProvidedListModel, SAPItemModel } from "./inventory-transfer-request-model"
 import { inventorytransferrequestApi } from "app/services/api/inventory-transfer-request-api"
 import { WarehouseModel } from "../warehouse/warehouse-model"
 // import { Item } from "../inventory-transfer/inventory-transfer-model"
@@ -92,7 +92,7 @@ export const TransferRequestModel = types
         items: types.array(TransferItemModel),
         activities: types.array(ActivitiesModel),
         // transferRequestDetails: types.array(SAPItemModel)
-        
+
     })
     .views((self) => {
         return {
@@ -155,7 +155,7 @@ export const SAPTransferRequestModel = types
         action: types.maybeNull(types.string),
         transfer_request: types.maybeNull(types.string),
         transferRequestDetails: types.array(SAPItemModel)
-        
+
     })
     .views((self) => {
         return {
@@ -194,6 +194,58 @@ export interface SAPTransferRequestModel extends SAPTransferRequestModelType { }
 type SAPTransferRequestModelSnapshotType = SnapshotOut<typeof TransferRequestModel>
 export interface TransferRequestModelSnapshot extends SAPTransferRequestModelSnapshotType { }
 
+export const ProvidedItemModel = types
+    .model('ProvidedItemModel')
+    .props({
+        item_code: types.maybeNull(types.string),
+        item_name: types.maybeNull(types.string),
+        uom: types.maybeNull(types.string),
+        quantity: types.maybeNull(types.string),
+        remark: types.maybeNull(types.string),
+        received: types.maybeNull(types.string),
+        provided: types.maybeNull(types.string),
+        is_receive: types.maybeNull(types.string),
+        total: types.maybeNull(types.string),
+        supplier: types.maybeNull(types.string),
+        itemReceive: types.maybeNull(types.number),
+    })
+
+
+type ProvidedItemType = Instance<typeof ProvidedItemModel>
+export interface ProvidedItem extends ProvidedItemType { }
+type ProvidedItemSnapshotType = SnapshotOut<typeof ProvidedItemModel>
+export interface ProvidedItemSnapshot extends ProvidedItemSnapshotType { }
+
+export const ProvidedModel = types
+    .model('ProvideModel')
+    .props({
+        item: types.array(ProvidedItemModel),
+        status:(types.string),
+        transfer_request_id:(types.number),
+    })
+    .views((self) => {
+        return {
+            saveprovided: async () => {
+                const rs = await inventorytransferrequestApi.saveProvided(
+                    self.item,
+                    self.status,
+                    self.transfer_request_id
+                )
+                if (rs.kind === 'ok')
+                    console.log('Success')
+                else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            }
+        }
+    })
+
+type ProvidedModelType = Instance<typeof ProvidedModel>
+export interface ProvidedModel extends ProvidedModelType { }
+type ProvidedModelSnapshotType = SnapshotOut<typeof ProvidedModel>
+export interface ProvidedModelSnapshot extends ProvidedModelSnapshotType { }
+
 export const AuthoritiesModel = types
     .model('AuthoritiesModel')
     .props({
@@ -231,10 +283,12 @@ export const TransferRequestStore = types
     .model('TransferRequestStore')
     .props({
         transferRequest: types.optional(types.array(TransferRequestModel), []),
-        approve: types.optional(types.array(InventoryTransferRequestModel),[]),
-        activities: types.optional(types.array(ActivitiesModel),[]),
-        item: types.optional(types.array(ItemModel),[]),
-        sap_tr: types.optional(types.array(SAPTransferRequestModel),[])
+        approve: types.optional(types.array(InventoryTransferRequestModel), []),
+        activities: types.optional(types.array(ActivitiesModel), []),
+        item: types.optional(types.array(ItemModel), []),
+        sap_tr: types.optional(types.array(SAPTransferRequestModel), []),
+        provided: types.optional(types.array(ProvidedModel),[]),
+        provide_list: types.optional(types.array(ProvidedListModel),[])
     })
     .actions((self) => {
         return {
@@ -242,21 +296,29 @@ export const TransferRequestStore = types
                 self.transferRequest.push(tran)
                 return (tran)
             },
-            approveReq: (app: InventoryTransferRequest)=>{
+            approveReq: (app: InventoryTransferRequest) => {
                 self.approve.push(app)
                 return (app)
             },
-            addActivites:(ac : Activities)=>{
+            addActivites: (ac: Activities) => {
                 self.activities.push(ac)
                 return (ac)
             },
-            addSupp:(sup: Item) =>{
+            addSupp: (sup: Item) => {
                 self.item.push(sup)
-                return(sup)
+                return (sup)
             },
-            addSapTr:(tr: SAPTransferRequestModel)=>{
+            addSapTr: (tr: SAPTransferRequestModel) => {
                 self.sap_tr.push(tr)
-                return(tr)
+                return (tr)
+            },
+            addProvided:(pro:ProvidedModel)=>{
+                self.provided.push(pro)
+                return(pro)
+            },
+            upstatus:(li:ProvidedList)=>{
+                self.provide_list.push(li)
+                return(li)
             }
         }
     })
@@ -289,8 +351,8 @@ export const TransferRequestStore = types
                     throw Error(rs.kind)
                 }
             },
-            getBomList: async (searchValue?:string,tendency?:string) => {
-                const rs = await inventorytransferrequestApi.getBom(10,searchValue,tendency)
+            getBomList: async (searchValue?: string, tendency?: string) => {
+                const rs = await inventorytransferrequestApi.getBom(10, searchValue, tendency)
                 if (rs.kind === 'ok') {
                     return rs.payload
                 } else {
@@ -298,7 +360,7 @@ export const TransferRequestStore = types
                     throw Error(rs.kind)
                 }
             },
-            getWarehouseTransferRequestList: async(state:string)=>{
+            getWarehouseTransferRequestList: async (state: string) => {
                 const rs = await inventorytransferrequestApi.getWarehouseTransferRequest(20, state)
                 if (rs.kind === 'ok') {
                     return rs.payload
@@ -307,7 +369,7 @@ export const TransferRequestStore = types
                     throw Error(rs.kind)
                 }
             },
-            getMobileUserList: async()=>{
+            getMobileUserList: async () => {
                 const rs = await inventorytransferrequestApi.getListMobileUser()
                 if (rs.kind === 'ok') {
                     return rs.payload
@@ -317,7 +379,7 @@ export const TransferRequestStore = types
                 }
             },
 
-            getListSubBom: async(father:string, tendency:string)=>{
+            getListSubBom: async (father: string, tendency: string) => {
                 const rs = await inventorytransferrequestApi.getListSubItem(father, tendency)
                 if (rs.kind === 'ok') {
                     return rs.payload
@@ -327,8 +389,8 @@ export const TransferRequestStore = types
                 }
             },
 
-            getSupplierList: async(tendency: string,searchValue?: string) =>{
-                const rs = await inventorytransferrequestApi.getSuppiler(10,tendency,searchValue)
+            getSupplierList: async (tendency: string, searchValue?: string) => {
+                const rs = await inventorytransferrequestApi.getSuppiler(10, tendency, searchValue)
                 if (rs.kind === 'ok') {
                     return rs.payload
                 } else {
@@ -337,7 +399,7 @@ export const TransferRequestStore = types
                 }
             },
 
-            getdetail: async(id:number)=>{
+            getdetail: async (id: number) => {
                 const rs = await inventorytransferrequestApi.getDetail(id)
                 if (rs.kind === 'ok') {
                     return rs.payload
@@ -345,7 +407,42 @@ export const TransferRequestStore = types
                     console.log('Error')
                     throw Error(rs.kind)
                 }
+            },
+            getprovidelist: async (transfer_request_id: number) => {
+                const rs = await inventorytransferrequestApi.getProvideList(transfer_request_id)
+                if (rs.kind === 'ok') {
+                    return rs.payload
+                } else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            },
+            getprovided: async (provided: string) => {
+                const rs = await inventorytransferrequestApi.getProvided(provided)
+                if (rs.kind === 'ok') {
+                    return rs.payload
+                } else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            },
+            gettotalprovided: async (item_code: string, transfer_request_id: number) => {
+                const rs = await inventorytransferrequestApi.getTotalProvided(item_code, transfer_request_id)
+                if (rs.kind === 'ok') {
+                    return rs.payload
+                } else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            },
+            getprovideitemforclose:async(transfer_request_id:number,status:string,item_code: string)=>{
+                const rs = await inventorytransferrequestApi.getProvideItemForClose(transfer_request_id,status,item_code)
+                if (rs.kind === 'ok') {
+                    return rs.payload
+                } else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
             }
-
         }
     })

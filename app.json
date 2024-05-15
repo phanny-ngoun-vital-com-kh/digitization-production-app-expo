@@ -1,8 +1,8 @@
 {
-  "name": "digitization-production-app-expo",
-  "displayName": "digitization-production-app-expo",
+  "name": "Digitization Production",
+  "displayName": "Digitization Production",
   "expo": {
-    "name": "digitization-production-app-expo",
+    "name": "Digitization Production",
     "slug": "digitization-production-app-expo",
     "scheme": "digitization-production-app-expo",
     "version": "1.0.0",
@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-logo-all.png",
       "resizeMode": "contain",
-      "backgroundColor": "#191015"
+      "backgroundColor": "#fff"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -22,7 +22,8 @@
     ],
     "android": {
       "icon": "./assets/images/app-icon-android-legacy.png",
-      "package": "com.digitizationproductionappexpo",
+      "package": "com.digitizationproduction",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
         "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
@@ -30,7 +31,7 @@
       "splash": {
         "image": "./assets/images/splash-logo-android-universal.png",
         "resizeMode": "contain",
-        "backgroundColor": "#191015"
+        "backgroundColor": "#fff"
       }
     },
     "ios": {
@@ -68,7 +69,18 @@
           }
         }
       ],
-      "expo-font"
+      [
+        "expo-notifications",
+        {
+          // "icon": "./local/path/to/myNotificationIcon.png",
+          "color": "#ffffff"
+          // "sounds": [
+          //   "./local/path/to/mySound.wav",
+          //   "./local/path/to/myOtherSound.wav"
+          // ],
+          // "mode": "production"
+        }
+      ]
     ],
     "experiments": {
       "tsconfigPaths": true

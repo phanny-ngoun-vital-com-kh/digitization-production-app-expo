@@ -24,7 +24,12 @@ const ApiEndpoint = {
     fetchPagingSupplier:'fetch-paging-supplier',
     addSupplier:'add-supplier',
     saveTransferToSap:'save-transfer-to-sap',
-    detailTransferRequest:'detail-transfer-request'
+    detailTransferRequest:'detail-transfer-request',
+    getProvideList:'get-provide-list',
+    getProvide:'get-provide',
+    getTotalProvide:'get-total-provide',
+    getProvideItemForClose:'get-provide-item-for-close',
+    updateProvideStatus:'update-provide-status'
 }
 
 export class InventoryTransferRequestApi extends BaseApi {
@@ -227,7 +232,82 @@ export class InventoryTransferRequestApi extends BaseApi {
             return { kind: "bad-data" }
         }
     }
+    async getProvideList(transfer_request_id:number):Promise<any>{
+        try{
+            const rs = await this.requestService.list(ApiEndpoint.getProvideList,{
+                transfer_request_id
+            })
+            return DataResponse(rs)
+        }catch (e:any) {
+            __DEV__ && console.tron.log(e.message)
+            return { kind: "bad-data" }
+        }
+    }
+    async getProvided(provided:string):Promise<any>{
+        try{
+            const rs = await this.requestService.list(ApiEndpoint.getProvide,{
+                provided
+            })
+            return DataResponse(rs)
+        }catch (e:any) {
+            __DEV__ && console.tron.log(e.message)
+            return { kind: "bad-data" }
+        }
+    }
+    async getTotalProvided(item_code:string,transfer_request_id:number):Promise<any>{
+        try{
+            const rs = await this.requestService.list(ApiEndpoint.getTotalProvide,{
+                item_code,
+                transfer_request_id
+            })
+            return DataResponse(rs)
+        }catch (e:any) {
+            __DEV__ && console.tron.log(e.message)
+            return { kind: "bad-data" }
+        }
+    }
 
+    async getProvideItemForClose(transfer_request_id:number,status:string,item_code:string):Promise<any>{
+        try{
+            const rs = await this.requestService.list(ApiEndpoint.getProvideItemForClose,{
+                transfer_request_id,
+                status,
+                item_code
+            })
+            return DataResponse(rs)
+        }catch (e:any) {
+            __DEV__ && console.tron.log(e.message)
+            return { kind: "bad-data" }
+        }
+    }
+
+    async saveProvided(item:any,status:string,transfer_request_id:number): Promise<any>{
+        try{
+            const rs = await this.requestService.exec(ApiEndpoint.saveProvided,{
+                item,
+                status,
+                transfer_request_id
+            })
+            return DataResponse(rs)
+        }catch (e:any) {
+            __DEV__ && console.tron.log(e.message)
+            return { kind: "bad-data" }
+        }
+    }
+
+    async updateProvided(provided:string,remark:string,status:string):Promise<any>{
+        try{
+            const rs = await this.requestService.exec(ApiEndpoint.updateProvideStatus,{
+                provided,
+                remark,
+                status
+            })
+            return DataResponse(rs)
+        }catch (e:any) {
+            __DEV__ && console.tron.log(e.message)
+            return { kind: "bad-data" }
+        }
+    }
 
 }
 

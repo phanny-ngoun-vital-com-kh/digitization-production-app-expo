@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "244489398431",
+    "project_id": "digitizationproduction",
+    "storage_bucket": "digitizationproduction.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244489398431:android:ba36dc28f525f159c75aaa",
+        "android_client_info": {
+          "package_name": "com.digitizationproduction"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAx4hHi3YnII0HRPbxSAIoYr3Hniv1rrNI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

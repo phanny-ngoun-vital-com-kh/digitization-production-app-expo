@@ -98,7 +98,7 @@ export default StyleSheet.create({
     marginRight: 'auto',
     height: 40,
     marginTop: 20,
-    marginBottom:20
+    marginBottom: 20
   },
   dropdownStyle: {
     flexDirection: 'row',
@@ -128,13 +128,66 @@ export default StyleSheet.create({
     fontSize: 18,
     color: '#333',
   },
-  input:{
-    borderWidth: 1, 
-    backgroundColor: '#fff', 
-    borderColor: '#696969', 
-    height: 47, 
-    borderRadius: 10, 
-  }
-
+  input: {
+    borderWidth: 1,
+    backgroundColor: '#fff',
+    borderColor: '#696969',
+    height: 47,
+    borderRadius: 10,
+  },
+  button_cancel: {
+    marginLeft: 'auto',
+    width: '25%',
+    backgroundColor: 'white',
+    borderColor: 'gray',
+    borderWidth: 1
+  },
+  butuon_view: {
+    marginTop: '5%',
+    flexDirection: 'row',
+    width: '100%'
+  },
+  model: {
+    backgroundColor: 'white',
+    marginTop: '5%',
+    padding: 20,
+    borderRadius: 10,
+    width: '85%',
+    // height: '40%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalcontainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center'
+  },
+  button: {
+    width: '25%',
+    // marginLeft: 'auto',
+  },
+  dropdown: {
+    // marginLeft: -10,
+    // marginRight: 10,
+    height: 40,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    width:'100%',
+    elevation: 2,
+  },
 
 });

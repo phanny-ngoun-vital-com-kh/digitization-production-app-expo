@@ -11,8 +11,9 @@ export default StyleSheet.create({
         padding: 20,
         marginTop: '5%',
         borderRadius: 10,
-        width: '80%',
-        // maxHeight: '55%',
+        width: '70%',
+        maxHeight: '70%',
+        // maxHeight: 400,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
