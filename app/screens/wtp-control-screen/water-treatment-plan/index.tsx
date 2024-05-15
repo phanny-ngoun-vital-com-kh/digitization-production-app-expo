@@ -499,7 +499,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               {
                 gap: 10,
                 marginTop: 0,
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#F6F5F5",
               },
             ]}
           >
@@ -572,7 +572,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
 const $root: ViewStyle = {
   flex: 1,
-  backgroundColor: "#fff",
+  backgroundColor: "white",
 }
 
 const $outerContainer: ViewStyle = {

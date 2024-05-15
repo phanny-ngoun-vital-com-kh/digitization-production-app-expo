@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/Ionicons"
 import { AppStackScreenProps } from "app/navigators"
 import { Text } from "app/components/v2"
-import { View, ViewStyle, TouchableOpacity } from "react-native"
+import { View, ViewStyle, TouchableOpacity, KeyboardAvoidingView } from "react-native"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import { Checkbox, Divider } from "react-native-paper"
@@ -11,19 +11,14 @@ import { ScrollView } from "react-native-gesture-handler"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import InstructionModal from "app/components/v2/InstructionModal"
 import ActivityModal from "app/components/v2/ActivitylogModal"
-import { KeyboardAvoidingView } from "react-native"
-// import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "app/models"
-
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
-
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
     const route = useRoute().params
     const navigation = useNavigation()
-    const [showinstruction, setShowInstruction] = useState(true)
+    const [showinstruction, setShowInstruction] = useState(false)
     const [showActivitylog, setShowActivitylog] = useState(false)
-    const [form, setForm] = useState({
+    const [formLineA, setFormLineA] = useState({
       side_wall: "",
       air_pressure: "",
       tem_preform: "",
@@ -33,8 +28,27 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       under_control: null,
       instruction: "",
     })
-
-    const [errors, setErrors] = useState({
+    const [formLineB, setFormLineB] = useState({
+      water_pressure: "",
+      nozzie_rinser: "",
+      FG: "",
+      over_control: false,
+      under_control: false,
+      smell: false,
+      instruction: "",
+      other: "",
+    })
+    const [errorsLineB, setErrorsLineB] = useState({
+      water_pressure: true,
+      nozzie_rinser: true,
+      FG: true,
+      over_control: true,
+      under_control: true,
+      smell: true,
+      instruction: false,
+      other: false,
+    })
+    const [errorsLineA, setErrorsLineA] = useState({
       side_wall: true,
       air_pressure: true,
       tem_preform: true,
@@ -44,6 +58,32 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       under_control: true,
       instruction: true,
     })
+
+    const validateLineA = (errorsLineA) => {
+      const errorlists = errorsLineA
+      delete errorlists.instruction
+
+      const notvalid = Object.values(errorlists).some((err) => err === true)
+
+      if (notvalid) {
+        return
+      }
+      navigation.goBack()
+    }
+
+    const validateLineB = (errorsLineB) => {
+      const errorlists = errorsLineB
+      delete errorlists.instruction
+      delete errorlists.other
+      delete errorlists.under_control
+      delete errorlists.over_control
+      delete errorlists.smell
+      const notvalid = Object.values(errorlists).some((err) => err === true)
+      if (notvalid) {
+        return
+      }
+      navigation.goBack()
+    }
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
@@ -52,14 +92,12 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center" }}
             onPress={() => {
-              const errorlists = errors
-
-              const notValid = Object.values(errorlists).some((err) => err === false)
-
-              if (notValid) {
-                return
+              if ([4, 5, 6].includes(route?.line)) {
+                validateLineA(errorsLineA)
               }
-              navigation.goBack()
+              if ([2, 3].includes(route?.line)) {
+                validateLineB(errorsLineB)
+              }
             }}
           >
             <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
@@ -69,7 +107,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           </TouchableOpacity>
         ),
       })
-    }, [route, navigation, errors])
+    }, [route, navigation, errorsLineA, errorsLineB])
 
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={$root}>
@@ -91,43 +129,43 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         keyboardType="decimal-pad"
                         hintLimit="100 - 110%"
                         showIcon={false}
-                        value={form.side_wall?.toString() || ""}
+                        value={formLineA.side_wall?.toString() || ""}
                         onBlur={() => {
-                          form.side_wall !== ""
-                            ? setErrors((pre) => ({ ...pre, side_wall: false }))
-                            : setErrors((pre) => ({ ...pre, side_wall: true }))
+                          formLineA.side_wall !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, side_wall: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, side_wall: true }))
                         }}
                         onChangeText={(text) => {
-                          form.side_wall !== ""
-                            ? setErrors((pre) => ({ ...pre, side_wall: false }))
-                            : setErrors((pre) => ({ ...pre, side_wall: true }))
+                          formLineA.side_wall !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, side_wall: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, side_wall: true }))
 
-                          setForm((pre) => ({ ...pre, side_wall: text.trim() }))
+                          setFormLineA((pre) => ({ ...pre, side_wall: text.trim() }))
                         }}
                         label="Side-wall"
-                        errormessage={errors?.side_wall ? "សូមជ្រើសរើស side wall" : ""}
+                        errormessage={errorsLineA?.side_wall ? "សូមជ្រើសរើស side wall" : ""}
                       />
                     </View>
                     <View style={$width}>
                       <CustomInput
                         keyboardType="decimal-pad"
                         hintLimit="> 1.5 Bar"
-                        value={form.air_pressure?.toString() || ""}
+                        value={formLineA.air_pressure?.toString() || ""}
                         showIcon={false}
                         onBlur={() => {
-                          form.air_pressure !== ""
-                            ? setErrors((pre) => ({ ...pre, air_pressure: false }))
-                            : setErrors((pre) => ({ ...pre, air_pressure: true }))
+                          formLineA.air_pressure !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, air_pressure: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, air_pressure: true }))
                         }}
                         onChangeText={(text) => {
-                          form.air_pressure !== ""
-                            ? setErrors((pre) => ({ ...pre, air_pressure: false }))
-                            : setErrors((pre) => ({ ...pre, air_pressure: true }))
+                          formLineA.air_pressure !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, air_pressure: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, air_pressure: true }))
 
-                          setForm((pre) => ({ ...pre, air_pressure: text.trim() }))
+                          setFormLineA((pre) => ({ ...pre, air_pressure: text.trim() }))
                         }}
                         label="Air Pressure"
-                        errormessage={errors?.air_pressure ? "សូមជ្រើសរើស Air Pressure" : ""}
+                        errormessage={errorsLineA?.air_pressure ? "សូមជ្រើសរើស Air Pressure" : ""}
                       />
                     </View>
                     <View style={$width}>
@@ -135,21 +173,23 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         keyboardType="decimal-pad"
                         hintLimit="100 - 110%"
                         showIcon={false}
-                        value={form.tem_preform?.toString() || ""}
+                        value={formLineA.tem_preform?.toString() || ""}
                         onBlur={() => {
-                          form.tem_preform !== ""
-                            ? setErrors((pre) => ({ ...pre, tem_preform: false }))
-                            : setErrors((pre) => ({ ...pre, tem_preform: true }))
+                          formLineA.tem_preform !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, tem_preform: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, tem_preform: true }))
                         }}
                         onChangeText={(text) => {
-                          form.tem_preform !== ""
-                            ? setErrors((pre) => ({ ...pre, tem_preform: false }))
-                            : setErrors((pre) => ({ ...pre, tem_preform: true }))
+                          formLineA.tem_preform !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, tem_preform: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, tem_preform: true }))
 
-                          setForm((pre) => ({ ...pre, tem_preform: text.trim() }))
+                          setFormLineA((pre) => ({ ...pre, tem_preform: text.trim() }))
                         }}
                         label="Temperature Preform"
-                        errormessage={errors?.tem_preform ? "សូមជ្រើសរើស Temperature Preform" : ""}
+                        errormessage={
+                          errorsLineA?.tem_preform ? "សូមជ្រើសរើស Temperature Preform" : ""
+                        }
                       />
                     </View>
                   </View>
@@ -157,24 +197,24 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                     <View style={$width}>
                       <CustomInput
                         keyboardType="decimal-pad"
-                        value={form.tw_pressure?.toString() || ""}
+                        value={formLineA.tw_pressure?.toString() || ""}
                         showIcon={false}
                         onBlur={() => {
-                          form.tw_pressure !== ""
-                            ? setErrors((pre) => ({ ...pre, tw_pressure: false }))
-                            : setErrors((pre) => ({ ...pre, tw_pressure: true }))
+                          formLineA.tw_pressure !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, tw_pressure: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, tw_pressure: true }))
                         }}
                         onChangeText={(text) => {
-                          form.tw_pressure !== ""
-                            ? setErrors((pre) => ({ ...pre, tw_pressure: false }))
-                            : setErrors((pre) => ({ ...pre, tw_pressure: true }))
+                          formLineA.tw_pressure !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, tw_pressure: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, tw_pressure: true }))
 
-                          setForm((pre) => ({ ...pre, tw_pressure: text.trim() }))
+                          setFormLineA((pre) => ({ ...pre, tw_pressure: text.trim() }))
                         }}
                         hintLimit="> 1.5 bar / flow scale > 3"
                         label="Treated Water Pressure"
                         errormessage={
-                          errors?.tw_pressure ? "សូមជ្រើសរើស Treated Water Pressure" : ""
+                          errorsLineA?.tw_pressure ? "សូមជ្រើសរើស Treated Water Pressure" : ""
                         }
                       />
                     </View>
@@ -182,22 +222,22 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <CustomInput
                         keyboardType="decimal-pad"
                         showIcon={false}
-                        value={form.FG?.toString() || ""}
+                        value={formLineA.FG?.toString() || ""}
                         hintLimit="0.05 - 0.4 ppm"
                         onBlur={() => {
-                          form.FG !== ""
-                            ? setErrors((pre) => ({ ...pre, FG: false }))
-                            : setErrors((pre) => ({ ...pre, FG: true }))
+                          formLineA.FG !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, FG: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, FG: true }))
                         }}
                         onChangeText={(text) => {
-                          form.FG !== ""
-                            ? setErrors((pre) => ({ ...pre, FG: false }))
-                            : setErrors((pre) => ({ ...pre, FG: true }))
+                          formLineA.FG !== ""
+                            ? setErrorsLineA((pre) => ({ ...pre, FG: false }))
+                            : setErrorsLineA((pre) => ({ ...pre, FG: true }))
 
-                          setForm((pre) => ({ ...pre, FG: text.trim() }))
+                          setFormLineA((pre) => ({ ...pre, FG: text.trim() }))
                         }}
                         label="FG [ O3 ]"
-                        errormessage={errors?.FG ? "សូមជ្រើសរើស FG [ O3 ]" : ""}
+                        errormessage={errorsLineA?.FG ? "សូមជ្រើសរើស FG [ O3 ]" : ""}
                       />
                     </View>
                     <View style={[$width, { marginTop: 20 }]}>
@@ -207,47 +247,55 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         <TouchableOpacity
                           style={$containerHorizon}
                           onPress={() => {
-                            if (!form.over_control) {
-                              setForm((pre) => ({
+                            if (!formLineA.over_control) {
+                              setFormLineA((pre) => ({
                                 ...pre,
                                 over_control: true,
                                 under_control: false,
                               }))
                             } else {
-                              setForm((pre) => ({
+                              setFormLineA((pre) => ({
                                 ...pre,
                                 over_control: true,
                                 under_control: false,
                               }))
                             }
 
-                            setErrors((pre) => ({ ...pre, over_control: false }))
+                            setErrorsLineA((pre) => ({
+                              ...pre,
+                              under_control: false,
+                              over_control: false,
+                            }))
                           }}
                         >
                           <Checkbox
                             status={
-                              !form?.over_control
+                              !formLineA?.over_control
                                 ? false
-                                : form?.over_control
+                                : formLineA?.over_control
                                 ? "checked"
                                 : "unchecked"
                             }
                             onPress={() => {
-                              if (!form.over_control) {
-                                setForm((pre) => ({
+                              if (!formLineA.over_control) {
+                                setFormLineA((pre) => ({
                                   ...pre,
                                   over_control: true,
                                   under_control: false,
                                 }))
                               } else {
-                                setForm((pre) => ({
+                                setFormLineA((pre) => ({
                                   ...pre,
                                   over_control: true,
                                   under_control: false,
                                 }))
                               }
 
-                              setErrors((pre) => ({ ...pre, over_control: false }))
+                              setErrorsLineA((pre) => ({
+                                ...pre,
+                                under_control: false,
+                                over_control: false,
+                              }))
                             }}
                             color="#0081F8"
                           />
@@ -256,47 +304,55 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         <TouchableOpacity
                           style={$containerHorizon}
                           onPress={() => {
-                            if (!form.under_control) {
-                              setForm((pre) => ({
+                            if (!formLineA.under_control) {
+                              setFormLineA((pre) => ({
                                 ...pre,
                                 under_control: true,
                                 over_control: false,
                               }))
                             } else {
-                              setForm((pre) => ({
+                              setFormLineA((pre) => ({
                                 ...pre,
                                 under_control: true,
                                 over_control: false,
                               }))
                             }
 
-                            setErrors((pre) => ({ ...pre, under_control: false }))
+                            setErrorsLineA((pre) => ({
+                              ...pre,
+                              under_control: false,
+                              over_control: false,
+                            }))
                           }}
                         >
                           <Checkbox
                             status={
-                              !form?.under_control
+                              !formLineA?.under_control
                                 ? false
-                                : form?.under_control
+                                : formLineA?.under_control
                                 ? "checked"
                                 : "unchecked"
                             }
                             onPress={() => {
-                              if (!form.under_control) {
-                                setForm((pre) => ({
+                              if (!formLineA.under_control) {
+                                setFormLineA((pre) => ({
                                   ...pre,
                                   under_control: true,
                                   over_control: false,
                                 }))
                               } else {
-                                setForm((pre) => ({
+                                setFormLineA((pre) => ({
                                   ...pre,
                                   under_control: true,
                                   over_control: false,
                                 }))
                               }
 
-                              setErrors((pre) => ({ ...pre, under_control: false }))
+                              setErrorsLineA((pre) => ({
+                                ...pre,
+                                under_control: false,
+                                over_control: false,
+                              }))
                             }}
                             color="#0081F8"
                           />
@@ -304,7 +360,9 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         </TouchableOpacity>
                       </View>
                       <Text errorColor caption1 style={{ marginTop: 10 }}>
-                        {errors?.over_control && errors?.under_control ? "*សូម​ត្រួតពិនិត្យ" : ""}
+                        {errorsLineA?.over_control && errorsLineA?.under_control
+                          ? "*សូម​ត្រួតពិនិត្យ"
+                          : ""}
                       </Text>
                     </View>
                   </View>
@@ -339,19 +397,49 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                     <View style={$width}>
                       <CustomInput
                         showIcon={false}
-                        onChangeText={(text) => {}}
+                        keyboardType="decimal-pad"
+                        value={formLineB.water_pressure?.toString() || ""}
+                        onBlur={() => {
+                          formLineB.water_pressure !== ""
+                            ? setErrorsLineB((pre) => ({ ...pre, water_pressure: false }))
+                            : setErrorsLineB((pre) => ({ ...pre, water_pressure: true }))
+                        }}
+                        onChangeText={(text) => {
+                          formLineB.water_pressure !== ""
+                            ? setErrorsLineB((pre) => ({ ...pre, water_pressure: false }))
+                            : setErrorsLineB((pre) => ({ ...pre, water_pressure: true }))
+
+                          setFormLineB((pre) => ({ ...pre, water_pressure: text.trim() }))
+                        }}
                         label="Water Pressure"
                         hintLimit="> 1.0 bar"
-                        errormessage={"សូមជ្រើសរើស water pressure"}
+                        errormessage={
+                          errorsLineB?.water_pressure ? "សូមជ្រើសរើស water pressure" : ""
+                        }
                       />
                     </View>
                     <View style={$width}>
                       <CustomInput
                         showIcon={false}
-                        onChangeText={(text) => {}}
+                        keyboardType="decimal-pad"
+                        value={formLineB.nozzie_rinser?.toString() || ""}
+                        onBlur={() => {
+                          formLineB.nozzie_rinser !== ""
+                            ? setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: false }))
+                            : setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: true }))
+                        }}
+                        onChangeText={(text) => {
+                          formLineB.nozzie_rinser !== ""
+                            ? setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: false }))
+                            : setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: true }))
+
+                          setFormLineB((pre) => ({ ...pre, nozzie_rinser: text.trim() }))
+                        }}
                         hintLimit="No one clog of 32/40"
                         label="Nozzies rinser"
-                        errormessage={"សូមជ្រើសរើស nozzies rinser"}
+                        errormessage={
+                          errorsLineB?.nozzie_rinser ? "សូមជ្រើសរើស Nozzies Rinser" : ""
+                        }
                       />
                     </View>
                   </View>
@@ -364,9 +452,22 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <CustomInput
                         hintLimit="0.05 - 0.4 ppm"
                         showIcon={false}
-                        onChangeText={(text) => {}}
+                        keyboardType="decimal-pad"
+                        value={formLineB.FG?.toString() || ""}
+                        onBlur={() => {
+                          formLineB.FG !== ""
+                            ? setErrorsLineB((pre) => ({ ...pre, FG: false }))
+                            : setErrorsLineB((pre) => ({ ...pre, FG: true }))
+                        }}
+                        onChangeText={(text) => {
+                          formLineB.FG !== ""
+                            ? setErrorsLineB((pre) => ({ ...pre, FG: false }))
+                            : setErrorsLineB((pre) => ({ ...pre, FG: true }))
+
+                          setFormLineB((pre) => ({ ...pre, FG: text.trim() }))
+                        }}
                         label="FG [ O3 ] "
-                        errormessage={"សូមជ្រើសរើស FG"}
+                        errormessage={errorsLineB?.FG ? "សូមជ្រើសរើស FG" : ""}
                       />
                     </View>
 
@@ -374,19 +475,101 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <Text style={{ margin: 5, fontSize: 18 }}>Activity Control</Text>
 
                       <View style={[$containerHorizon, { marginTop: 10 }]}>
-                        <TouchableOpacity style={$containerHorizon} onPress={() => {}}>
-                          <Checkbox status={"unchecked"} onPress={() => {}} color="#0081F8" />
+                        <TouchableOpacity
+                          style={$containerHorizon}
+                          onPress={() => {
+                            setErrorsLineB((pre) => ({ ...pre, smell: false }))
+                            setFormLineB((pre) => ({
+                              ...pre,
+                              smell: pre?.smell === null ? true : !formLineB?.smell,
+                            }))
+                          }}
+                        >
+                          <Checkbox
+                            status={
+                              !formLineB?.smell ? false : formLineB?.smell ? "checked" : "unchecked"
+                            }
+                            onPress={() => {
+                              setErrorsLineB((pre) => ({ ...pre, smell: false }))
+                              setFormLineB((pre) => ({
+                                ...pre,
+                                smell: pre?.smell === null ? true : !formLineB?.smell,
+                              }))
+                            }}
+                            color="#0081F8"
+                          />
                           <Text>Smell</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={$containerHorizon} onPress={() => {}}>
-                          <Checkbox status={"unchecked"} onPress={() => {}} color="#0081F8" />
+                        <TouchableOpacity
+                          style={$containerHorizon}
+                          onPress={() => {
+                            setErrorsLineB((pre) => ({ ...pre, over_control: false }))
+                            setFormLineB((pre) => ({
+                              ...pre,
+                              over_control:
+                                pre?.over_control === null ? true : !formLineB?.over_control,
+                            }))
+                          }}
+                        >
+                          <Checkbox
+                            status={
+                              !formLineB?.over_control
+                                ? false
+                                : formLineB?.over_control
+                                ? "checked"
+                                : "unchecked"
+                            }
+                            onPress={() => {
+                              setErrorsLineB((pre) => ({ ...pre, over_control: false }))
+                              setFormLineB((pre) => ({
+                                ...pre,
+                                over_control:
+                                  pre?.over_control === null ? true : !formLineB?.over_control,
+                              }))
+                            }}
+                            color="#0081F8"
+                          />
                           <Text>Overcontrol</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={$containerHorizon} onPress={() => {}}>
-                          <Checkbox status={"unchecked"} onPress={() => {}} color="#0081F8" />
+                        <TouchableOpacity
+                          style={$containerHorizon}
+                          onPress={() => {
+                            setErrorsLineB((pre) => ({ ...pre, under_control: false }))
+                            setFormLineB((pre) => ({
+                              ...pre,
+                              under_control:
+                                pre?.under_control === null ? true : !formLineB?.under_control,
+                            }))
+                          }}
+                        >
+                          <Checkbox
+                            status={
+                              !formLineB?.under_control
+                                ? false
+                                : formLineB?.under_control
+                                ? "checked"
+                                : "unchecked"
+                            }
+                            onPress={() => {
+                              setErrorsLineB((pre) => ({ ...pre, under_control: false }))
+                              setFormLineB((pre) => ({
+                                ...pre,
+                                under_control:
+                                  pre?.under_control === null ? true : !formLineB?.under_control,
+                              }))
+                            }}
+                            color="#0081F8"
+                          />
                           <Text>UnderControl</Text>
                         </TouchableOpacity>
                       </View>
+                      <Text errorColor caption1 style={{ marginTop: 10 }}>
+                        {errorsLineB?.over_control &&
+                        errorsLineB?.under_control &&
+                        errorsLineB.smell
+                          ? "*សូម​ត្រួតពិនិត្យ"
+                          : ""}
+                      </Text>
                     </View>
                   </View>
 

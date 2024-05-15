@@ -1,7 +1,14 @@
 import React, { FC, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/Ionicons"
-import { KeyboardAvoidingView, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+  Platform,
+} from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import { Text } from "app/components/v2"
@@ -9,9 +16,6 @@ import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import { Checkbox, useTheme } from "react-native-paper"
 import ActivityModal from "app/components/v2/ActivitylogModal"
-import { Platform } from "react-native"
-// import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "app/models"
 
 interface WaterTreatmentPlant2FormScreenProps
   extends AppStackScreenProps<"WaterTreatmentPlant2Form"> {}
@@ -37,7 +41,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       taste: null,
       press_inlet: "",
       press_treat: "",
-      press_drain                                                                                                                            : "",
+      press_drain: "",
     })
 
     const [errors, setErrors] = useState({
@@ -61,39 +65,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
         headerRight: () => (
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center" }}
-            onPress={() => {
-              console.log(route?.type?.toLowerCase())
-              if (route?.type?.toLowerCase()?.startsWith("raw water stock")) {
-                if (errors.tds || errors.temperature || errors.ph) {
-                  return
-                }
-              } else if (
-                route?.type?.toLowerCase() === "sand filter" ||
-                route?.type?.toLowerCase() === "carbon filter" ||
-                route?.type?.toLowerCase() === "resin filter"
-              ) {
-                if (errors.tds || errors.temperature || errors.ph || errors.air_release) {
-                  return
-                }
-              } else if (route?.type?.toLowerCase()?.startsWith("micro")) {
-                if (errors.tds || errors.temperature || errors.ph || errors.pressure) {
-                  return
-                }
-              } else {
-                if (
-                  errors.tds ||
-                  errors.ph ||
-                  errors.press_drain ||
-                  errors.press_inlet ||
-                  errors.press_treat ||
-                  (errors.odor && errors.taste)
-                ) {
-                  return
-                }
-              }
-
-              navigation.goBack()
-            }}
+            onPress={() => validate()}
           >
             <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
             <Text primaryColor body1 semibold>
@@ -104,6 +76,34 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       })
     }, [errors, navigation, route])
 
+    const validate = () => {
+      const rawWaterError = errors.tds || errors.temperature || errors.ph
+      const filterError = errors.tds || errors.temperature || errors.ph || errors.air_release
+      const microError = errors.tds || errors.temperature || errors.ph || errors.pressure
+      const reversesError =
+        errors.tds ||
+        errors.ph ||
+        errors.press_drain ||
+        errors.press_inlet ||
+        errors.press_treat ||
+        (errors.odor && errors.taste)
+
+      if (route?.type?.toLowerCase()?.startsWith("raw water stock")) {
+        if (rawWaterError) return
+      } else if (
+        ["sand filter", "carbon filter", "resin filter"].includes(route?.type?.toLowerCase())
+      ) {
+        if (filterError) return
+      } else if (route?.type?.toLowerCase()?.startsWith("micro")) {
+        if (microError) {
+          return
+        }
+      } else if (reversesError) {
+        return
+      }
+
+      navigation.goBack()
+    }
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={$root}>
         <View>
@@ -374,8 +374,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                 </View>
               )}
               <View style={$containerHorizon}>
-              
-
                 {route?.type?.toLowerCase()?.startsWith("reverse") && (
                   <View style={[$width, { marginTop: 20 }]}>
                     <Text style={{ margin: 5, fontSize: 18 }}>Smell Check</Text>

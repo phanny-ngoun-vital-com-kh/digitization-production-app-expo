@@ -29,7 +29,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center" }}
             onPress={() => {
-              navigation.navigate("HaccpLineForm",{line:5})
+              navigation.navigate("HaccpLineForm",{line:2})
             }}
           >
             <Icon name="plus" size={25} />
