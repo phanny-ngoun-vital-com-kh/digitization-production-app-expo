@@ -5,14 +5,18 @@
  *
  * https://reactnative.dev/docs/security#storing-sensitive-info
  */
-// QA
+// // QA
 // export const IP = '10.0.12.247'
 // const PORT = '85'
 
 
 // Local-t
-export const IP = '10.0.20.154'
-const PORT = '8080'
+// export const IP = '10.0.12.247'
+// const PORT = '85'
+// QA
+export const IP = '10.0.12.247'
+const PORT = '85'
+// const PROTOCOL = 'http'
 
 // Local
 // export const IP = '192.168.1.103'

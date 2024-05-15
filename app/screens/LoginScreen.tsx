@@ -35,6 +35,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   const error = isSubmitted ? validationError : ""
 
   function login() {
+    console.log("Login")
     setIsSubmitted(true)
     setAttemptsCount(attemptsCount + 1)
 

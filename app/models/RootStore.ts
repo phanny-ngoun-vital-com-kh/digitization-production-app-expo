@@ -1,4 +1,7 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
+import { WaterTreatmentFormStoreModel } from "./water-treatment-form/water-treatment-form-store"
+import { HaccpMonitoringStoreModel } from "./haccp-monitoring/haccp-monitoring-store"
+import { WaterTreatmentStoreModel } from "./water-treatment/water-treatment-store"
 import { AuthenticationStoreModel } from "./AuthenticationStore"
 import { EpisodeStoreModel } from "./EpisodeStore"
 import { AuthStoreModel } from "./auth/AuthStore"
@@ -9,6 +12,9 @@ import { TransferStore } from "./inventory-transfer/inventory-transfer-store"
  * A RootStore model.
  */
 export const RootStoreModel = types.model("RootStore").props({
+  waterTreatmentFormStore: types.optional(WaterTreatmentFormStoreModel, {} as any),
+  haccpMonitoringStore: types.optional(HaccpMonitoringStoreModel, {} as any),
+  waterTreatmentStore: types.optional(WaterTreatmentStoreModel, {} as any),
   authStore: types.optional(AuthStoreModel, {}),
   authenticationStore: types.optional(AuthenticationStoreModel, {}),
   inventoryRequestStore: types.optional(TransferRequestStore, {}),

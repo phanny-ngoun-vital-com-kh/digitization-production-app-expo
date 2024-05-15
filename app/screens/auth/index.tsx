@@ -128,10 +128,11 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
   // }, []);
 
   async function login() {
+
     setIsSubmitted(true)
     setIsLoading(true)
     setAttemptsCount(attemptsCount + 1)
-    if (validationError) return
+    // if (validationError) return
 
     if (!password) {
       <View style={{ width: '100%' }}>
@@ -143,6 +144,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
       return;
     }
     try {
+      // console.log(username,password)
       await authStore.doLogin(username, password)
       const rs = await authStore.getUserInfo();
       const authoritie = rs.data.authorities.map((authority_name:any) => ({ user_id: rs.data.id, authority_name: authority_name }));
