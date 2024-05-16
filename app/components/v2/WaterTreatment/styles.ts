@@ -76,8 +76,8 @@ export default StyleSheet.create({
     width: "20%",
   },
   machinePanel: {
-    width: 15,
-    height: 15,
+    width: 10,
+    height: 10,
     borderRadius: 100,
     marginRight: 5,
     alignItems: "center",

@@ -9,10 +9,11 @@ export type TimePanelProps = {
 
 export type MachinePanelProps = {
   machine_type: string  | undefined
-  status: MACHINE_STATE 
+  status?: MACHINE_STATE  | undefined 
   assign_to: string  | undefined
   time: string | undefined
   onPress:()=>void
+  warning_count?:string 
 }
 
 export type MACHINE_STATE = "normal" | "pending" | "warning"

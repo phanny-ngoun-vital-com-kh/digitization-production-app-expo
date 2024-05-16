@@ -1,4 +1,4 @@
-import React, { FC, useLayoutEffect, useState } from "react"
+import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/Ionicons"
 import {
@@ -8,6 +8,7 @@ import {
   View,
   ViewStyle,
   Platform,
+  Alert,
 } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { useNavigation, useRoute } from "@react-navigation/native"
@@ -16,6 +17,9 @@ import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import { Checkbox, useTheme } from "react-native-paper"
 import ActivityModal from "app/components/v2/ActivitylogModal"
+import { useStores } from "app/models"
+import { TreatmentModel } from "app/models/water-treatment/water-treatment-model"
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 
 interface WaterTreatmentPlant2FormScreenProps
   extends AppStackScreenProps<"WaterTreatmentPlant2Form"> {}
@@ -28,8 +32,12 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
     // Pull in navigation via hook
     const navigation = useNavigation()
     const [showLog, setShowlog] = useState<boolean>(false)
+    const [machineState, setMachineState] = useState({
+      iswarning: false,
+      warning_count: 0,
+    })
     const route = useRoute().params
-    const { colors } = useTheme()
+    const { waterTreatmentStore } = useStores()
     const [form, setForm] = useState({
       tds: "",
       ph: "",
@@ -48,7 +56,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       tds: true,
       ph: true,
       temperature: true,
-      other: true,
+      other: false,
       air_release: true,
       pressure: true,
       odor: true,
@@ -74,7 +82,77 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
           </TouchableOpacity>
         ),
       })
-    }, [errors, navigation, route])
+      validateStateMachine()
+    }, [errors, navigation, route, form])
+
+    useEffect(() => {
+      if (route?.items) {
+        setForm({
+          tds: route?.items?.tds,
+          ph: route?.items?.ph,
+          temperature: route?.items?.temperature,
+          other: route?.items?.other,
+          air_release: route?.items?.air_release,
+          pressure: route?.items?.pressure,
+          odor: route?.items?.odor,
+          taste: route?.items?.taste,
+          press_inlet: route?.items?.press_inlet,
+          press_treat: route?.items?.press_treat,
+          press_drain: route?.items?.press_drain,
+        })
+        setErrors({
+          tds: !route?.items?.tds,
+          ph: !route?.items?.ph,
+          temperature: !route?.items?.temperature,
+          other: false,
+          air_release: !route?.items?.air_release,
+          pressure: !route?.items?.pressure,
+          odor: !route?.items?.odor,
+          taste: !route?.items?.taste,
+          press_inlet: !route?.items?.press_inlet,
+          press_treat: !route?.items?.press_treat,
+          press_drain: !route?.items?.press_drain,
+        })
+      }
+    }, [route])
+
+    const handleSubmit = async () => {
+      try {
+        const payload = TreatmentModel.create({
+          tds: form?.tds?.toString(),
+          ph: form?.ph?.toString(),
+          temperature: form?.temperature?.toString(),
+          other: form?.other,
+          air_release: form?.air_release?.toString(),
+          machine: route?.type + "",
+          status: machineState.iswarning ? "warning" : "normal",
+          press_drain: form?.press_drain,
+          press_inlet: form?.press_inlet,
+          press_treat: form?.press_treat,
+          pressure: form?.pressure,
+          taste: form?.taste ? "1" : "0",
+          odor: form?.odor ? "1" : "0",
+          id: Number(route?.items?.id),
+        })
+        await waterTreatmentStore.createWtpRequest(payload).saveWtp2()
+
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "ជោគជ័យ",
+          textBody: "រក្សាទុកបានជោគជ័យ",
+          button: "close",
+          // autoClose: 500,
+        })
+      } catch (error) {
+        console.log(error?.message)
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
+          button: "បិទ",
+        })
+      }
+    }
 
     const validate = () => {
       const rawWaterError = errors.tds || errors.temperature || errors.ph
@@ -101,9 +179,65 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       } else if (reversesError) {
         return
       }
-
-      navigation.goBack()
+      validateStateMachine()
+      // valid every field =>  call handlesubmit form to server
+      handleSubmit()
     }
+
+    const validateStateMachine = () => {
+      const restrictTD = +form?.tds > 300
+      const restrictTemperature = +form?.temperature < 25 || +form?.temperature > 35
+      const restrictPH = +form?.ph < 6.5 || +form?.ph > 8.5
+
+      const restrictPressure = +form?.pressure > 300
+      const restrictPress =
+        +form?.press_inlet < 0.01 ||
+        +form?.press_inlet > 0.3 ||
+        +form?.press_treat < 0.01 ||
+        +form?.press_treat > 0.3 ||
+        +form?.press_drain < 0.01 ||
+        +form?.press_drain > 0.3
+
+      if (
+        route?.type?.toLowerCase()?.startsWith("raw water stock") ||
+        ["sand filter", "carbon filter", "resin filter"].includes(route?.type?.toLowerCase())
+      ) {
+        if (restrictTD || restrictTemperature || restrictPH) {
+          setMachineState({
+            iswarning: true,
+            warning_count: 0,
+          })
+        } else {
+          setMachineState({ iswarning: false, warning_count: 0 })
+        }
+      } else if (route?.type?.toLowerCase()?.startsWith("micro")) {
+        if (restrictTD || restrictTemperature || restrictPH || restrictPressure) {
+          console.log("tem is", restrictTemperature)
+          console.log("td is", restrictTD)
+
+          console.log("ph is", restrictPH)
+
+          console.log("restrict", restrictPressure)
+          setMachineState({
+            iswarning: true,
+            warning_count: 0,
+          })
+        } else {
+          setMachineState({ iswarning: false, warning_count: 0 })
+        }
+      } else {
+        if (restrictTD || restrictPH || restrictPress) {
+          setMachineState({
+            iswarning: true,
+            warning_count: 0,
+          })
+        } else {
+          setMachineState({ iswarning: false, warning_count: 0 })
+        }
+      }
+    }
+
+    console.log("is warning", machineState.iswarning)
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={$root}>
         <View>
@@ -211,7 +345,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     <CustomInput
                       showIcon={false}
                       value={form.other?.toString() || ""}
-                      onBlur={() => {}}
                       onChangeText={(text) => {
                         setForm((pre) => ({ ...pre, other: text.trim() }))
                       }}
@@ -236,14 +369,20 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                           }}
                         >
                           <Checkbox
-                            status={form?.air_release || false ? "checked" : "unchecked"}
+                            status={
+                              form.air_release == null
+                                ? "unchecked"
+                                : form?.air_release === "true" || form.air_release === true
+                                ? "checked"
+                                : "unchecked"
+                            }
                             onPress={() => {
                               setErrors((pre) => ({ ...pre, air_release: false }))
                               setForm((pre) => ({ ...pre, air_release: true }))
                             }}
                             color="#0081F8"
                           />
-                          <Text>Yes</Text>
+                          <Text>Yes </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={$containerHorizon}
@@ -256,7 +395,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                             status={
                               form.air_release == null
                                 ? "unchecked"
-                                : !form?.air_release || false
+                                : form?.air_release === "false" || form.air_release === false
                                 ? "checked"
                                 : "unchecked"
                             }
@@ -283,6 +422,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     <CustomInput
                       keyboardType="decimal-pad"
                       showIcon={false}
+                      value={form?.pressure}
                       onBlur={() => {
                         form.pressure !== ""
                           ? setErrors((pre) => ({ ...pre, pressure: false }))

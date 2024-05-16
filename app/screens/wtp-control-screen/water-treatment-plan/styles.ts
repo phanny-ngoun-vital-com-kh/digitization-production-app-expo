@@ -1,6 +1,15 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
+  sortingIcon: {
+    width: 50,
+    height: 50,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#EFEBEB",
+  },
   leftPane: {
     flex: 0.2,
 
@@ -9,7 +18,6 @@ export default StyleSheet.create({
     gap: 5,
     backgroundColor: "#F5F5F5",
   },
-
 
   rightPane: {
     flex: 1,

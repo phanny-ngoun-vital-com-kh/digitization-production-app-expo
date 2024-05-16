@@ -1,6 +1,7 @@
 import { Instance, SnapshotIn, SnapshotOut, types } from "mobx-state-tree"
 import { withSetPropAction } from "../helpers/withSetPropAction"
 import { ShiftModel } from "./water-treatment-store"
+import { watertreatmentApi } from "app/services/api/water-treatment-api"
 
 /**
  * Model description here for TypeScript hints.
@@ -9,7 +10,7 @@ export const TreatmentModel = types
   .model("TreatmentModel", {
     id: types.identifierNumber,
     machine: types.string,
-    treatment_id: types.string,
+    treatment_id: types.maybeNull(types.string),
     tds: types.maybeNull(types.string),
     ph: types.maybeNull(types.string),
     temperature: types.maybeNull(types.string),
@@ -23,12 +24,39 @@ export const TreatmentModel = types
     odor: types.maybeNull(types.string),
     taste: types.maybeNull(types.string),
     other: types.maybeNull(types.string),
-    createdBy: types.string,
-    createdDate: types.string,
-    lastModifiedBy: types.string,
-    lastModifiedDate: types.string,
+    createdBy: types.maybeNull(types.string),
+    createdDate: types.maybeNull(types.string),
+    lastModifiedBy: types.maybeNull(types.string),
+    lastModifiedDate: types.maybeNull(types.string),
   })
   .actions(withSetPropAction)
+  .views((self) => {
+    return {
+      saveWtp2: async () => {
+        const rs = await watertreatmentApi.saveWtp2({
+          tds: self.tds ?? null,
+          ph: self.ph ?? null,
+          temperature: self.temperature ?? null,
+          other: self.other,
+          air_release: self.air_release ?? null,
+          machine: self.machine,
+          status: self.status ?? "pending",
+          id: self.id,
+          press_inlet: self.press_inlet ?? null,
+          press_treat: self.press_treat ?? null,
+          press_drain: self.press_drain ?? null,
+          odor: self.odor,
+          taste: self.taste,
+          pressure: self.pressure,
+        })
+        if (rs.kind === "ok") console.log("Success")
+        else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
+    }
+  })
 export const WaterTreatmentModel = types
   .model("WaterTreatmentModel", {
     assign_to: types.maybeNull(types.string),
@@ -46,6 +74,8 @@ export const WaterTreatmentModel = types
 // eslint-disable-line @typescript-eslint/no-unused-vars
 
 export interface WaterTreatment extends Instance<typeof WaterTreatmentModel> {}
+
+export interface Treatment extends Instance<typeof TreatmentModel> {}
 export interface WaterTreatmentSnapshotOut extends SnapshotOut<typeof WaterTreatmentModel> {}
 export interface WaterTreatmentSnapshotIn extends SnapshotIn<typeof WaterTreatmentModel> {}
 export const createWaterTreatmentDefaultModel = () => types.optional(WaterTreatmentModel, {})

@@ -34,6 +34,7 @@ import { InventoryTransferRequestWarehouseScreen } from "app/screens/inventory-t
 import { InventoryTransferScreen } from "app/screens/inventory-transfer"
 import { api } from "app/services/api"
 import { AddTransferScreen } from "app/screens/inventory-transfer-request-warehouse/add-transfer"
+import { Treatment } from "app/models/water-treatment/water-treatment-model"
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
  * as well as what properties (if any) they might take when navigating to them.
@@ -47,6 +48,12 @@ import { AddTransferScreen } from "app/screens/inventory-transfer-request-wareho
  *   https://reactnavigation.org/docs/typescript#type-checking-the-navigator
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
+
+
+export type WTP2ParamsForm = {
+  type:string 
+  item:Treatment
+}
 export type AppStackParamList = {
   Welcome: undefined
   Login: undefined
@@ -69,7 +76,7 @@ export type AppStackParamList = {
   PrewaterTreatment: undefined
   WaterTreatmentControlList: undefined
   DailyHaccpLineDetail: undefined
-  WaterTreatmentPlant2Form: undefined
+  WaterTreatmentPlant2Form: WTP2ParamsForm
   HaccpLineForm: undefined
   PreWaterForm1: undefined
   PreWaterForm2: undefined

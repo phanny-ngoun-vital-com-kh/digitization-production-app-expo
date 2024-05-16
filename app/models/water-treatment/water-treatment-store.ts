@@ -1,4 +1,8 @@
-import { WaterTreatmentModel } from "app/models/water-treatment/water-treatment-model"
+import {
+  Treatment,
+  TreatmentModel,
+  WaterTreatmentModel,
+} from "app/models/water-treatment/water-treatment-model"
 import { Shift } from "app/screens/water-treatment-plan/type"
 import { Instance, SnapshotIn, SnapshotOut, detach, types } from "mobx-state-tree"
 import { withSetPropAction } from "../helpers/withSetPropAction"
@@ -31,19 +35,20 @@ export const ShiftModel = types.model("Shift").props({
 export const WaterTreatmentStoreModel = types
   .model("WaterTreatmentStore")
   .props({
-    wtp2: types.optional(types.array(WaterTreatmentModel), []),
+    treatments: types.optional(types.array(TreatmentModel), []),
   })
   .actions((self) => {
     return {
-      createWaterTreatmentForm: (wtp: WaterTreatment) => {
-        self.wtp2.push(wtp)
-        return wtp
+      createWtpRequest: (wtp: Treatment) => {
+        self.treatments.push(wtp)
+        return (wtp)
       },
     }
   })
   .views((self) => {
     return {
       getWtpSchedules: async (assign_date = "2024-05-15", shift = "S1 (7:00)") => {
+        console.log(assign_date, shift)
         const rs = await watertreatmentApi.getWtp2List({
           assign_date,
           shift,

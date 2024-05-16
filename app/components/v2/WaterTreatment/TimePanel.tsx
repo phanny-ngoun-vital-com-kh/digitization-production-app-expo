@@ -6,7 +6,7 @@ import { TimePanelProps } from "./type"
 import { black } from "react-native-paper/lib/typescript/styles/themes/v2/colors"
 const TimePanel = ({
   time = "  7: 00",
-  progressValue = 0.5,
+  progressValue = 1,
   isSelected = false,
   bgColor = "#0081F8",
   color = "#8CC8FF",
@@ -38,16 +38,18 @@ const TimePanel = ({
           {time}
         </Text>
 
-        <View>
-          <ProgressBar
-            progress={progressValue}
-            style={{ height: 10 }}
-            color={"#8CC8FF"}
-            backgroundColor={"#8CC8FF"}
-            animated={false}
-          />
-          {/* <Text>80%</Text> */}
-        </View>
+        {progressValue && (
+          <View>
+            <ProgressBar
+              progress={progressValue}
+              style={{ height: 10 }}
+              color={"#8CC8FF"}
+              backgroundColor={"#8CC8FF"}
+              animated={false}
+            />
+            {/* <Text>80%</Text> */}
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   )

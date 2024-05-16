@@ -28,7 +28,7 @@ const HeaderBar = ({
   ]
   return (
     <>
-      <View>
+      <View style={{marginLeft:50,alignItems:"center"}}>
         <Text semibold headline>
           Today Task
         </Text>

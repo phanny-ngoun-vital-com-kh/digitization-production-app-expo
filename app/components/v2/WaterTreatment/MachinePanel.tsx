@@ -12,6 +12,7 @@ const MachinePanel = ({
   status = "normal",
   assign_to = "Vicheaka",
   time = "7:00",
+  warning_count = 0,
   onPress,
 }: MachinePanelProps) => {
   const getStatus = (status: MACHINE_STATE) =>
@@ -27,13 +28,35 @@ const MachinePanel = ({
       }}
     >
       <TouchableOpacity style={{ paddingHorizontal: 10, paddingVertical: 5 }} onPress={onPress}>
-        <Text semibold headline>
-          {machine_type}
-        </Text>
+        <View style={{ width: 180, position: "relative" }}>
+          <Text semibold headline>
+            {machine_type}
+          </Text>
+
+          {!!warning_count && (
+            <View
+              style={[
+                { backgroundColor: getStatus(status) },
+                styles.machinePanel,
+                {
+                  width: 20,
+                  height: 20,
+                  backgroundColor: "#D32600",
+                  position: "absolute",
+                  right: -20,
+                },
+              ]}
+            >
+              <Text caption1 whiteColor>
+                {warning_count}
+              </Text>
+            </View>
+          )}
+        </View>
 
         <View style={$containerHorizon}>
           <View style={[{ backgroundColor: getStatus(status) }, styles.machinePanel]}></View>
-          <Text>{status}</Text>
+          <Text caption1>{status}</Text>
         </View>
 
         <Divider
