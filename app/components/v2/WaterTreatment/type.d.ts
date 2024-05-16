@@ -1,17 +1,17 @@
 export type TimePanelProps = {
-  time: string
-  progressValue: number | string
+  time?: string
+  progressValue?: number | string
   isSelected?: boolean
-  bgColor: string
-  color: string
-  onPress:()=>void
+  bgColor?: string
+  color?: string
+  onPress?:()=>void
 }
 
 export type MachinePanelProps = {
-  machine_type: string
-  status: MACHINE_STATE
-  assign_to: string
-  time: string
+  machine_type: string  | undefined
+  status: MACHINE_STATE 
+  assign_to: string  | undefined
+  time: string | undefined
   onPress:()=>void
 }
 

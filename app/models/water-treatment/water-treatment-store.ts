@@ -1,7 +1,9 @@
+import { WaterTreatmentModel } from "app/models/water-treatment/water-treatment-model"
 import { Shift } from "app/screens/water-treatment-plan/type"
 import { Instance, SnapshotIn, SnapshotOut, detach, types } from "mobx-state-tree"
 import { withSetPropAction } from "../helpers/withSetPropAction"
-import { WaterTreatment, WaterTreatmentModel } from "./water-treatment-model"
+import { WaterTreatment } from "./water-treatment-model"
+import { watertreatmentApi } from "app/services/api/water-treatment-api"
 
 /**
  * Model description here for TypeScript hints.
@@ -30,43 +32,31 @@ export const WaterTreatmentStoreModel = types
   .model("WaterTreatmentStore")
   .props({
     wtp2: types.optional(types.array(WaterTreatmentModel), []),
-    // wtp3: types.optional(types.array(FoodModel), []),
-    // wtp4: types.optional(types.array(FoodModel), []),
   })
-  .actions(withSetPropAction)
-  .views((self) => ({
-    getAll: () => {
-      return self.wtp2
-    },
-    getIndex: (checkId: number) => {
-      return self.wtp2.findIndex((item) => item.check_id === checkId)
-    },
-  })) // eslint-disable-line @typescript-eslint/no-unused-vars
   .actions((self) => {
     return {
-      addAll: (wtp: WaterTreatment) => {
+      createWaterTreatmentForm: (wtp: WaterTreatment) => {
         self.wtp2.push(wtp)
         return wtp
-      },
-      add: (wtp: WaterTreatment) => {
-        self.wtp2.push(wtp)
-        return wtp
-      },
-
-      removeAll: () => {
-        self.wtp2.clear()
-      },
-
-      updateItem(index: any, wtp: WaterTreatment) {
-        // self.wtp2[index].shifts = null
-        // self.wtp2.splice(index, 1)'
-        self.wtp2[index]?.shifts?.forEach((existingShift) => {
-          detach(existingShift)
-        })
-        self.wtp2[index] = wtp // Directly mutate the array by replacing an item at the specified index
       },
     }
-  }) // eslint-disable-line @typescript-eslint/no-unused-vars
+  })
+  .views((self) => {
+    return {
+      getWtpSchedules: async (assign_date = "2024-05-15", shift = "S1 (7:00)") => {
+        const rs = await watertreatmentApi.getWtp2List({
+          assign_date,
+          shift,
+        })
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
+    }
+  })
 
 export interface WaterTreatmentStore extends Instance<typeof WaterTreatmentStoreModel> {}
 export interface WaterTreatmentStoreSnapshotOut

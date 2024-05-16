@@ -9,8 +9,6 @@ export * from "./ErrorScreen/ErrorBoundary"
 // export other screens here
 export * from "./wtp-control-screen/water-treatment-plan"
 export * from "./haccp-monitoring"
-export * from "./daily-wtc-control/daily-wtc-record"
-export * from "./daily-wtc-control-form"
 export * from "./wtp-control-screen/pre-water-treatment"
 export * from "./wtp-control-screen"
 export * from "./haccp-monitoring/haccp-line-detail"

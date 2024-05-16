@@ -120,7 +120,7 @@ const AppStack = observer(function AppStack(props: {
       screenOptions={{ headerShown: false, navigationBarColor: colors.background }}
       initialRouteName={isAuthenticated ? "Welcome" : "login"}
     >
-      {!isAuthenticated ? (
+      {isAuthenticated ? (
         <>
           {/* <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} /> */}
 
@@ -210,25 +210,7 @@ const AppStack = observer(function AppStack(props: {
               title: "Water Control",
             }}
           />
-          <Stack.Screen
-            name="DailyWtcRecord"
-            component={Screens.DailyWtcRecordScreen}
-            options={{
-              headerShown: true,
-              title: "Daily Pre Water Treatment",
-              headerRight: () => (
-                <TouchableOpacity
-                  style={{ flexDirection: "row", alignItems: "center" }}
-                  onPress={() => {
-                    navigation.navigate("WaterTreatmentControlForm" as never)
-                  }}
-                >
-                  <Icon name="plus" size={25} />
-                  <Text style={{ fontSize: 18 }}> Add New</Text>
-                </TouchableOpacity>
-              ),
-            }}
-          />
+      
           {/* <Stack.Screen
             name="WaterTreatmentControlForm"
             component={Screens.WaterTreatmentControlFormScreen}

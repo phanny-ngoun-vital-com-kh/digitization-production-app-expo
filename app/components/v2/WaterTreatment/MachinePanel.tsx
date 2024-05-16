@@ -5,7 +5,7 @@ import styles from "./styles"
 import { TouchableOpacity, View } from "react-native"
 import { Divider } from "react-native-paper"
 import { $containerHorizon } from "app/screens"
-import { MachinePanelProps } from "./type"
+import { MACHINE_STATE, MachinePanelProps } from "./type"
 
 const MachinePanel = ({
   machine_type = "Raw Water Stock",
@@ -14,7 +14,7 @@ const MachinePanel = ({
   time = "7:00",
   onPress,
 }: MachinePanelProps) => {
-  const getStatus = (status) =>
+  const getStatus = (status: MACHINE_STATE) =>
     status === "normal" ? "#0081F8" : status === "pending" ? "#8CC8FF" : "red"
   return (
     <View
@@ -32,9 +32,7 @@ const MachinePanel = ({
         </Text>
 
         <View style={$containerHorizon}>
-          <View
-            style={[{ backgroundColor: getStatus(status)}, styles.machinePanel]}
-          ></View>
+          <View style={[{ backgroundColor: getStatus(status) }, styles.machinePanel]}></View>
           <Text>{status}</Text>
         </View>
 

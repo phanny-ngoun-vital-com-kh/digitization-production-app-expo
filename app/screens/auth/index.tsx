@@ -169,7 +169,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
     setIsSubmitted(true)
     setIsLoading(true)
     setAttemptsCount(attemptsCount + 1)
-    // if (validationError) return
+    // if (validationError) return 
 
     if (!password) {
       <View style={{ width: '100%' }}>

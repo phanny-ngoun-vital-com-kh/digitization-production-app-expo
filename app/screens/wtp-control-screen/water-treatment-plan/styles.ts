@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
-  rightPane: {
+  leftPane: {
     flex: 0.2,
 
     // backgroundColor: "#EFEBEB",
@@ -11,9 +11,10 @@ export default StyleSheet.create({
   },
 
 
-  leftPane: {
+  rightPane: {
     flex: 1,
     // backgroundColor: "#F5F5F5",
+    // height:"100%",
 
     paddingHorizontal: 10,
     // paddingBottom:100

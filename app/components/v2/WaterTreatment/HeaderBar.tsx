@@ -10,12 +10,14 @@ type HeaderProps = {
   currDate: string
   showDate: boolean
   dateValue: any
+  showLine: boolean
   onPressdate: () => void
   onChangeDate: (e: DateTimePickerEvent, v: Date | undefined) => void
 }
 const HeaderBar = ({
   currDate = "31 May , 2024",
   showDate,
+  showLine = true,
   dateValue,
   onPressdate,
   onChangeDate,
@@ -36,24 +38,26 @@ const HeaderBar = ({
       </View>
 
       <View style={{ flexDirection: "row" }}>
-        <Dropdown
-          style={styles.dropdown}
-          data={lines}
-          labelField="name"
-          valueField="value"
-          placeholder="Select Line"
-          placeholderStyle={{fontSize:14.5}}
-        
-          // onSelect={setSelected}
-          search
-          value={lines}
-          onChangeText={(text: any) => {
-            console.log(text)
-          }}
-          onChange={(item) => {
-            console.log(item)
-          }}
-        />
+        {showLine && (
+          <Dropdown
+            style={styles.dropdown}
+            data={lines}
+            labelField="name"
+            valueField="value"
+            placeholder="Select Line"
+            placeholderStyle={{ fontSize: 14.5 }}
+            // onSelect={setSelected}
+            search
+            value={lines}
+            onChangeText={(text: any) => {
+              console.log(text)
+            }}
+            onChange={(item) => {
+              console.log(item)
+            }}
+          />
+        )}
+
         <View style={{ width: 200 }}>
           <TouchableOpacity
             onPress={onPressdate}

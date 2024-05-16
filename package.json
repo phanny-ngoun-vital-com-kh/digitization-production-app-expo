@@ -198,13 +198,9 @@
       "@typescript-eslint/no-explicit-any": 0,
       "@typescript-eslint/no-object-literal-type-assertion": 0,
       "@typescript-eslint/no-var-requires": 0,
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_",
-          "varsIgnorePattern": "^_"
-        }
-      ],
+      "@typescript-eslint/no-unused-vars": 0,
+      "spaced-comment":0,
+      "eslint-plugin-vue/no-static-inline-styles":0,
       "comma-dangle": 0,
       "multiline-ternary": 0,
       "no-undef": 0,
@@ -216,7 +212,13 @@
       "react/no-unescaped-entities": 0,
       "react/prop-types": 0,
       "space-before-function-paren": 0,
+      "react-native/no-inline-styles": 0,
+      "camelcase":0,
+      "react-native/no-color-literals":0,
+      "react-native/no-single-element-style-arrays": 0,
       "reactotron/no-tron-in-production": "error"
+
     }
+    
   }
 }

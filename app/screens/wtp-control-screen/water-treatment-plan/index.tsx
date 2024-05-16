@@ -1,449 +1,56 @@
-/* eslint-disable camelcase */
 import React, { FC, useEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
+import moment from "moment"
 import { useTheme } from "app/theme-v2"
-import { View, ViewStyle, TouchableOpacity, Platform, ScrollView } from "react-native"
+import {
+  View,
+  ViewStyle,
+  TouchableOpacity,
+  Platform,
+  ScrollView,
+  FlatList,
+  RefreshControl,
+  Alert,
+} from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import styles from "./styles"
 import { Divider } from "react-native-paper"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "app/models"
-import { Shift } from "./type"
-import {
-  WaterTreatment
-} from "app/models/water-treatment/water-treatment-model"
+import { WaterTreatment } from "app/models/water-treatment/water-treatment-model"
 import HeaderBar from "../../../components/v2/WaterTreatment/HeaderBar"
 import TimePanel from "app/components/v2/WaterTreatment/TimePanel"
 import Icon from "react-native-vector-icons/FontAwesome"
 import MachinePanel from "app/components/v2/WaterTreatment/MachinePanel"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
-import { FlatList } from "react-native-gesture-handler"
+import EmptyFallback from "app/components/EmptyFallback"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 
 export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
   function WaterTreatmentScreen() {
-    const dummy_generate = {
-      check_id: Date.now(),
-      waterplant_type: "B",
-      shifts: [
-        {
-          shift: 1,
-          time: "7:00:00",
-          type: "A",
-          tsd_ppm: null,
-          ph_level: null,
-          temperature: null,
-          checked_by: null,
-          machines: "Raw Water Stock",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "13:00:00",
-          type: "A",
-          tsd_ppm: null,
-          ph_level: null,
-          temperature: null,
-          checked_by: null,
-          machines: "Raw Water Stock",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "18:00:00",
-          type: "A",
-          tsd_ppm: null,
-          ph_level: null,
-          temperature: null,
-          checked_by: null,
-          machines: "Raw Water Stock",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "21:00:00",
-          type: "A",
-          tsd_ppm: null,
-          ph_level: null,
-          temperature: null,
-          checked_by: null,
-          machines: "Raw Water Stock",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "7:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Sand Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "13:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Sand Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "18:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Sand Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "21:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Sand Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "7:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Carbon Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "13:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Carbon Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "18:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Carbon Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "21:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Carbon Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "7:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Resin Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "13:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Resin Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "18:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Resin Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "21:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          air_release: null,
-          other: null,
-          temperature: null,
-          type: "B",
-          checked_by: null,
-          machines: "Resin Filter",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "7:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 5Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "13:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 5Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "18:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 5Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "22:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 5Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "7:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 1Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "18:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 1Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "18:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 1Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "22:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          pressure: null,
-          other: null,
-          temperature: null,
-          type: "C",
-          checked_by: null,
-          machines: "Microfilter 1Mm",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "7:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          press_inlet: null,
-          press_treat: null,
-          press_drain: null,
-          checked_by: null,
-          odor: null,
-          taste: null,
-          type: "D",
-          machines: "Reverses Osmosis",
-          inspection_status: null,
-        },
-        {
-          shift: 1,
-          time: "13:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          press_inlet: null,
-          press_treat: null,
-          press_drain: null,
-          checked_by: null,
-          odor: null,
-          taste: null,
-          type: "D",
-          machines: "Reverses Osmosis",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "18:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          press_inlet: null,
-          press_treat: null,
-          press_drain: null,
-          checked_by: null,
-          odor: null,
-          taste: null,
-          type: "D",
-          machines: "Reverses Osmosis",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "22:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          press_inlet: null,
-          press_treat: null,
-          press_drain: null,
-          checked_by: null,
-          odor: null,
-          taste: null,
-          type: "D",
-          machines: "Reverses Osmosis",
-          inspection_status: null,
-        },
-        {
-          shift: 2,
-          time: "22:00:00",
-          tsd_ppm: null,
-          ph_level: null,
-          press_inlet: null,
-          press_treat: null,
-          press_drain: null,
-          checked_by: null,
-          odor: null,
-          taste: null,
-          type: "D",
-          machines: "Reverses Osmosis",
-          inspection_status: null,
-        },
-      ],
-      check_date: new Date(Date.now()),
-    }
-
     const { waterTreatmentStore } = useStores()
+    const [refreshing, setRefreshing] = useState(false)
     const { colors } = useTheme()
-    const [waterPlants, setWaterplants] = useState<WaterTreatment[]>([])
+    const [wtp2, setWtp2] = useState<WaterTreatment[]>([])
     const [isloading, setLoading] = useState(false)
-    const [selectMachine, setSelectMachine] = useState<Shift | null>(null)
     const [datePicker, setDatePicker] = useState({
       show: false,
-      value: null,
+      value: new Date(Date.now()),
     })
-    const [selectedShift, setSelectedShift] = useState(null)
+    const [selectedShift, setSelectedShift] = useState("")
 
     const navigation = useNavigation()
     const shifts = [
       {
         id: 1,
-        name: "shift 1",
-        schedules: ["7:00:00", "13:00:00"],
+        name: "S1",
+        schedules: ["7:00", "13:00"],
       },
       {
         id: 2,
-        name: "shift 2",
-        schedules: ["18:00:00", "22:00:00"],
+        name: "S2",
+        schedules: ["18:00", "22:00"],
       },
     ]
 
@@ -457,18 +64,56 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       "Reverses Osmosis",
     ]
 
-    const renderItem = ({ item }) => (
-      <MachinePanel
-        status="warning"
-        machine_type={item}
-        assign_to="Virek Chan"
-        onPress={() =>
-          navigation.navigate("WaterTreatmentPlant2Form", {
-            type: item,
-          })
-        }
-      />
-    )
+    const renderItem = ({ item }: { item: WaterTreatment }) =>
+      item?.treatmentlist?.map((subitem, index) => {
+        //Sub Collection of treatmentlist that contain the machines
+        return (
+          <MachinePanel
+            key={index.toString()}
+            status={subitem.status}
+            machine_type={subitem?.machine}
+            assign_to={item?.assign_to ?? 'vorn'}
+            time={item?.shift ?? 'S1 (7:00)' }
+            onPress={() =>
+              navigation.navigate("WaterTreatmentPlant2Form", {
+                type: subitem?.machine,
+              })
+            }
+          />
+        )
+      })
+    const refresh = async (showLoading = false) => {
+      try {
+        setRefreshing(true)
+      } catch (error) {
+      } finally {
+        setRefreshing(false)
+      }
+    }
+
+    const fetchScehdules = async () => {
+      try {
+        setLoading(true)
+        const assign_date = moment(datePicker.value).format("YYYY-MM-DD")
+        const results = (await waterTreatmentStore.getWtpSchedules(
+          assign_date?.toString(),
+          "S1 (7:00)",
+        )) as []
+        setWtp2(results)
+        // setSelectedShift(results.map((item) => item?.shift)[0])
+      } catch (error:unknown) {
+        Alert.alert("error has been occur")
+        console.log(error?.message)
+      }
+      setLoading(false)
+    }
+
+    useEffect(() => {
+      fetchScehdules()
+    }, [])
+
+    console.log(selectedShift)
+
     return (
       <View style={$root}>
         <View style={[$outerContainer]}>
@@ -481,6 +126,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             ]}
           >
             <HeaderBar
+              showLine={false}
               onChangeDate={(e, v) => {
                 setDatePicker((pre) => ({ show: false, value: v }))
               }}
@@ -503,17 +149,18 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               },
             ]}
           >
-            <View style={styles.rightPane}>
+            <View style={styles.leftPane}>
               <ScrollView scrollEnabled>
                 {shifts?.map((item) => {
                   return item.schedules.map((subitem, index) => {
                     return (
                       <TimePanel
+
                         onPress={() => {
-                          setSelectedShift(subitem)
+                          setSelectedShift(`${item.name} ( ${subitem} )`)
                         }}
                         time={subitem?.trim()}
-                        isSelected={selectedShift === subitem}
+                        isSelected={false}
                         key={index.toString()}
                       />
                     )
@@ -522,17 +169,17 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               </ScrollView>
             </View>
 
-            <View style={styles.leftPane}>
+            <View style={styles.rightPane}>
               <View
                 style={[
                   $containerHorizon,
-                  { justifyContent: "space-between", marginVertical: 10, alignItems: "center" },
+                  { justifyContent: "space-between", marginVertical: 4, alignItems: "center" },
                 ]}
               >
                 <View style={{ width: 400 }}>
                   <CustomInput
                     placeholder="Search"
-                    onChangeText={(text) => setForm((pre) => ({ ...pre, item_code: text }))}
+                    onChangeText={(text) => {}}
                     label=""
                     errormessage={""}
                   />
@@ -554,11 +201,20 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                   </TouchableOpacity>
                 </View>
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={$useflex}>
                 <FlatList
-                  style={{ flex: 1 }}
-                  data={machines}
-                  keyExtractor={(item, index) => index.toString()}
+                  refreshControl={
+                    <RefreshControl
+                      colors={[colors.primary]}
+                      tintColor={colors.primary}
+                      refreshing={isloading ? true : refreshing}
+                      onRefresh={() => refresh()}
+                    />
+                  }
+                  style={$useflex}
+                  data={wtp2}
+                  ListEmptyComponent={<EmptyFallback placeholder="Please Select Shift!!!" />}
+                  keyExtractor={(_, index) => index.toString()}
                   renderItem={renderItem}
                 />
               </View>
