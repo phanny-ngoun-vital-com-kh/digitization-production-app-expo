@@ -62,7 +62,6 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
           <HeaderBar
             onChangeDate={(e, v) => {
               console.log(e.nativeEvent.timestamp)
-
               setDatePicker((pre) => ({ show: false, value: v }))
             }}
             onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
@@ -88,7 +87,6 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
             renderItem={({ item, index }) => {
               return (
                 <LinePanel
-                
                   item={item}
                   onClickPanel={() =>
                     navigation.navigate("DailyHaccpLineDetail", {

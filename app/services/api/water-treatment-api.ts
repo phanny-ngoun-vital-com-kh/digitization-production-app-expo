@@ -37,7 +37,6 @@ export class WaterTreatmentApi extends BaseApi {
     pressure: string | null
   }): Promise<any> {
     try {
-      console.log("params", params)
       const rs = await this.requestService.exec(ApiURL.saveWtp2, {
         ...params,
       })

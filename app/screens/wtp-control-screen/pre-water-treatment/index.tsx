@@ -19,7 +19,6 @@ interface PrewaterTreatmentScreenProps extends AppStackScreenProps<"PrewaterTrea
 
 export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observer(
   function PrewaterTreatmentScreen() {
-  
     const navigation = useNavigation()
     const schedules = ["7:00:00", "11:00:00", "15:00:00", "19:00:00", "23:00:00", "3:00:00"]
 
@@ -31,8 +30,12 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
     const [selectedShift, setSelectedShift] = useState(null)
 
     const renderItem = ({ item }) => (
-      <MachinePanel status="warning" machine_type={item} assign_to="Virek Chan"
-        onPress={()=>navigation.navigate("PreWaterForm2",{type:"tds"})}/>
+      <MachinePanel
+        status="warning"
+        machine_type={item}
+        assign_to="Virek Chan"
+        onPress={() => navigation.navigate("PreWaterForm2", { type: "tds" })}
+      />
     )
     return (
       <View style={$root}>
@@ -46,6 +49,8 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
             ]}
           >
             <HeaderBar
+             enableWTP ={true}
+              showLine={false}
               onChangeDate={(e, v) => {
                 console.log(e.nativeEvent.timestamp)
 
@@ -87,21 +92,18 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
 
             <View style={styles.rightPane}>
               <View
-                style={[$containerHorizon, { justifyContent: "space-between", marginVertical: 10 }]}
+                style={[$containerHorizon, { justifyContent: "space-between",alignItems:"center"}]}
               >
-            
-
-                <View style={{ width: 400 }}>
+                <View style={{ width: 550,marginBottom:10 }}>
                   <CustomInput
                     placeholder="Search"
                     onChangeText={(text) => setForm((pre) => ({ ...pre, item_code: text }))}
                     label=""
                     errormessage={""}
+                    type="search"
                   />
                 </View>
-                <View
-                  style={styles.sortIcon}
-                >
+                <View style={styles.sortIcon}>
                   <TouchableOpacity style={{}}>
                     <Icon name="sort" size={20} color={"black"} />
                   </TouchableOpacity>
@@ -132,7 +134,6 @@ const $outerContainer: ViewStyle = {
   margin: 15,
   marginTop: 20,
   padding: 10,
-
 }
 
 const $containerHorizon: ViewStyle = {

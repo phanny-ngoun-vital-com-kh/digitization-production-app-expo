@@ -29,7 +29,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center" }}
             onPress={() => {
-              navigation.navigate("HaccpLineForm",{line:2})
+              navigation.navigate("HaccpLineForm", { line: 2 })
             }}
           >
             <Icon name="plus" size={25} />
@@ -39,7 +39,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       })
     }, [navigation])
     const rendertableLine1 = ({ item, index }) => (
-      <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm")}>
+      <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm", { line: 2 })}>
         <DataTable style={{ margin: 10, marginTop: 0 }}>
           <DataTable.Row key={1}>
             <DataTable.Cell style={{ flex: 0.4 }}>{index + 1}</DataTable.Cell>
@@ -78,7 +78,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
 
     const rendertableLine4 = ({ item, index }) => {
       return (
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm", { line: 2 })}>
           <DataTable style={{ margin: 10, marginTop: 0 }}>
             <DataTable.Row key={1}>
               <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>

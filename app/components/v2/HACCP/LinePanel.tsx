@@ -8,26 +8,24 @@ import HeaderBar from "app/components/v2/WaterTreatment/HeaderBar"
 import { ProgressBar } from "react-native-paper"
 import styles from "./styles"
 import { TouchableOpacity } from "react-native-gesture-handler"
+import BadgeWarning from "../Badgewarn"
 
 const LinePanel = ({ onClickPanel, item }: { onClickPanel: () => void; item: any }) => {
   return (
     <View style={styles.linePanel}>
-      <TouchableOpacity
-        onPress={() =>
-                onClickPanel()
-        }
-      >
+      <TouchableOpacity onPress={() => onClickPanel()}>
         <View style={[$containerHorizon, { justifyContent: "space-between", marginBottom: 15 }]}>
           <Text bold body1>
             {item.name}
           </Text>
-          <Icon name="arrow-forward-outline" size={30} color={"gray"} />
+          <BadgeWarning value={4} status="warning" />
+          <Icon name="arrow-forward-outline" size={30} color={"black"} />
         </View>
 
         <View style={{ marginBottom: 30 }}>
           <ProgressBar
             progress={1}
-            style={{ height: 20 }}
+            style={{ height: 10 }}
             color={"#8CC8FF"}
             backgroundColor={"#8CC8FF"}
             animated={false}
@@ -36,7 +34,7 @@ const LinePanel = ({ onClickPanel, item }: { onClickPanel: () => void; item: any
 
         <View style={$containerHorizon}>
           <View style={$containerHorizon}>
-            <Icon name="people" size={20} color={"gray"} />
+            <Icon name="people" size={20} color={"black"} />
             <Text caption1>Assign to: Darith</Text>
           </View>
 

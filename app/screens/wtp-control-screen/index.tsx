@@ -32,15 +32,15 @@ export const WaterTreatmentControlListScreen: FC<WaterTreatmentControlListScreen
           name: "Daily Water Control and HACCP",
           subname: "Daily Water Treatment Plant System and HACCP Monitoring-Pre RO Stock Tank",
           navigation: "WaterTreatment",
-          iconname: "arrow-top-right-bottom-left",
-          icontype: "Fontisto",
+          iconname: "bottle-tonic",
+          icontype: "MaterialCommunityIcons",
         },
         {
           id: 2,
           name: "Daily Pre Water Control",
           subname: "Pre-water treatment control record",
           navigation: "PrewaterTreatment",
-          iconname: "warehouse",
+          iconname: "water-check",
           icontype: "MaterialCommunityIcons",
         },
       ]

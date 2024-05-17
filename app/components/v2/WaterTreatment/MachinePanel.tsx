@@ -6,6 +6,7 @@ import { TouchableOpacity, View } from "react-native"
 import { Divider } from "react-native-paper"
 import { $containerHorizon } from "app/screens"
 import { MACHINE_STATE, MachinePanelProps } from "./type"
+import BadgeWarning from "../Badgewarn"
 
 const MachinePanel = ({
   machine_type = "Raw Water Stock",
@@ -33,25 +34,7 @@ const MachinePanel = ({
             {machine_type}
           </Text>
 
-          {!!warning_count && (
-            <View
-              style={[
-                { backgroundColor: getStatus(status) },
-                styles.machinePanel,
-                {
-                  width: 20,
-                  height: 20,
-                  backgroundColor: "#D32600",
-                  position: "absolute",
-                  right: -20,
-                },
-              ]}
-            >
-              <Text caption1 whiteColor>
-                {warning_count}
-              </Text>
-            </View>
-          )}
+          {!!warning_count && <BadgeWarning value={+warning_count} status="warning" />}
         </View>
 
         <View style={$containerHorizon}>

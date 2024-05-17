@@ -10,7 +10,7 @@ const CustomInput = forwardRef(
     {
       label,
       placeholder,
-
+      type = "default",
       hintLimit = "",
       errormessage,
       disabled = true,
@@ -21,6 +21,7 @@ const CustomInput = forwardRef(
       ...textInputProps
     }: {
       label?: string
+      type?: "search" | "default"
       placeholder?: string
       value: string
       hintLimit: string
@@ -37,7 +38,6 @@ const CustomInput = forwardRef(
       <>
         {label && (
           <View style={{ flexDirection: "row" }}>
-            {/* <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text> */}
             <Text style={{ margin: 0, fontSize: 18 }}>{label}</Text>
           </View>
         )}
@@ -54,7 +54,7 @@ const CustomInput = forwardRef(
           style={{
             flexDirection: "row",
             alignItems: "center",
-            marginTop: 10,
+            marginTop: 20,
             backgroundColor: "white",
             borderWidth: 1,
             borderColor: "#EFEBEB",
@@ -64,7 +64,7 @@ const CustomInput = forwardRef(
           {showIcon && <Icon style={{ marginLeft: 5 }} name="search1" size={19} color={"gray"} />}
 
           <TextInput
-            style={{ backgroundColor: "white",width:"100%" }}
+            style={{ backgroundColor: "white", width: "100%" }}
             ref={ref} // Forwarded ref
             multiline={false}
             editable={disabled}
@@ -75,11 +75,13 @@ const CustomInput = forwardRef(
           ></TextInput>
         </TouchableOpacity>
 
-        <View style={{ width: "100%", marginTop: 10 }}>
-          <Text caption1 errorColor>
-            {errormessage ? "*" + errormessage : ""}
-          </Text>
-        </View>
+        {type === "default" && (
+          <View style={{ width: "100%", marginTop: 10 }}>
+            <Text caption1 errorColor>
+              {errormessage ? "*" + errormessage : ""}
+            </Text>
+          </View>
+        )}
       </>
     )
   },

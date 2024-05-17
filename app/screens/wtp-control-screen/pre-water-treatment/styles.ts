@@ -1,10 +1,6 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
-  rightPane: {
-    flex: 1,
-    paddingHorizontal: 10,
-  },
   leftPane: {
     flex: 0.2,
 
@@ -12,6 +8,10 @@ export default StyleSheet.create({
     // padding: 20,
     gap: 5,
     backgroundColor: "#F5F5F5",
+  },
+  rightPane: {
+    flex: 1,
+    paddingHorizontal: 10,
   },
   displayButton: {
     borderWidth: 1,
@@ -62,6 +62,7 @@ export default StyleSheet.create({
   sortIcon: {
     width: 50,
     height: 50,
+    marginTop:13,
     backgroundColor: "white",
     alignItems: "center",
     justifyContent: "center",

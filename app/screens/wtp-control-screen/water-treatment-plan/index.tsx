@@ -74,11 +74,16 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               navigation.navigate("WaterTreatmentPlant2Form", {
                 type: subitem?.machine ?? "",
                 items: subitem,
+                onReturn: sendBack,
               })
             }
           />
         )
       })
+
+    const sendBack = (isSubmit: boolean = false) => {
+      refresh()
+    }
     const refresh = async (showLoading = false) => {
       setRefreshing(true)
       fetchScehdules()
@@ -101,6 +106,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           setWtp2(results)
           setSchedules(results.map((item) => item?.treatmentlist)[0])
           setScheduleSnapshot(results.map((item) => item?.treatmentlist)[0])
+
           return
         }
         setWtp2([])
@@ -156,7 +162,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
     useEffect(() => {
       if (isfocused && !query) {
-        refresh()
+        // refresh()
       }
     }, [isfocused])
 
@@ -173,6 +179,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             ]}
           >
             <HeaderBar
+              enableWTP={false}
               showLine={false}
               onChangeDate={(e, v) => {
                 setDatePicker((pre) => ({ show: false, value: v }))
@@ -224,8 +231,9 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                   { justifyContent: "space-between", marginVertical: 4, alignItems: "center" },
                 ]}
               >
-                <View style={{ width: 600 }}>
+                <View style={{ width: 550 }}>
                   <CustomInput
+                    type="search"
                     value={query ?? ""}
                     placeholder="Search"
                     onChangeText={(text: string) => {
