@@ -2,7 +2,7 @@ import React from "react"
 import Icon from "react-native-vector-icons/AntDesign"
 import styles from "./styles"
 import { Text } from "app/components/v2"
-import { View, TextInput, Modal, ViewStyle, TouchableOpacity } from "react-native"
+import { View, TextInput, Modal, ViewStyle, TouchableOpacity, ScrollView } from "react-native"
 import Button from "../Button"
 interface ActivityModalProps {
   isVisible: boolean
@@ -26,23 +26,27 @@ const ActivityModal = ({ isVisible = true, onClose }: ActivityModalProps) => {
                 Activity Log
               </Text>
 
-              <View style={[$hori,{gap:20}]}>
+              <View style={[$hori, { gap: 20 }]}>
                 <TouchableOpacity>
                   <Icon size={22.5} name="calendar" color={"white"} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={()=>onClose()}>
+                <TouchableOpacity onPress={() => onClose()}>
                   <Icon size={22.5} name="close" color={"white"} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-
-          {Array.from({ length: 15 }, (item, index) => (
-            <View style={[$hori, { justifyContent: "flex-start", padding: 10 }]} key={index.toString()}>
-              <Text title1>{`\u2022 `}</Text>
-              <Text body2>2024-05-11 08:00AM: Darith has created the form</Text>
-            </View>
-          ))}
+          <ScrollView>
+            {Array.from({ length: 15 }, (item, index) => (
+              <View
+                style={[$hori, { justifyContent: "flex-start", padding: 10 }]}
+                key={index.toString()}
+              >
+                <Text title1>{`\u2022 `}</Text>
+                <Text body2>2024-05-11 08:00AM: Darith has created the form</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -53,7 +57,7 @@ const $hori: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  gap:10
+  gap: 10,
 }
 
 export default ActivityModal

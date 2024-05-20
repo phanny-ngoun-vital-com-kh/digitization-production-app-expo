@@ -4,6 +4,7 @@ import { ProgressBar } from "react-native-paper"
 import { Text } from "app/components/v2"
 import { TimePanelProps } from "./type"
 import { black } from "react-native-paper/lib/typescript/styles/themes/v2/colors"
+import { ViewStyle } from "react-native"
 const TimePanel = ({
   time = "  7: 00",
   progressValue = 1,
@@ -29,7 +30,7 @@ const TimePanel = ({
         }}
       >
         <Text
-          style={{ marginBottom: 20 }}
+          style={{ marginBottom:20 }}
           whiteColor={isSelected}
           semibold
           headline
@@ -38,21 +39,29 @@ const TimePanel = ({
           {time}
         </Text>
 
-        {progressValue && (
-          <View>
-            <ProgressBar
-              progress={progressValue}
-              style={{ height: 10 }}
-              color={"#8CC8FF"}
-              backgroundColor={"#8CC8FF"}
-              animated={false}
-            />
-            {/* <Text>80%</Text> */}
+        {isSelected ? (
+          <View style={$useHori}>
+         
+
+              <ProgressBar
+                progress={progressValue || 0}
+                style={{ height: 10,width:100}}
+                color={"#8CC8FF"}
+                // backgroundColor={"#8CC8FF"}
+                animated={false}
+              />
+            <Text whiteColor caption2>
+                {
+                 Math.floor( +progressValue * 100) + "%" || 0
+                }
+            </Text>
           </View>
+        ) : (
+          <></>
         )}
       </View>
     </TouchableOpacity>
   )
 }
-
+const $useHori: ViewStyle= {flexDirection:"row",alignItems:"center",gap:5}
 export default TimePanel

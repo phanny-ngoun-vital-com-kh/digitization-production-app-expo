@@ -163,7 +163,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       }
     }
 
-    console.log(route)
     const handleSubmit = async () => {
       try {
         setLoading((pre) => ({ ...pre, submitting: true }))

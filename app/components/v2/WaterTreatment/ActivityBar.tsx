@@ -45,7 +45,10 @@ const ActivityBar = ({
         </View>
       </TouchableOpacity>
 
-      <Button onPress={onActivity}>View Activity</Button>
+      <Button onPress={onActivity}>
+
+        <Text whiteColor body2 >View Activity</Text>
+      </Button>
     </View>
   )
 }

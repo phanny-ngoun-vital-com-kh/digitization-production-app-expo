@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from "react"
+import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import moment from "moment"
 import { useTheme } from "app/theme-v2"
@@ -32,6 +32,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     const { waterTreatmentStore } = useStores()
     const isfocused = useIsFocused()
 
+    const [selectProgess, setSelectProgess] = useState(0)
     const [refreshing, setRefreshing] = useState(false)
     const { colors } = useTheme()
     const [wtp2, setWtp2] = useState<WaterTreatment[]>([])
@@ -60,6 +61,13 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       },
     ]
 
+    const onCalculateSchedule = (completed: string, total: string) => {
+      if (completed && total) {
+        const progress = Number(completed) / Number(total)
+        setSelectProgess(progress)
+      }
+    }
+
     const renderItem = ({ item }: { item: WaterTreatment }) =>
       schedules?.map((subitem, index) => {
         //Sub Collection of treatmentlist that contain the machines
@@ -70,18 +78,18 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             machine_type={subitem?.machine}
             assign_to={item?.assign_to ?? "vorn"}
             time={item?.shift ?? "S1 (7:00)"}
-            onPress={() =>
+            onPress={() => {
               navigation.navigate("WaterTreatmentPlant2Form", {
                 type: subitem?.machine ?? "",
                 items: subitem,
                 onReturn: sendBack,
               })
-            }
+            }}
           />
         )
       })
 
-    const sendBack = (isSubmit: boolean = false) => {
+    const sendBack = () => {
       refresh()
     }
     const refresh = async (showLoading = false) => {
@@ -104,8 +112,14 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           )) as []
 
           setWtp2(results)
-          setSchedules(results.map((item) => item?.treatmentlist)[0])
-          setScheduleSnapshot(results.map((item) => item?.treatmentlist)[0])
+          const schedules = results.map((item) => item?.treatmentlist)[0]
+          setSchedules(schedules)
+          setScheduleSnapshot(schedules)
+          const [allprogress] = results.map((item) => item?.treatmentlist) as []
+
+          const selectProgress = allprogress?.filter((item) => item?.status !== null)
+
+          onCalculateSchedule(selectProgress?.length, schedules?.length)
 
           return
         }
@@ -145,7 +159,6 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
         item.machine?.trim().toLowerCase().includes(query?.trim().toLowerCase()),
       )
 
-      console.log(result?.length)
       if (!result?.length || query === "") {
         //length = 0 meaning no result, > 0  have result so we set to schedule
         setSchedules(scheduleSnapshot)
@@ -156,17 +169,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
     useEffect(() => {
       onSearchItem()
-
       return () => setSchedules(scheduleSnapshot)
     }, [query])
 
-    useEffect(() => {
-      if (isfocused && !query) {
-        // refresh()
-      }
-    }, [isfocused])
 
-    // console.log("observer ", waterTreatmentStore.treatments.length)
     return (
       <View style={$root}>
         <View style={[$outerContainer]}>
@@ -183,6 +189,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               showLine={false}
               onChangeDate={(e, v) => {
                 setDatePicker((pre) => ({ show: false, value: v }))
+                setSelectProgess(0)
                 setSelectedShift(`S1 (7:00)`)
               }}
               onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
@@ -199,7 +206,8 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               $containerHorizon,
               {
                 gap: 10,
-                marginTop: 0,
+                // marginBottom: 20,
+                height:'88%',
                 backgroundColor: "#F6F5F5",
               },
             ]}
@@ -211,9 +219,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                     return (
                       <TimePanel
                         onPress={() => {
+                          setSelectProgess(0)
                           setSelectedShift(`${item.name} (${subitem})`)
                         }}
-                        // progressValue={1}
+                        progressValue={selectProgess ?? 0}
                         time={subitem?.trim()}
                         isSelected={`${item.name} (${subitem})` === selectedShift}
                         key={index.toString()}
@@ -228,10 +237,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               <View
                 style={[
                   $containerHorizon,
-                  { justifyContent: "space-between", marginVertical: 4, alignItems: "center" },
+                  { justifyContent: "space-between", alignItems: "center" },
                 ]}
               >
-                <View style={{ width: 550 }}>
+                <View style={{ width: 550,marginBottom:10 }}>
                   <CustomInput
                     type="search"
                     value={query ?? ""}
@@ -281,7 +290,7 @@ const $root: ViewStyle = {
 }
 
 const $outerContainer: ViewStyle = {
-  margin: 15,
+  // margin: 15,
   marginTop: 20,
   padding: 10,
 }
@@ -289,6 +298,7 @@ const $outerContainer: ViewStyle = {
 export const $containerHorizon: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
+
   gap: 0,
 }
 

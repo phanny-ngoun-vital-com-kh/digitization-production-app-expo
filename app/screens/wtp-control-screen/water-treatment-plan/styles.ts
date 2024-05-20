@@ -15,18 +15,14 @@ export default StyleSheet.create({
 
     // backgroundColor: "#EFEBEB",
     // padding: 20,
+
     gap: 5,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "white",
   },
 
   rightPane: {
     flex: 1,
-    // backgroundColor: "#F5F5F5",
-    // height:"100%",
-
     paddingHorizontal: 10,
-    // paddingBottom:100
-    // padding:10
   },
   displayButton: {
     borderWidth: 1,
