@@ -67,9 +67,11 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
             onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
             dateValue={datePicker.value}
             showDate={datePicker.show}
-            currDate={new Date(Date.now()).toLocaleDateString()}
-          />
+            currDate={new Date(Date.now())}
+            />
         </View>
+
+    
         <Divider style={styles.divider_space} />
 
         <View style={{ marginTop: 15 }}>
@@ -88,6 +90,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
               return (
                 <LinePanel
                   item={item}
+                  
                   onClickPanel={() =>
                     navigation.navigate("DailyHaccpLineDetail", {
                       id: 1,

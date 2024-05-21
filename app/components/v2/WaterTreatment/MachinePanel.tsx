@@ -34,7 +34,10 @@ const MachinePanel = ({
             {machine_type}
           </Text>
 
-          {!!warning_count && <BadgeWarning value={+warning_count} status="warning" />}
+          {!!warning_count && <View style={{left:110,top:1}}>
+            
+            <BadgeWarning value={+warning_count} status="warning" />
+            </View>}
         </View>
 
         <View style={$containerHorizon}>

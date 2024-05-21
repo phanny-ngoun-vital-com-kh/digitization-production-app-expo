@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
+  buttonSelect: { height: 40, backgroundColor: "transparent" },
   rightPane: {
     flex: 0.2,
 
@@ -40,7 +41,7 @@ export default StyleSheet.create({
       width: 0,
       height: 1,
     },
-    width:150,
+    width: 150,
 
     shadowOpacity: 0.2,
     shadowRadius: 1.41,

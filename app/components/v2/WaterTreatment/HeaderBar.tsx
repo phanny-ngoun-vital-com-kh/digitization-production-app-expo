@@ -2,12 +2,12 @@ import React from "react"
 import Icon from "react-native-vector-icons/Entypo"
 import DatePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import { Text } from "app/components/v2"
-import { Platform, TextStyle, TouchableOpacity } from "react-native"
-import { View } from "react-native"
+import { View, Platform, TextStyle, TouchableOpacity } from "react-native"
 import styles from "../../../screens/wtp-control-screen/water-treatment-plan/styles"
 import { Dropdown } from "react-native-element-dropdown"
+import moment from "moment"
 type HeaderProps = {
-  currDate: string
+  currDate: Date
   showDate: boolean
   dateValue: any
   enableWTP: boolean
@@ -16,7 +16,7 @@ type HeaderProps = {
   onChangeDate: (e: DateTimePickerEvent, v: Date | undefined) => void
 }
 const HeaderBar = ({
-  currDate = "31 May , 2024",
+  currDate ,
   showDate,
   showLine = true,
   enableWTP = false,
@@ -49,7 +49,9 @@ const HeaderBar = ({
           Today Task
         </Text>
         <Text body1 body2>
-          {currDate}
+
+        
+          {moment(currDate).format('LL')}
         </Text>
       </View>
 
@@ -97,6 +99,7 @@ const HeaderBar = ({
               display={Platform.OS === "ios" ? "spinner" : "default"}
               is24Hour={true}
               onChange={onChangeDate}
+         
               style={{}}
             />
           )}

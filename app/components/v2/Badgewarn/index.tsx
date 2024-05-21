@@ -18,7 +18,7 @@ const BadgeWarning = ({ status, value }: { status: MACHINE_STATE; value: number 
           backgroundColor: "#D32600",
           position: "absolute",
           left: 53,
-          bottom: 13,
+          bottom: 10,
         },
       ]}
     >

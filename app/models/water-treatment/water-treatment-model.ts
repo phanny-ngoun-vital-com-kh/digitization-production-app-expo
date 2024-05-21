@@ -1,6 +1,5 @@
 import { Instance, SnapshotIn, SnapshotOut, types } from "mobx-state-tree"
 import { withSetPropAction } from "../helpers/withSetPropAction"
-import { ShiftModel } from "./water-treatment-store"
 import { watertreatmentApi } from "app/services/api/water-treatment-api"
 
 /**
@@ -9,6 +8,8 @@ import { watertreatmentApi } from "app/services/api/water-treatment-api"
 export const TreatmentModel = types
   .model("TreatmentModel", {
     id: types.identifierNumber,
+    action: types.string,
+    warning_count: types.maybeNull(types.string),
     machine: types.string,
     treatment_id: types.maybeNull(types.string),
     tds: types.maybeNull(types.string),
@@ -42,11 +43,14 @@ export const TreatmentModel = types
           machine: self.machine,
           status: self.status ?? "pending",
           id: self.id,
+          action: self.action ?? "N / A",
+          warning_count: self.warning_count ?? null,
           press_inlet: self.press_inlet ?? null,
           press_treat: self.press_treat ?? null,
           press_drain: self.press_drain ?? null,
           odor: self.odor,
           taste: self.taste,
+          treatment_id: self.treatment_id ?? null,
           pressure: self.pressure,
         })
         if (rs.kind === "ok") console.log("Success")
@@ -54,6 +58,30 @@ export const TreatmentModel = types
           console.log("Error")
           throw Error(rs.kind)
         }
+      },
+    }
+  })
+
+export const ActivitiesLogModel = types
+  .model("ActivityModel", {
+    id: types.identifierNumber,
+    action: types.string,
+    actionBy: types.string,
+    actionDate: types.Date,
+    machine_id: types.number,
+    treatment_id: types.string,
+  })
+  .actions(withSetPropAction)
+  .views((self) => {
+    return {
+      savelogByMachine: async () => {
+        console.log("save log")
+      },
+      savelogByTreatment: async () => {
+        console.log("save log")
+      },
+      saveLogAll: async () => {
+        console.log("save all log")
       },
     }
   })
@@ -76,6 +104,8 @@ export const WaterTreatmentModel = types
 export interface WaterTreatment extends Instance<typeof WaterTreatmentModel> {}
 
 export interface Treatment extends Instance<typeof TreatmentModel> {}
+export interface Activities extends Instance<typeof ActivitiesLogModel> {}
+
 export interface WaterTreatmentSnapshotOut extends SnapshotOut<typeof WaterTreatmentModel> {}
 export interface WaterTreatmentSnapshotIn extends SnapshotIn<typeof WaterTreatmentModel> {}
 export const createWaterTreatmentDefaultModel = () => types.optional(WaterTreatmentModel, {})

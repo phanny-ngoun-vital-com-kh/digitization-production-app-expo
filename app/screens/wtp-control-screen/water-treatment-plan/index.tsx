@@ -77,6 +77,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             status={subitem?.status ?? "pending"}
             machine_type={subitem?.machine}
             assign_to={item?.assign_to ?? "vorn"}
+            warning_count={subitem?.warning_count ?? 0}
             time={item?.shift ?? "S1 (7:00)"}
             onPress={() => {
               navigation.navigate("WaterTreatmentPlant2Form", {
@@ -172,7 +173,6 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       return () => setSchedules(scheduleSnapshot)
     }, [query])
 
-
     return (
       <View style={$root}>
         <View style={[$outerContainer]}>
@@ -189,13 +189,17 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               showLine={false}
               onChangeDate={(e, v) => {
                 setDatePicker((pre) => ({ show: false, value: v }))
-                setSelectProgess(0)
-                setSelectedShift(`S1 (7:00)`)
+
+                if (e.type === "set") {
+                  setSelectProgess(0)
+
+                  setSelectedShift(`S1 (7:00)`)
+                }
               }}
               onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
               dateValue={datePicker.value}
               showDate={datePicker.show}
-              currDate={new Date(Date.now()).toLocaleDateString()}
+              currDate={new Date(Date.now())}
             />
           </View>
 
@@ -207,7 +211,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               {
                 gap: 10,
                 // marginBottom: 20,
-                height:'88%',
+                height: "88%",
                 backgroundColor: "#F6F5F5",
               },
             ]}
@@ -240,7 +244,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                   { justifyContent: "space-between", alignItems: "center" },
                 ]}
               >
-                <View style={{ width: 550,marginBottom:10 }}>
+                <View style={{ width: 550, marginBottom: 10 }}>
                   <CustomInput
                     type="search"
                     value={query ?? ""}

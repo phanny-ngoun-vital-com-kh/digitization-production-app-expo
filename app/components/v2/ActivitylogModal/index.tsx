@@ -2,13 +2,16 @@ import React from "react"
 import Icon from "react-native-vector-icons/AntDesign"
 import styles from "./styles"
 import { Text } from "app/components/v2"
-import { View, TextInput, Modal, ViewStyle, TouchableOpacity, ScrollView } from "react-native"
-import Button from "../Button"
+import { View, Modal, ViewStyle, TouchableOpacity, ScrollView, FlatList } from "react-native"
+import { Activities } from "app/models/water-treatment/water-treatment-model"
+import moment from "moment"
+import EmptyFallback from "app/components/EmptyFallback"
 interface ActivityModalProps {
   isVisible: boolean
   onClose: () => void
+  log: Activities[] | null
 }
-const ActivityModal = ({ isVisible = true, onClose }: ActivityModalProps) => {
+const ActivityModal = ({ isVisible = true, onClose, log = [] }: ActivityModalProps) => {
   return (
     <Modal
       animationType="slide"
@@ -27,26 +30,36 @@ const ActivityModal = ({ isVisible = true, onClose }: ActivityModalProps) => {
               </Text>
 
               <View style={[$hori, { gap: 20 }]}>
-                <TouchableOpacity>
+                {/* <TouchableOpacity>
                   <Icon size={22.5} name="calendar" color={"white"} />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 <TouchableOpacity onPress={() => onClose()}>
                   <Icon size={22.5} name="close" color={"white"} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-          <ScrollView>
-            {Array.from({ length: 15 }, (item, index) => (
-              <View
-                style={[$hori, { justifyContent: "flex-start", padding: 10 }]}
-                key={index.toString()}
-              >
-                <Text title1>{`\u2022 `}</Text>
-                <Text body2>2024-05-11 08:00AM: Darith has created the form</Text>
-              </View>
-            ))}
-          </ScrollView>
+
+          <FlatList
+            data={log}
+            keyExtractor={(item, index) => index.toString()}
+            ListEmptyComponent={<EmptyFallback placeholder="No Activity found for this Machine"/>}
+            renderItem={({ item, index }) => {
+              return (
+                <View
+                  style={[$hori, { justifyContent: "flex-start", padding: 10 }]}
+                  key={index.toString()}
+                >
+                  <Text title1>{`\u2022 `}</Text>
+                  <Text body2>
+                    {moment(item?.actionDate).format("LLLL") ?? Date.now().toLocaleString()} :{" "}
+                    {item?.actionBy} has {item?.action}
+                  </Text>
+                </View>
+              )
+            }}
+          />
+     
         </View>
       </View>
     </Modal>

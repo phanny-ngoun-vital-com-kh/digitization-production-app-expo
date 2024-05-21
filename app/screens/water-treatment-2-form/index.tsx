@@ -11,7 +11,7 @@ import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import { ActivityIndicator, Checkbox, useTheme } from "react-native-paper"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { useStores } from "app/models"
-import { TreatmentModel } from "app/models/water-treatment/water-treatment-model"
+import { Activities, TreatmentModel } from "app/models/water-treatment/water-treatment-model"
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -24,6 +24,7 @@ import {
 } from "react-native"
 import { styles } from "./styles"
 import { ImagetoText } from "app/utils-v2/ocr"
+import BadgeWarning from "app/components/v2/Badgewarn"
 interface WaterTreatmentPlant2FormScreenProps
   extends AppStackScreenProps<"WaterTreatmentPlant2Form"> {}
 
@@ -43,6 +44,8 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       iswarning: false,
       warning_count: 0,
     })
+
+    const [activities, setActivities] = useState<Activities[]>([])
     const route = useRoute().params
     const { waterTreatmentStore } = useStores()
     const [form, setForm] = useState({
@@ -73,7 +76,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       press_drain: true,
     })
     const [image, setImage] = useState(null)
-
     const [extractedText, setExtractedText] = useState()
 
     useLayoutEffect(() => {
@@ -95,8 +97,13 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       validateStateMachine()
     }, [errors, navigation, route, form])
 
+    const fetchUserActivities = async () => {
+      const result = await waterTreatmentStore.getTreatmentActivitiesMachine(route?.items?.id, 20)
+      setActivities(result?.items)
+    }
     useEffect(() => {
       if (route?.items) {
+        fetchUserActivities()
         setForm({
           tds: route?.items?.tds,
           ph: route?.items?.ph,
@@ -125,6 +132,10 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
         })
       }
     }, [route])
+
+    const getActionUser = () => {
+      return route?.items?.status ? "modified this machine" : "completed the check"
+    }
 
     const onlaunchGallery = async () => {
       try {
@@ -163,7 +174,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       }
     }
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (warningCount: string) => {
       try {
         setLoading((pre) => ({ ...pre, submitting: true }))
         const payload = TreatmentModel.create({
@@ -172,7 +183,9 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
           temperature: form?.temperature?.toString(),
           other: form?.other,
           air_release: form?.air_release?.toString(),
-          machine: route?.type + "",
+          machine: route?.type,
+          warning_count: warningCount ?? null,
+          action: getActionUser(),
           status: machineState.iswarning ? "warning" : "normal",
           press_drain: form?.press_drain,
           press_inlet: form?.press_inlet,
@@ -181,9 +194,10 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
           taste: form?.taste ? "1" : "0",
           odor: form?.odor ? "1" : "0",
           id: Number(route?.items?.id),
+          treatment_id: route?.items?.treatment_id,
         })
+
         await waterTreatmentStore.createWtpRequest(payload).saveWtp2()
-        route?.onReturn(true) // force refresh back screen
         Dialog.show({
           type: ALERT_TYPE.SUCCESS,
           title: "ជោគជ័យ",
@@ -191,7 +205,12 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
           button: "close",
           autoClose: 500,
         })
+        setLoading((pre) => ({ ...pre, submitting: false }))
+        fetchUserActivities()
+
+        route?.onReturn(true) // force refresh back screen
       } catch (error) {
+        console.log(error)
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "បរាជ័យ",
@@ -200,7 +219,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
           autoClose: 500,
         })
       } finally {
-        setLoading((pre) => ({ ...pre, submitting: false }))
+        setLoading({ image: false, submitting: false })
       }
     }
 
@@ -229,9 +248,9 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       } else if (reversesError) {
         return
       }
-      validateStateMachine()
+      const warningCount = validateStateMachine()
       // valid every field =>  call handlesubmit form to server
-      handleSubmit()
+      handleSubmit(String(warningCount))
     }
 
     const validateStateMachine = () => {
@@ -240,43 +259,65 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       const restrictPH = +form?.ph < 6.5 || +form?.ph > 8.5
 
       const restrictPressure = +form?.pressure > 300
-      const restrictPress =
-        +form?.press_inlet < 0.01 ||
-        +form?.press_inlet > 0.3 ||
-        +form?.press_treat < 0.01 ||
-        +form?.press_treat > 0.3 ||
-        +form?.press_drain < 0.01 ||
-        +form?.press_drain > 0.3
+      const restrictPressinlet = +form?.press_inlet < 0.01 || +form?.press_inlet > 0.3
+      const restrictPressTreat = +form?.press_treat < 0.01 || +form?.press_treat > 0.3
+      const restrictPressDrain = +form?.press_drain < 0.01 || +form?.press_drain > 0.3
 
       if (
         route?.type?.toLowerCase()?.startsWith("raw water stock") ||
         ["sand filter", "carbon filter", "resin filter"].includes(route?.type?.toLowerCase())
       ) {
         if (restrictTD || restrictTemperature || restrictPH) {
+          //  true = 1, false = 0
+
           setMachineState({
             iswarning: true,
-            warning_count: 0,
+            warning_count: +restrictTD + +restrictTemperature + +restrictPH,
           })
+
+          return +restrictTD + +restrictTemperature + +restrictPH
         } else {
           setMachineState({ iswarning: false, warning_count: 0 })
+          return 0
         }
       } else if (route?.type?.toLowerCase()?.startsWith("micro")) {
         if (restrictTD || restrictTemperature || restrictPH || restrictPressure) {
           setMachineState({
             iswarning: true,
-            warning_count: 0,
+            warning_count: +restrictTD + +restrictPressure + +restrictPH + +restrictTemperature,
           })
+          return +restrictTD + +restrictPressure + +restrictPH + +restrictTemperature
         } else {
           setMachineState({ iswarning: false, warning_count: 0 })
+          return 0
         }
       } else {
-        if (restrictTD || restrictPH || restrictPress) {
+        if (
+          restrictTD ||
+          restrictPH ||
+          restrictPressinlet ||
+          restrictPressDrain ||
+          restrictPressTreat
+        ) {
           setMachineState({
             iswarning: true,
-            warning_count: 0,
+            warning_count:
+              +restrictTD +
+              +restrictPH +
+              +restrictPressinlet +
+              +restrictPressDrain +
+              +restrictPressTreat,
           })
+          return (
+            +restrictTD +
+            +restrictPH +
+            +restrictPressinlet +
+            +restrictPressDrain +
+            +restrictPressTreat
+          )
         } else {
           setMachineState({ iswarning: false, warning_count: 0 })
+          return 0
         }
       }
     }
@@ -436,6 +477,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                 <View style={[$containerHorizon, { marginBottom: 40, marginTop: 15 }]}>
                   <View style={$width}>
                     <CustomInput
+                      warning={+form?.tds > 300}
                       hintLimit="<=300 ppm"
                       showIcon={false}
                       label="TDS"
@@ -460,6 +502,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     <View style={$width}>
                       <CustomInput
                         hintLimit="6.5 - 8.5"
+                        warning={+form?.ph < 6.5 || +form?.ph > 8.5}
                         keyboardType="decimal-pad"
                         showIcon={false}
                         value={form.ph?.toString() || ""}
@@ -484,6 +527,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <CustomInput
                         hintLimit="25 - 35 °C"
                         keyboardType="decimal-pad"
+                        warning={+form?.temperature < 25 || +form?.temperature > 35}
                         value={form.temperature?.toString() || ""}
                         showIcon={false}
                         onBlur={() => {
@@ -511,6 +555,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <CustomInput
                         hintLimit="6.5 - 8.5"
                         showIcon={false}
+                        warning={+form?.ph < 6.5 || +form?.ph > 8.5}
                         keyboardType="decimal-pad"
                         value={form.ph?.toString() || ""}
                         onBlur={() => {
@@ -642,6 +687,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                             ? setErrors((pre) => ({ ...pre, press_inlet: false }))
                             : setErrors((pre) => ({ ...pre, press_inlet: true }))
                         }}
+                        warning={+form?.press_inlet < 0.01 || +form?.press_inlet > 0.3}
                         onChangeText={(text) => {
                           form.press_inlet !== ""
                             ? setErrors((pre) => ({ ...pre, press_inlet: false }))
@@ -657,6 +703,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
                     <View style={$width}>
                       <CustomInput
+                        warning={+form?.press_treat < 0.01 || +form?.press_treat > 0.3}
                         keyboardType="decimal-pad"
                         value={form.press_treat?.toString() || ""}
                         hintLimit="0.01 - 0.3 Mpa"
@@ -679,6 +726,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     </View>
                     <View style={$width}>
                       <CustomInput
+                        warning={+form?.press_drain < 0.01 || +form?.press_drain > 0.3}
                         keyboardType="decimal-pad"
                         value={form.press_drain?.toString() || ""}
                         hintLimit="0.01 - 0.3 Mpa"
@@ -768,7 +816,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                 </View>
               </View>
             </ScrollView>
-            <ActivityModal onClose={() => setShowlog(false)} isVisible={showLog} />
+            <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} />
           </View>
         </KeyboardAvoidingView>
       </>

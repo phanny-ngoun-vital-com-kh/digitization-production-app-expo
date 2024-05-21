@@ -10,10 +10,10 @@ interface ActivityModalProps {
 }
 const InstructionModal = ({ isVisible = true, onClose }: ActivityModalProps) => {
   const tasks = [
-    "Check the treated water pressure for bottle rinsing",
-    "Check 32/40 nozzles to verify they are not clogged",
-    "Smell test of ozone after capping with bottling",
-    "In case, ozone concentration or pressure is smaller than critical limit",
+    "Check the treated water pressure for bottle rinsing from pressure gauge every 2 hours by Line Leader",
+    "Check 32/40 nozzles to verify they are not clog if there is no clogged tick ✔ ",
+    "Smell test of ozone after capping with bottling every 2 hours and Verify ozone concenstration with QC every 4 hours",
+    "In case, ozone concentration or pressure is smaller than critical limit or there is one of them clogged, Line Leader must stop to find root cause and take action",
   ]
   return (
     <Modal
@@ -44,14 +44,14 @@ const InstructionModal = ({ isVisible = true, onClose }: ActivityModalProps) => 
               </View>
             </View>
           </View>
-          <View>
+          <View style={{paddingHorizontal:30,paddingVertical:25}}>
             {tasks.map((item, index) => (
               <View
                 key={index.toString()}
-                style={[$hori, { justifyContent: "flex-start", padding: 10, paddingTop: 30 }]}
+                style={[$hori, { justifyContent: "flex-start", padding:0, paddingTop: 20 }]}
               >
-                <Text body2>{index + 1} .</Text>
-                <Text body2>{item}</Text>
+                <Text subhead>{index + 1} .</Text>
+                <Text subhead>{item}</Text>
               </View>
             ))}
           </View>

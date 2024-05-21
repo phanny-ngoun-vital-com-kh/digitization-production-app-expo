@@ -132,6 +132,7 @@ const ModalDailyPreWater: React.FC<ModalProps> = ({
         <View style={{ backgroundColor: "#fff", width: "100%", flexDirection: "row" }}>
           <View style={{ marginTop: 5, marginBottom: 20, width: "25%", marginRight: "2.5%" }}>
             <CustomInput
+               
               onChangeText={(text) => setForm((pre) => ({ ...pre, item_code: text }))}
               label="Item Code"
               errormessage={

@@ -7,7 +7,10 @@ const EmptyFallback = ({ placeholder = "No Items" }: { placeholder: string }) =>
   return (
     <View style={$useFlex}>
       <Icon name={"boxes-packing"} size={60} color="#2292EE" style={{ marginBottom: 10 }} />
-      <Text>{placeholder} </Text>
+      <View style={{marginTop:20}}>
+
+      </View>
+      <Text primaryColor regular>{placeholder} </Text>
     </View>
   )
 }

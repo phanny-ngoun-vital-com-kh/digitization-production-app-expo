@@ -1,0 +1,71 @@
+const kh = {
+  common: {
+        todayTask: "កិច្ចការថ្ងៃនេះ",
+        pleaseSelect: "សូមជ្រើសរើស",
+        save: "រក្សាទុក", 
+        viewActivity: "មើលសកម្មភាព",
+        yes:"យល់ព្រម",
+        no: "មិនយល់ស្រប",
+      },
+  dailyWaterTreatment: {
+    dailyWaterTreatmentPlant2:"រោងចក្រផលិតទឹកស្អាតប្រចាំថ្ងៃ ២",
+    assignTo: "ចាត់តាំងទៅ",
+    smellCheck:"Smell Check",
+    odor:"ក្លិន",
+    taste:"រសជាតិ",
+    warning: "ការព្រមាន",
+    other:"ផ្សេងទៀត",
+    normal:"ធម្មតា",
+    pending: "កំពុងរង់ចាំ",
+    search:"ស្វែងរក",
+    optional:"ស្រេចចិត្ត",
+    activityLog:"កំណត់ហេតុ​សកម្មភាព"
+  },
+  preWaterTreatment: {
+    dailyPreWaterControl:"ការគ្រប់គ្រងទឹកប្រចាំថ្ងៃ",
+    assignTo: "ចាត់តាំងទៅ",
+    warning: "ការព្រមាន", 
+    normal:"ធម្មតា",
+    pending: "កំពុងរង់ចាំ",
+    search:"ស្វែងរក",
+    optional:"ស្រេចចិត្ត",
+    activityLog:"កំណត់ហេតុ​សកម្មភាព"
+  },
+  haccpMonitoring: {
+    haccpMonitoring: "ការត្រួតពិនិត្យ HACCP",
+    selectLine:"ជ្រើសរើសបន្ទាត់",
+    addNew:"បន្ថែម​ថ្មី",
+    time:"ពេលវេលា",
+    line:"បន្ទាត់",
+    status:"ស្ថានភាព",
+    assignTo:"ចាត់តាំងទៅ",
+    takeAction:"ចាត់វិធានការ",
+    warning: "ការព្រមាន",
+    normal:"ធម្មតា",
+    pending: "កំពុងរង់ចាំ",
+    bottleAndCap:"ដប និងមួក",
+    waterPressure:"សម្ពាធទឹក",
+    nozzieRinser:"Nozzie Rinser",
+    fillingAndCapping:"ការបំពេញនិងគម្រប",
+    activityControl:"ការត្រួតពិនិត្យសកម្មភាព",
+    smell:"ក្លិន",
+    FG:"FG[O₃] ",
+    overcontrol:"ការគ្រប់គ្រងលើស",
+    undercontrol:"ក្រោមការគ្រប់គ្រង",
+    optional:"ស្រេចចិត្ត",
+    instrunction:"ការណែនាំ",
+    pleaseWriteMessage:"សូមសរសេរសារ",
+    SideWall:"ជញ្ជាំងចំហៀង",
+    treatedWaterPressure:"សម្ពាធទឹកដែលត្រូវបានព្យាបាល",
+    airPressure:"សម្ពាធខ្យល់",
+    temperaturePreform:"ទម្រង់សីតុណ្ហភាព",
+    instructionDetail: {
+      first:"ពិនិត្យសម្ពាធទឹកដែលបានព្យាបាលសម្រាប់ការលាងដបចេញពីរង្វាស់សម្ពាធរៀងរាល់ 2 ម៉ោងម្តងដោយ Line Leader",
+      second:"ពិនិត្យក្បាល 32/40 ដើម្បីផ្ទៀងផ្ទាត់ថាវាមិនស្ទះទេ ប្រសិនបើមិនមានសញ្ញាធីកទេ ✔",
+      third:"ការធ្វើតេស្តក្លិនអូហ្សូនបន្ទាប់ពីការបិទភ្ជាប់ជាមួយដបរៀងរាល់ 2 ម៉ោងម្តង និងផ្ទៀងផ្ទាត់ការប្រមូលផ្តុំអូហ្សូនជាមួយ QC រៀងរាល់ 4 ម៉ោងម្តង",
+      fourth:"ក្នុងករណីដែលកំហាប់អូហ្សូន ឬសម្ពាធគឺតូចជាងដែនកំណត់សំខាន់ ឬមានមួយក្នុងចំនោមពួកគេត្រូវបានស្ទះ អ្នកដឹកនាំបន្ទាត់ត្រូវតែបញ្ឈប់ដើម្បីស្វែងរកមូលហេតុដើម និងចាត់វិធានការ"
+    }
+ 
+
+  },
+}

@@ -1,13 +1,16 @@
-import React, { FC, useLayoutEffect } from "react"
+import React, { FC, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/AntDesign"
-import { DataTable, ProgressBar } from "react-native-paper"
+import { DataTable } from "react-native-paper"
 import { FlatList, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
-import { Text } from "app/components/v2"
+import { Button, Text } from "app/components/v2"
 import styles from "./styles"
 import { TouchableOpacity } from "react-native-gesture-handler"
 import { useNavigation } from "@react-navigation/native"
+import { $containerHorizon } from "app/screens/wtp-control-screen/water-treatment-plan"
+import { useTheme } from "app/theme-v2"
+import StateButton from "app/components/v2/HACCP/StateButton"
 // import { useNavigation } from "@react-navigation/native"
 // import { useStores } from "app/models"
 
@@ -22,7 +25,9 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     onClick: (item: any) => void
   }) {
     const navigation = useNavigation()
-
+    const { colors } = useTheme()
+    const lineStatus = ["normal", "pending", "warning"]
+    const [selectedStatus, setSelectStatus] = useState("")
     useLayoutEffect(() => {
       navigation.setOptions({
         headerRight: () => (
@@ -32,12 +37,17 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
               navigation.navigate("HaccpLineForm", { line: 2 })
             }}
           >
-            <Icon name="plus" size={25} />
-            <Text style={{ fontSize: 14 }}> Add New</Text>
+            <Icon name="plus" size={22} color={"#0081F8"} />
+            <Text style={{ fontSize: 14 }} primaryColor semibold>
+              {" "}
+              Add New
+            </Text>
           </TouchableOpacity>
         ),
       })
     }, [navigation])
+
+    console.log("render time ")
     const rendertableLine1 = ({ item, index }) => (
       <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm", { line: 2 })}>
         <DataTable style={{ margin: 10, marginTop: 0 }}>
@@ -122,6 +132,31 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       return (
         <View style={$root}>
           <View style={$outerContainer}>
+            <View style={[$containerHorizon, { marginBottom: 20 }]}>
+              <TouchableOpacity style={{}} onPress={() => null}>
+                <Icon name="up" size={15} color={"black"} />
+                <Icon name="down" size={15} color={"black"} />
+              </TouchableOpacity>
+
+              <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
+                {lineStatus.map((item, index) => (
+                  <View key={index.toString()}>
+                    <StateButton
+                      onPress={() => setSelectStatus(item)}
+                      isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
+                      placeholder={item[0].toUpperCase() + item.slice(1)}
+                      color={
+                        item === "pending"
+                          ? "#777777"
+                          : item === "warning"
+                          ? "#FF0000"
+                          : colors.primary
+                      }
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
             <DataTable style={{ margin: 10, marginTop: 0 }}>
               <DataTable.Header>
                 <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>
@@ -164,6 +199,20 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     return (
       <View style={$root}>
         <View style={$outerContainer}>
+          <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
+            {lineStatus.map((item, index) => (
+              <View key={index.toString()}>
+                <StateButton
+                  onPress={() => setSelectStatus(item)}
+                  isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
+                  placeholder={item[0].toUpperCase() + item.slice(1)}
+                  color={
+                    item === "pending" ? "#777777" : item === "warning" ? "#FF0000" : colors.primary
+                  }
+                />
+              </View>
+            ))}
+          </View>
           <DataTable style={{ margin: 10, marginTop: 5 }}>
             <DataTable.Header>
               <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>

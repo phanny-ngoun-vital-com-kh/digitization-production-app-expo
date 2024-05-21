@@ -1,9 +1,10 @@
 import React, { forwardRef, useState } from "react"
 import Icon from "react-native-vector-icons/AntDesign"
-import { Button, Text, ModelItem, TextInput } from "../../../components/v2"
+import { Text, TextInput } from "../../../components/v2"
 import { TextInput as TextInputRef, TouchableOpacity, View } from "react-native"
 import styles from "./styles"
 import { TextInputProps } from "react-native-paper"
+import BadgeWarning from "../Badgewarn"
 // eslint-disable-next-line react/display-name
 const CustomInput = forwardRef(
   (
@@ -12,6 +13,7 @@ const CustomInput = forwardRef(
       placeholder,
       type = "default",
       hintLimit = "",
+      warning = false,
       errormessage,
       disabled = true,
       onPress,
@@ -24,6 +26,7 @@ const CustomInput = forwardRef(
       type?: "search" | "default"
       placeholder?: string
       value: string
+      warning: boolean
       hintLimit: string
       errormessage: string
       disabled: boolean
@@ -39,6 +42,7 @@ const CustomInput = forwardRef(
         {label && (
           <View style={{ flexDirection: "row" }}>
             <Text style={{ margin: 0, fontSize: 18 }}>{label}</Text>
+            <View>{warning && <BadgeWarning value={"!"} status="warning" />}</View>
           </View>
         )}
 

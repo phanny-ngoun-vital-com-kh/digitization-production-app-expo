@@ -52,14 +52,14 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
              enableWTP ={true}
               showLine={false}
               onChangeDate={(e, v) => {
-                console.log(e.nativeEvent.timestamp)
+                
 
                 setDatePicker((pre) => ({ show: false, value: v }))
               }}
               onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
               dateValue={datePicker.value}
               showDate={datePicker.show}
-              currDate={new Date(Date.now()).toLocaleDateString()}
+              currDate={new Date(Date.now())}
             />
           </View>
 

@@ -9,7 +9,7 @@ export type TimePanelProps = {
 
 export type MachinePanelProps = {
   machine_type: string  | undefined
-  status?: MACHINE_STATE  | undefined 
+  status?: MACHINE_STATE   
   assign_to: string  | undefined
   time: string | undefined
   onPress:()=>void

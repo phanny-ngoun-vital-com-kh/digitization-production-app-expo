@@ -1,12 +1,11 @@
+import { ActivitiesModel } from "app/models/inventory-transfer-request/inventory-transfer-request-model"
 import {
+  Activities,
+  ActivitiesLogModel,
   Treatment,
   TreatmentModel,
-  WaterTreatmentModel,
 } from "app/models/water-treatment/water-treatment-model"
-import { Shift } from "app/screens/water-treatment-plan/type"
-import { Instance, SnapshotIn, SnapshotOut, detach, types } from "mobx-state-tree"
-import { withSetPropAction } from "../helpers/withSetPropAction"
-import { WaterTreatment } from "./water-treatment-model"
+import { Instance, SnapshotIn, SnapshotOut, types } from "mobx-state-tree"
 import { watertreatmentApi } from "app/services/api/water-treatment-api"
 
 /**
@@ -36,12 +35,17 @@ export const WaterTreatmentStoreModel = types
   .model("WaterTreatmentStore")
   .props({
     treatments: types.optional(types.array(TreatmentModel), []),
+    items: types.optional(types.array(ActivitiesLogModel), []),
   })
   .actions((self) => {
     return {
       createWtpRequest: (wtp: Treatment) => {
         self.treatments.push(wtp)
-        return (wtp)
+        return wtp
+      },
+      createActivities: (activities: Activities) => {
+        self.items.push(activities)
+        return activities
       },
     }
   })
@@ -53,6 +57,25 @@ export const WaterTreatmentStoreModel = types
           assign_date,
           shift,
         })
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
+
+      getTreatmentActivities: async (treatment_id = "", pageSize = 0) => {
+        const rs = await watertreatmentApi.getActivitiesByTreatment(pageSize, treatment_id)
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
+      getTreatmentActivitiesMachine: async (machine_id = "", pageSize = 0) => {
+        const rs = await watertreatmentApi.getActivitiesByMachine(pageSize, machine_id)
         if (rs.kind === "ok") {
           return rs.payload
         } else {

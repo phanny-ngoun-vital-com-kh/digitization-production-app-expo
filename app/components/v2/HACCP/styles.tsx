@@ -1,6 +1,12 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
+  progressLine : {
+    backgroundColor: "#0081F8",
+    width: 15,
+    height: 15,
+    borderRadius: 100,
+  },
   machinePanel: {
     width: 10,
     height: 10,
@@ -9,11 +15,10 @@ export default StyleSheet.create({
     alignItems: "center",
   },
   linePanel: {
-    paddingVertical: 70,
-    paddingHorizontal: 20,
-    borderColor: "#BFB6B6",
+    paddingHorizontal: 10,
+    paddingVertical: 60,
     borderWidth: StyleSheet.hairlineWidth,
-
+    borderColor: "#BFB6B6",
     borderBottomWidth: 1,
     shadowColor: "black",
     shadowOffset: {
@@ -25,6 +30,7 @@ export default StyleSheet.create({
     // elevation: 3,
     // height: 1,
     width: "33.33%",
+    flexDirection:"column"
   },
   rightPane: {
     flex: 0.2,
