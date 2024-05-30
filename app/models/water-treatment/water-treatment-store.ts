@@ -1,4 +1,3 @@
-import { ActivitiesModel } from "app/models/inventory-transfer-request/inventory-transfer-request-model"
 import {
   Activities,
   ActivitiesLogModel,
@@ -7,6 +6,7 @@ import {
 } from "app/models/water-treatment/water-treatment-model"
 import { Instance, SnapshotIn, SnapshotOut, types } from "mobx-state-tree"
 import { watertreatmentApi } from "app/services/api/water-treatment-api"
+import { AssignDailyWTP2, assignDailywtp2Api } from "app/services/api/assign-daily-wtp-api"
 
 /**
  * Model description here for TypeScript hints.
@@ -52,10 +52,21 @@ export const WaterTreatmentStoreModel = types
   .views((self) => {
     return {
       getWtpSchedules: async (assign_date = "2024-05-15", shift = "S1 (7:00)") => {
-        console.log(assign_date, shift)
         const rs = await watertreatmentApi.getWtp2List({
           assign_date,
           shift,
+        })
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
+
+      getWtpByDate: async (assign_date = "2024-05-15") => {
+        const rs = await watertreatmentApi.getWtp2ListByDate({
+          assign_date,
         })
         if (rs.kind === "ok") {
           return rs.payload
@@ -76,6 +87,44 @@ export const WaterTreatmentStoreModel = types
       },
       getTreatmentActivitiesMachine: async (machine_id = "", pageSize = 0) => {
         const rs = await watertreatmentApi.getActivitiesByMachine(pageSize, machine_id)
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
+      assignTask: async (shiftuser: string, user: string, date: string) => {
+        const rs = await assignDailywtp2Api.saveAssign({
+          shift: shiftuser,
+          assign_to: user,
+          remark: "N / A",
+          assign_date: date,
+          activities: [{ action: "Assign to ware1" }],
+          treatmentlist: [
+            {
+              machine: "Raw Water Stock",
+            },
+            {
+              machine: "Sand Filter",
+            },
+            {
+              machine: "Carbon Filter",
+            },
+            {
+              machine: "Resin Filter",
+            },
+            {
+              machine: "Microfilter 5µm",
+            },
+            {
+              machine: "Microfilter 1µm",
+            },
+            {
+              machine: "Reverses Osmosis",
+            },
+          ],
+        })
         if (rs.kind === "ok") {
           return rs.payload
         } else {

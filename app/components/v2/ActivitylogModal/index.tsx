@@ -30,9 +30,6 @@ const ActivityModal = ({ isVisible = true, onClose, log = [] }: ActivityModalPro
               </Text>
 
               <View style={[$hori, { gap: 20 }]}>
-                {/* <TouchableOpacity>
-                  <Icon size={22.5} name="calendar" color={"white"} />
-                </TouchableOpacity> */}
                 <TouchableOpacity onPress={() => onClose()}>
                   <Icon size={22.5} name="close" color={"white"} />
                 </TouchableOpacity>
@@ -43,23 +40,28 @@ const ActivityModal = ({ isVisible = true, onClose, log = [] }: ActivityModalPro
           <FlatList
             data={log}
             keyExtractor={(item, index) => index.toString()}
-            ListEmptyComponent={<EmptyFallback placeholder="No Activity found for this Machine"/>}
+            contentContainerStyle={{
+              paddingHorizontal:25
+            }}
+            ListEmptyComponent={<EmptyFallback placeholder="No Activity found for this Machine" />}
             renderItem={({ item, index }) => {
               return (
                 <View
-                  style={[$hori, { justifyContent: "flex-start", padding: 10 }]}
+                  style={[
+                    $hori,
+                    { justifyContent: "flex-start", paddingHorizontal: 10, paddingVertical: 10 },
+                  ]}
                   key={index.toString()}
                 >
                   <Text title1>{`\u2022 `}</Text>
                   <Text body2>
-                    {moment(item?.actionDate).format("LLLL") ?? Date.now().toLocaleString()} :{" "}
-                    {item?.actionBy} has {item?.action}
+                    {moment(item?.actionDate).format("LLL") ?? Date.now().toLocaleString()} :{" "}
+                    {item?.actionBy} {item?.action}
                   </Text>
                 </View>
               )
             }}
           />
-     
         </View>
       </View>
     </Modal>

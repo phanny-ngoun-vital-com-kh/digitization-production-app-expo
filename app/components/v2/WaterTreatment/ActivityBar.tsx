@@ -26,13 +26,13 @@ const ActivityBar = ({
         { justifyContent: direction === "end" ? "flex-end" : "flex-start" },
       ]}
     >
-      {showInfo && (
+      {/* {showInfo && (
         <TouchableOpacity onPress={onClickinfo}>
           <View style={styles.iconBorder}>
             <Icon name="help-circle-sharp" size={30} />
           </View>
         </TouchableOpacity>
-      )}
+      )} */}
 
       <TouchableOpacity onPress={onScanCamera}>
         <View style={styles.iconBorder}>

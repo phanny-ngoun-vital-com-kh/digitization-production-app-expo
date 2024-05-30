@@ -1,4 +1,4 @@
-import React, { FC, useLayoutEffect, useState } from "react"
+import React, { FC, useLayoutEffect, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/Ionicons"
 import { AppStackScreenProps } from "app/navigators"
@@ -6,18 +6,26 @@ import { Text } from "app/components/v2"
 import { View, ViewStyle, TouchableOpacity, KeyboardAvoidingView } from "react-native"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
-import { Checkbox, Divider } from "react-native-paper"
+import { Checkbox, Divider, List } from "react-native-paper"
 import { ScrollView } from "react-native-gesture-handler"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import InstructionModal from "app/components/v2/InstructionModal"
 import ActivityModal from "app/components/v2/ActivitylogModal"
+import { useTheme } from "app/theme-v2"
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
     const route = useRoute().params
+    const { colors } = useTheme()
     const navigation = useNavigation()
-    const [showinstruction, setShowInstruction] = useState(false)
+    const [showinstruction, setShowInstruction] = useState(true)
     const [showActivitylog, setShowActivitylog] = useState(false)
+    const tasks = [
+      "Check the treated water pressure for bottle rinsing from pressure gauge every 2 hours by Line Leader",
+      "Check 32/40 nozzles to verify they are not clog if there is no clogged tick ✔ ",
+      "Smell test of ozone after capping with bottling every 2 hours and Verify ozone concenstration with QC every 4 hours",
+      "In case, ozone concentration or pressure is smaller than critical limit or there is one of them clogged, Line Leader must stop to find root cause and take action",
+    ]
     const [formLineA, setFormLineA] = useState({
       side_wall: "",
       air_pressure: "",
@@ -84,6 +92,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       }
       navigation.goBack()
     }
+
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
@@ -389,6 +398,35 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                   onClickinfo={() => setShowInstruction(true)}
                   onActivity={() => setShowActivitylog(true)}
                 />
+                <View style={{ marginVertical: 25 }}>
+                  <List.Section title="" style={{ backgroundColor: "#F6F6F6" }}>
+                    <List.Accordion
+                      id={1}
+                      titleStyle={{ color: "white", fontSize:16}}
+                      
+                      title="Instruction"
+                      
+                      style={{ backgroundColor: colors.primary }}
+                      left={(props) => <List.Icon {...props} icon="folder" color="white" />}
+                      expanded={showinstruction}
+                      theme={{colors: {text: "red"}}}
+                      right={(props) => <List.Icon {...props} icon={
+                        showinstruction ?
+                        "chevron-up" :       "chevron-down" 
+                      } color="white" />}
+
+                      onPress={() => setShowInstruction((pre) => !pre)}
+                    >
+                      {tasks.map((task, index) => (
+                        <View key={index}>
+                          {/* <Text subhead>{index + 1} .</Text> */}
+
+                          <List.Item title={index + 1 + "/. " +task} />
+                        </View>
+                      ))}
+                    </List.Accordion>
+                  </List.Section>
+                </View>
 
                 <Text title3>Bottle and Cap rinsing</Text>
                 <Divider style={{ marginVertical: 30, backgroundColor: "#A49B9B" }} />
@@ -472,7 +510,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                     </View>
 
                     <View style={[$width, { marginTop: 20 }]}>
-                      <Text style={{ margin: 5, fontSize: 18 }}>Activity Control</Text>
+                      <Text style={{ margin: 5, fontSize: 18 }} semibold >Activity Control</Text>
 
                       <View style={[$containerHorizon, { marginTop: 10 }]}>
                         <TouchableOpacity
@@ -596,11 +634,12 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             )}
 
             <ActivityModal isVisible={showActivitylog} onClose={() => setShowActivitylog(false)} />
-            <InstructionModal
+
+            {/* <InstructionModal
               isVisible={showinstruction}
               key={Date.now().toString()}
               onClose={() => setShowInstruction(false)}
-            />
+            /> */}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

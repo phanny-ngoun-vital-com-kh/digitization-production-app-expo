@@ -8,15 +8,17 @@ import { Page } from "./api.types"
 
 const ApiURL = {
   getWtpByShift: "get_treatment_by_date_assign",
+  fetchShiftRoleAll:"get_treatment_by_date",
   fetchShiftTreatment: "fetch-paging-shift-activities",
   fetchActivitiesByMachine : "fetch-paging-machine-activities",
   saveWtp2: "post_daily_water_treatment",
+  getTreatmentDaily:"get-treatment-daily"
 }
 
 export class WaterTreatmentApi extends BaseApi {
   async getWtp2List(params: { assign_date: string; shift: string }): Promise<any> {
     try {
-      const rs = await this.requestService.list(ApiURL.getWtpByShift, {
+      const rs = await this.requestService.list(ApiURL.fetchShiftRoleAll, {
         ...params,
       })
       return DataResponse(rs)
@@ -25,7 +27,17 @@ export class WaterTreatmentApi extends BaseApi {
       return { kind: "bad-data" }
     }
   }
-
+  async getWtp2ListByDate(params: { assign_date: string }): Promise<any> {
+    try {
+      const rs = await this.requestService.list(ApiURL.getTreatmentDaily, {
+        ...params,
+      })
+      return DataResponse(rs)
+    } catch (e: any) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data" }
+    }
+  }
   async saveWtp2(params: {
     tds: string | null
     ph: string | null
@@ -49,6 +61,7 @@ export class WaterTreatmentApi extends BaseApi {
       const rs = await this.requestService.exec(ApiURL.saveWtp2, {
         ...params,
       })
+      
       return DataResponse(rs)
     } catch (e: any) {
       __DEV__ && console.tron.log(e.message)

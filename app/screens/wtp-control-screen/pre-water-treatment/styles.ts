@@ -12,6 +12,9 @@ export default StyleSheet.create({
   rightPane: {
     flex: 1,
     paddingHorizontal: 10,
+    paddingVertical:0
+
+    // paddingBottom:20
   },
   displayButton: {
     borderWidth: 1,
@@ -62,7 +65,7 @@ export default StyleSheet.create({
   sortIcon: {
     width: 50,
     height: 50,
-    marginTop:13,
+    marginTop: 13,
     backgroundColor: "white",
     alignItems: "center",
     justifyContent: "center",

@@ -1,16 +1,15 @@
 import React from "react"
-import { TouchableOpacity, View } from "react-native"
-import { ProgressBar } from "react-native-paper"
+import { TouchableOpacity, View, ViewStyle } from "react-native"
+import { ProgressBar, Badge } from "react-native-paper"
 import { Text } from "app/components/v2"
 import { TimePanelProps } from "./type"
-import { black } from "react-native-paper/lib/typescript/styles/themes/v2/colors"
-import { ViewStyle } from "react-native"
 const TimePanel = ({
   time = "  7: 00",
   progressValue = 1,
   isSelected = false,
   bgColor = "#0081F8",
   color = "#8CC8FF",
+  isWarning = false,
   onPress,
 }: TimePanelProps) => {
   return (
@@ -23,14 +22,32 @@ const TimePanel = ({
             width: 0,
             height: 3,
           },
+          overflow: "hidden",
           shadowOpacity: 0.27,
           shadowRadius: 4.65,
           elevation: 1,
           marginBottom: 5,
         }}
       >
+        <View>
+          {isWarning && (
+            <Badge
+              style={{
+                fontSize: 12.5,
+                borderRadius: 0,
+                position: "relative",
+                right: -40,
+                overflow: "hidden",
+                transform: [{ rotate: "45deg" }],
+              }}
+            >
+              Warning
+            </Badge>
+          )}
+        </View>
+
         <Text
-          style={{ marginBottom:20 }}
+          style={{ marginBottom: 20 }}
           whiteColor={isSelected}
           semibold
           headline
@@ -38,22 +55,17 @@ const TimePanel = ({
         >
           {time}
         </Text>
-
         {isSelected ? (
           <View style={$useHori}>
-         
-
-              <ProgressBar
-                progress={progressValue || 0}
-                style={{ height: 10,width:100}}
-                color={"#8CC8FF"}
-                // backgroundColor={"#8CC8FF"}
-                animated={false}
-              />
+            <ProgressBar
+              progress={progressValue || 0}
+              style={{ height: 10, width: 100 }}
+              color={"#8CC8FF"}
+              // backgroundColor={"#8CC8FF"}
+              animated={false}
+            />
             <Text whiteColor caption2>
-                {
-                 Math.floor( +progressValue * 100) + "%" || 0
-                }
+              {Math.floor(+progressValue * 100) + "%" || 0}
             </Text>
           </View>
         ) : (
@@ -63,5 +75,5 @@ const TimePanel = ({
     </TouchableOpacity>
   )
 }
-const $useHori: ViewStyle= {flexDirection:"row",alignItems:"center",gap:5}
+const $useHori: ViewStyle = { flexDirection: "row", alignItems: "center", gap: 5 }
 export default TimePanel

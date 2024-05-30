@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useRef } from "react"
 import Icon from "react-native-vector-icons/Entypo"
 import DatePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import { Text } from "app/components/v2"
@@ -10,38 +10,45 @@ type HeaderProps = {
   currDate: Date
   showDate: boolean
   dateValue: any
+  selectedWtp:any 
   enableWTP: boolean
   showLine: boolean
+  onSelectWtp: (item: string) => void
   onPressdate: () => void
   onChangeDate: (e: DateTimePickerEvent, v: Date | undefined) => void
 }
 const HeaderBar = ({
-  currDate ,
+  currDate,
   showDate,
   showLine = true,
   enableWTP = false,
   dateValue,
+  selectedWtp,
   onPressdate,
+  onSelectWtp,
   onChangeDate,
 }: HeaderProps) => {
   const lines = [
     { name: "line 1", value: 1 },
     { name: "line 2", value: 2 },
   ]
+
   const wtps = [
     {
-      name: "Water Treatment plant 2",
+      name: "Water Treatment Plant 2",
       value: 1,
     },
     {
-      name: "Water Treatment plant 3",
+      name: "Water Treatment Plant 3",
       value: 2,
     },
     {
-      name: "Water Treatment plant 4",
+      name: "Water Treatment Plant 4",
       value: 3,
     },
   ]
+
+  console.log('selected',selectedWtp)
   return (
     <>
       <View style={{ marginLeft: 50, alignItems: "center" }}>
@@ -49,9 +56,7 @@ const HeaderBar = ({
           Today Task
         </Text>
         <Text body1 body2>
-
-        
-          {moment(currDate).format('LL')}
+          {moment(currDate).format("LL")}
         </Text>
       </View>
 
@@ -72,6 +77,30 @@ const HeaderBar = ({
             }}
             onChange={(item) => {
               console.log(item)
+            }}
+          />
+        )}
+
+        {enableWTP && (
+          <Dropdown
+            style={[styles.dropdown, { width: 230 }]}
+            data={wtps}
+            labelField="name"
+            valueField="value"
+            placeholder="Select Treatment"
+            itemTextStyle={$fontSelected}
+            // closeModalWhenSelectedItem
+            selectedTextStyle={$fontSelected}
+            placeholderStyle={$fontSelected}
+            // onSelect={setSelected}
+            
+            search
+            value={selectedWtp}
+            onChangeText={(text: any) => {
+              console.log(text)
+            }}
+            onChange={(item) => {
+              onSelectWtp(item)
             }}
           />
         )}
@@ -99,42 +128,16 @@ const HeaderBar = ({
               display={Platform.OS === "ios" ? "spinner" : "default"}
               is24Hour={true}
               onChange={onChangeDate}
-         
               style={{}}
             />
           )}
         </View>
-        {enableWTP && (
-          <Dropdown
-            style={[styles.dropdown, { width: 230 }]}
-            data={wtps}
-            labelField="name"
-            valueField="value"
-            placeholder="Select Water Treatment"
-            mode="default"
-            itemTextStyle={$fontSelected}
-            confirmSelectItem 
-            closeModalWhenSelectedItem
-            selectedTextStyle ={$fontSelected}
-            placeholderStyle={$fontSelected}
-            // onSelect={setSelected}
-            search
-            value={wtps}
-            onChangeText={(text: any) => {
-              console.log(text)
-            }}
-            onChange={(item) => {
-              console.log(item)
-            }}
-          />
-        )}
       </View>
     </>
   )
 }
 
-
-const $fontSelected : TextStyle= {
-  fontSize:14
+const $fontSelected: TextStyle = {
+  fontSize: 14,
 }
 export default HeaderBar

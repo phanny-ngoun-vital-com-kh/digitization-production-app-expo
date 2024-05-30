@@ -13,7 +13,9 @@ const MachinePanel = ({
   status = "normal",
   assign_to = "Vicheaka",
   time = "7:00",
+  created_date,
   warning_count = 0,
+  handleAssigntask,
   onPress,
 }: MachinePanelProps) => {
   const getStatus = (status: MACHINE_STATE) =>
@@ -30,14 +32,17 @@ const MachinePanel = ({
     >
       <TouchableOpacity style={{ paddingHorizontal: 10, paddingVertical: 5 }} onPress={onPress}>
         <View style={{ width: 180, position: "relative" }}>
-          <Text semibold headline>
-            {machine_type}
-          </Text>
+          <View style={$containerHorizon}>
+            <Text semibold headline>
+              {machine_type}
+            </Text>
+          </View>
 
-          {!!warning_count && <View style={{left:110,top:1}}>
-            
-            <BadgeWarning value={+warning_count} status="warning" />
-            </View>}
+          {!!warning_count && (
+            <View style={{ left: 110, top: 1 }}>
+              <BadgeWarning value={+warning_count} status="warning" />
+            </View>
+          )}
         </View>
 
         <View style={$containerHorizon}>
@@ -54,7 +59,7 @@ const MachinePanel = ({
         />
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-          <View style={[$containerHorizon, { gap: 10 }]}>
+          <View style={[$containerHorizon, { gap: 20 }]}>
             <View style={$containerHorizon}>
               <Icon name="search1" size={20} color="black" />
               <Text semibold caption1>
@@ -67,6 +72,12 @@ const MachinePanel = ({
                 {time}
               </Text>
             </View>
+            <View style={$containerHorizon}>
+              <Icon name="calendar" size={20} color="black" />
+              <Text semibold caption1 style={{ marginLeft: 5 }}>
+                {created_date?.toString()}
+              </Text>
+            </View>
           </View>
 
           <View>
@@ -75,6 +86,19 @@ const MachinePanel = ({
             </TouchableOpacity>
           </View>
         </View>
+
+        {status === "pending" && (
+          <TouchableOpacity
+          onPress={handleAssigntask}
+          >
+            <View style={[$containerHorizon, { justifyContent: "center", marginBottom: 20 ,marginTop:15}]}>
+              <Icon name="edit" size={18} color="#0081F8" />
+              <Text semibold caption1 style={{ marginLeft: 5, color: "#0081F8" }}>
+                Enroll this task
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     </View>
   )

@@ -29,7 +29,6 @@ interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const {
     authStore: { getUserInfo },
-    waterTreatmentStore,
   } = useStores()
   const { width: ScreenWidth } = Dimensions.get("screen")
   const [isNotiVisible, setNotiVisible] = useState(false)
