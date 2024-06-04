@@ -10,9 +10,11 @@ type HeaderProps = {
   currDate: Date
   showDate: boolean
   dateValue: any
-  selectedWtp:any 
+  selectedLine: string
+  selectedWtp: any
   enableWTP: boolean
   showLine: boolean
+  onSelectLine: (item: string) => void
   onSelectWtp: (item: string) => void
   onPressdate: () => void
   onChangeDate: (e: DateTimePickerEvent, v: Date | undefined) => void
@@ -24,6 +26,8 @@ const HeaderBar = ({
   enableWTP = false,
   dateValue,
   selectedWtp,
+  selectedLine,
+  onSelectLine,
   onPressdate,
   onSelectWtp,
   onChangeDate,
@@ -48,7 +52,6 @@ const HeaderBar = ({
     },
   ]
 
-  console.log('selected',selectedWtp)
   return (
     <>
       <View style={{ marginLeft: 50, alignItems: "center" }}>
@@ -69,14 +72,13 @@ const HeaderBar = ({
             valueField="value"
             placeholder="Select Line"
             placeholderStyle={{ fontSize: 14.5 }}
-            // onSelect={setSelected}
+            // onSelect={onSelectLine}
             search
-            value={lines}
+            value={selectedLine }
             onChangeText={(text: any) => {
-              console.log(text)
             }}
             onChange={(item) => {
-              console.log(item)
+              onSelectLine(item)
             }}
           />
         )}
@@ -93,7 +95,7 @@ const HeaderBar = ({
             selectedTextStyle={$fontSelected}
             placeholderStyle={$fontSelected}
             // onSelect={setSelected}
-            
+
             search
             value={selectedWtp}
             onChangeText={(text: any) => {

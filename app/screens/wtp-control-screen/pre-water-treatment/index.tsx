@@ -27,6 +27,7 @@ import {
   PreWaterTreatmentListItem,
 } from "app/models/pre-water-treatment/pre-water-treatment-model"
 import { useStores } from "app/models"
+import { getCurrentTime } from "app/utils-v2/getCurrTime"
 
 interface PrewaterTreatmentScreenProps extends AppStackScreenProps<"PrewaterTreatment"> {}
 
@@ -47,7 +48,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
     const [wtp, setWtp] = useState<PreWaterTreatment[] | null>([])
     const [datePicker, setDatePicker] = useState({
       show: false,
-      value: null,
+      value: new Date(Date.now()),
     })
     const [sort, setSort] = useState("asc")
     const [query, setQuery] = useState("")
@@ -56,7 +57,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
     const [machineSnapshot, setMachineSnapshot] = useState<PreWaterTreatment[] | null>([])
     const { colors } = useTheme()
     const [selectedShift, setSelectedShift] = useState({
-      item: "7:00",
+      item: "",
       index: 0,
       pre_treatment_id: "",
     })
@@ -64,6 +65,34 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
       name: "",
       value: "",
     })
+
+    const getCurrentSchedule = (schedules: any[], currTime: string) => {
+      const currentTime = currTime
+      // Convert currentTime to minutes
+      const [currentHour, currentMinute] = currentTime.split(":").map(Number)
+      const currentTimeInMinutes = currentHour * 60 + currentMinute
+
+      // Sort schedules by time in minutes (assuming schedules are already sorted)
+      const sortedSchedules = schedules.map((schedule) => {
+        const [hour, minute] = schedule.time.split(":").map(Number)
+        const timeInMinutes = hour * 60 + minute
+        return { ...schedule, timeInMinutes }
+      })
+
+      // Find the latest schedule that hasn't passed yet
+      let latestSchedule = null
+      for (let i = 0; i < sortedSchedules.length; i++) {
+        const schedule = sortedSchedules[i]
+        if (schedule.timeInMinutes <= currentTimeInMinutes) {
+          latestSchedule = schedule
+        } else {
+          break
+        }
+      }
+
+      // Return the latest schedule or the last schedule if none found
+      return latestSchedule || sortedSchedules[schedules.length - 1]
+    }
 
     const onSendback = () => {
       setSchedules([
@@ -87,6 +116,8 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
     const renderItem = ({ item }: { item: PreWaterTreatment }) => {
       return (
         <FlatList
+          showsVerticalScrollIndicator
+          persistentScrollbar
           data={item?.pretreatmentlist || []}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item: subitem }) => {
@@ -206,6 +237,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
         setLoading(false)
       }
     }
+
     const onSortItem = () => {
       sort === "asc" ? setSort("desc") : setSort("asc")
       if (selectTime?.length) {
@@ -252,8 +284,15 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
         setLoading(false)
       }
     }
+
     useEffect(() => {
-      if (selectedWTP.value && datePicker.value) {
+      if (selectedWTP.value) {
+        const result = getCurrentSchedule(schedules, getCurrentTime())
+        const Foundindex = schedules.findIndex((item) => item.time === result?.time)
+        console.log(result, Foundindex)
+
+        console.log("index", Foundindex)
+        setSelectedShift((pre) => ({ ...pre, item: "7:00", index: 0 }))
         setSchedules([
           { time: "7:00", isWarning: false, pre_treatment_id: "" },
           { time: "11:00", isWarning: false, pre_treatment_id: "" },
@@ -273,7 +312,14 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
         fetchWtp()
       }
 
-      return () => setWtp([])
+      return () => {
+        setWtp([])
+        // setSelectedShift({
+        //   item: "",
+        //   index: 0,
+        //   pre_treatment_id: "",
+        // })
+      }
     }, [datePicker.value, selectedWTP])
 
     useEffect(() => {
@@ -363,7 +409,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
             ]}
           >
             <View style={styles.leftPane}>
-              <ScrollView scrollEnabled>
+              <ScrollView scrollEnabled showsVerticalScrollIndicator persistentScrollbar>
                 {schedules?.map((item, index) => (
                   <TimePanel
                     onPress={() => {
@@ -410,6 +456,8 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
               <View style={{ flex: 1 }}>
                 <FlatList
                   // contentContainerStyle={{flex:1}}
+                  showsVerticalScrollIndicator
+                  persistentScrollbar
                   data={selectTime}
                   ListEmptyComponent={<EmptyFallback placeholder="No Task for this schedule !!!" />}
                   refreshControl={

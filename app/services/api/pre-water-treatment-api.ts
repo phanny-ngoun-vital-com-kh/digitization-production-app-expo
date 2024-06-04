@@ -5,6 +5,7 @@ import { DataResponse } from "./response-util"
 const ApiURL = {
   getPrewtpBydate: "get_pre_treatment_by_date_assign",
   postWTP: "post_daily_pre_water_treatment",
+  getAllByDateOnly:"get-treatment-daily",
   getWtpbyDate: "get_pre_treatment_by_date_time",
   getCtlActivity: "get-control-activities",
 }
@@ -13,6 +14,18 @@ export class PreWaterTreatmentApi extends BaseApi {
   async getPreWTPList(params: { assign_date: string; pre_treatment_type: string }): Promise<any> {
     try {
       const rs = await this.requestService.list(ApiURL.getPrewtpBydate, {
+        ...params,
+      })
+
+      return DataResponse(rs)
+    } catch (e: any) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data" }
+    }
+  }
+  async getPreWTPListByDate(params: { assign_date: string }): Promise<any> {
+    try {
+      const rs = await this.requestService.list(ApiURL.getAllByDateOnly, {
         ...params,
       })
 

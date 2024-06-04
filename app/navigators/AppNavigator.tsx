@@ -49,10 +49,9 @@ import { Treatment } from "app/models/water-treatment/water-treatment-model"
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
 
-
 export type WTP2ParamsForm = {
-  type:string 
-  item:Treatment
+  type: string
+  item: Treatment
 }
 export type AppStackParamList = {
   Welcome: undefined
@@ -80,6 +79,11 @@ export type AppStackParamList = {
   HaccpLineForm: undefined
   PreWaterForm1: undefined
   PreWaterForm2: undefined
+  GiftChart: undefined
+  Dashboard: undefined
+  PreWaterDs: undefined
+  LineDs: undefined
+  DailyDs: undefined
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -106,7 +110,12 @@ const DrawerScreen = observer(function DrawerScreen() {
       drawerContent={(props) => <DrawerContent {...props} username={username} />}
       screenOptions={{ headerShown: false }}
     >
-      <Drawer.Screen name="AppStack">
+      <Drawer.Screen
+        name="AppStack"
+        options={{
+          swipeEnabled: false, //disable drawer when swipe accidentally at empty screen that do not have drawer 
+        }}
+      >
         {(props) => <AppStack {...props} setUsername={setUsername} />}
       </Drawer.Screen>
     </Drawer.Navigator>
@@ -217,7 +226,7 @@ const AppStack = observer(function AppStack(props: {
               title: "Water Control",
             }}
           />
-      
+
           {/* <Stack.Screen
             name="WaterTreatmentControlForm"
             component={Screens.WaterTreatmentControlFormScreen}
@@ -283,6 +292,39 @@ const AppStack = observer(function AppStack(props: {
             options={{
               headerShown: true,
               title: "Form 2",
+            }}
+          />
+     
+          <Stack.Screen
+            name="Dashboard"
+            component={Screens.DashboardScreen}
+            options={{
+              headerShown: true,
+              title: "Dashboard",
+            }}
+          />
+          <Stack.Screen
+            name="PreWaterDs"
+            component={Screens.PreWaterDsScreen}
+            options={{
+              headerShown: true,
+              title: "Pre Water",
+            }}
+          />
+          <Stack.Screen
+            name="LineDs"
+            component={Screens.LineDsScreen}
+            options={{
+              headerShown: true,
+              title: "Line",
+            }}
+          />
+          <Stack.Screen
+            name="DailyDs"
+            component={Screens.DailyDsScreen}
+            options={{
+              headerShown: true,
+              title: "Daily Water",
             }}
           />
           {/* <Stack.Screen name="Demo" component={DemoNavigator} /> */}

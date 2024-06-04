@@ -1,7 +1,13 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
-  progressLine : {
+  badge: {
+    backgroundColor: "#D32600",
+    borderRadius: 100,
+    height: 10,
+    width: 10,
+  },
+  progressLine: {
     backgroundColor: "#0081F8",
     width: 15,
     height: 15,
@@ -15,8 +21,8 @@ export default StyleSheet.create({
     alignItems: "center",
   },
   linePanel: {
-    paddingHorizontal: 10,
-    paddingVertical: 60,
+    paddingHorizontal: 50,
+    paddingVertical: 30,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#BFB6B6",
     borderBottomWidth: 1,
@@ -25,12 +31,18 @@ export default StyleSheet.create({
       width: 0,
       height: 3,
     },
+    height:250,
+    flex:1,
+    flexGrow:1,
     shadowOpacity: 0.27,
     shadowRadius: 4.65,
     // elevation: 3,
     // height: 1,
-    width: "33.33%",
-    flexDirection:"column"
+    // width: "100%",
+    // width:,
+ 
+    flexDirection: "column",
+    justifyContent: "center",
   },
   rightPane: {
     flex: 0.2,

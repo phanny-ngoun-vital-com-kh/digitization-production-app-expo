@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from "@react-navigation/native"
 import { Text } from "app/components/v2"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
-import { ActivityIndicator, Checkbox, useTheme } from "react-native-paper"
+import { ActivityIndicator, Checkbox } from "react-native-paper"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { useStores } from "app/models"
 import { Activities, TreatmentModel } from "app/models/water-treatment/water-treatment-model"
@@ -23,7 +23,7 @@ import {
 import { styles } from "./styles"
 import { ImagetoText } from "app/utils-v2/ocr"
 interface WaterTreatmentPlant2FormScreenProps
-  extends AppStackScreenProps<"WaterTreatmentPlant2Form"> {}
+  extends AppStackScreenProps<"WaterTreatmentPlant2Form"> { }
 
 export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenProps> = observer(
   function WaterTreatmentPlant2FormScreen() {
@@ -36,7 +36,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       image: false,
       submitting: false,
     })
-    const [actions, setActions] = useState<string[]>([])
     const [showLog, setShowlog] = useState<boolean>(false)
     const [machineState, setMachineState] = useState({
       iswarning: false,
@@ -210,11 +209,16 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       }
     }
 
+    console.log(route?.items?.status)
+
     const handleSubmit = async (warningCount: string) => {
       try {
         setLoading((pre) => ({ ...pre, submitting: true }))
 
-        const actions = getActionUser()
+        const actions =
+          route?.items?.status === null || route?.items?.status === "pending"
+            ? "has completed the machine inspection"
+            : getActionUser()
         const payload = TreatmentModel.create({
           tds: form?.tds?.toString(),
           ph: form?.ph?.toString(),
@@ -638,6 +642,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                           setForm((pre) => ({ ...pre, other: text.trim() }))
                         }}
                         label="Other"
+                        showAsterick={false}
                         hintLimit="Optional"
                         errormessage={""}
                       />
@@ -646,64 +651,64 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     {(route?.type?.toLowerCase() === "sand filter" ||
                       route?.type?.toLowerCase() === "carbon filter" ||
                       route?.type?.toLowerCase() === "resin filter") && (
-                      <View style={$width}>
-                        <Text style={{ margin: 5, fontSize: 18 }} semibold>
-                          Air Released
-                        </Text>
+                        <View style={$width}>
+                          <Text style={{ margin: 5, fontSize: 18 }} semibold>
+                            Air Released
+                          </Text>
 
-                        <View style={[$containerHorizon, { marginTop: 10 }]}>
-                          <TouchableOpacity
-                            style={$containerHorizon}
-                            onPress={() => {
-                              setErrors((pre) => ({ ...pre, air_release: false }))
-                              setForm((pre) => ({ ...pre, air_release: true }))
-                            }}
-                          >
-                            <Checkbox
-                              status={
-                                form.air_release == null
-                                  ? "unchecked"
-                                  : form?.air_release === "true" || form.air_release === true
-                                  ? "checked"
-                                  : "unchecked"
-                              }
+                          <View style={[$containerHorizon, { marginTop: 10 }]}>
+                            <TouchableOpacity
+                              style={$containerHorizon}
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
                                 setForm((pre) => ({ ...pre, air_release: true }))
                               }}
-                              color="#0081F8"
-                            />
-                            <Text>Yes </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={$containerHorizon}
-                            onPress={() => {
-                              setErrors((pre) => ({ ...pre, air_release: false }))
-                              setForm((pre) => ({ ...pre, air_release: false }))
-                            }}
-                          >
-                            <Checkbox
-                              status={
-                                form.air_release == null
-                                  ? "unchecked"
-                                  : form?.air_release === "false" || form.air_release === false
-                                  ? "checked"
-                                  : "unchecked"
-                              }
+                            >
+                              <Checkbox
+                                status={
+                                  form.air_release == null
+                                    ? "unchecked"
+                                    : form?.air_release === "true" || form.air_release === true
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setErrors((pre) => ({ ...pre, air_release: false }))
+                                  setForm((pre) => ({ ...pre, air_release: true }))
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>Yes </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={$containerHorizon}
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
                                 setForm((pre) => ({ ...pre, air_release: false }))
                               }}
-                              color="#0081F8"
-                            />
-                            <Text>No</Text>
-                          </TouchableOpacity>
+                            >
+                              <Checkbox
+                                status={
+                                  form.air_release == null
+                                    ? "unchecked"
+                                    : form?.air_release === "false" || form.air_release === false
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setErrors((pre) => ({ ...pre, air_release: false }))
+                                  setForm((pre) => ({ ...pre, air_release: false }))
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>No</Text>
+                            </TouchableOpacity>
+                          </View>
+                          <Text caption1 errorColor>
+                            {errors?.air_release ? "*សូម​ត្រួតពិនិត្យ air release " : ""}
+                          </Text>
                         </View>
-                        <Text caption1 errorColor>
-                          {errors?.air_release ? "*សូម​ត្រួតពិនិត្យ air release " : ""}
-                        </Text>
-                      </View>
-                    )}
+                      )}
                   </View>
                 )}
 

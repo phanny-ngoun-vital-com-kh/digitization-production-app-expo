@@ -24,6 +24,7 @@ import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import EmptyFallback from "app/components/EmptyFallback"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import AlertDialog from "app/components/v2/AlertDialog"
+import { convertToMinutes, getCurrentTime } from "app/utils-v2/getCurrTime"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 
@@ -40,12 +41,12 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     const [isloading, setLoading] = useState(false)
     const [datePicker, setDatePicker] = useState({
       show: false,
-      // value: new Date(Date.now()),
-      value: null,
+      value: new Date(Date.now()),
+      // value: null,
     })
     const [sort, setSort] = useState("asc")
     const [query, setQuery] = useState("")
-    const [selectedShift, setSelectedShift] = useState("")
+
     const navigation = useNavigation()
 
     const [shifts, setShifts] = useState([
@@ -67,6 +68,13 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       },
     ])
 
+    const dummyShifts = [
+      { time: "7:00", type: "S1" },
+      { time: "13:00", type: "S1" },
+      { time: "18:00", type: "S2" },
+      { time: "22:00", type: "S2" },
+    ]
+
     const handleAssignTask = async () => {
       try {
         console.log(await authStore.getUserInfo())
@@ -78,7 +86,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           moment(datePicker.value).format("YYYY-MM-DD"),
         )
 
-        console.log("full finished", payload)
+        // console.log("full finished", payload)
       } catch (error) {
         console.log(error.message)
         Dialog.show({
@@ -93,6 +101,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }
 
     const onCalculateSchedule = (completed: string, total: string) => {
+      // console.log(completed, total)
       if (completed && total) {
         const progress = Number(completed) / Number(total)
         setSelectProgess(progress)
@@ -131,7 +140,29 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       setRefreshing(true)
       fetchScehdules()
     }
+    const getCurrentTimeAndShift = (dummyShifts, getCurrentTime) => {
+      const currentTime = getCurrentTime
+      const currentTimeInMinutes = convertToMinutes(currentTime)
 
+      for (let i = 0; i < dummyShifts.length; i++) {
+        const shift = dummyShifts[i]
+        const shiftTimeInMinutes = convertToMinutes(shift.time)
+
+        if (currentTimeInMinutes < shiftTimeInMinutes) {
+          if (i === 0) {
+            // If current time is before the first shift, return the first shift time and type
+            return { time: dummyShifts[0].time, type: dummyShifts[0].type }
+          } else {
+            // If current time is after a shift but before the next, return the previous shift time and type
+            return { time: dummyShifts[i - 1].time, type: dummyShifts[i - 1].type }
+          }
+        }
+      }
+
+      // If current time is after the last shift, return the last shift time and type
+      const lastIndex = dummyShifts.length - 1
+      return { time: dummyShifts[lastIndex].time, type: dummyShifts[lastIndex].type }
+    }
     const fetchTimePanel = async () => {
       const assign_date = moment(datePicker?.value).format("YYYY-MM-DD")
       const times = (await waterTreatmentStore.getWtpByDate(assign_date?.toString() || "")) as []
@@ -190,17 +221,21 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           )) as []
 
           setWtp2(results)
+          console.log(results.length)
           const schedules = results.map((item) => item?.treatmentlist)[0]
           setSchedules(schedules)
           setScheduleSnapshot(schedules)
           const [allprogress] = results.map((item) => item?.treatmentlist) as []
 
-          const selectProgress = allprogress?.filter((item) => item?.status !== null)
+          const selectProgress = allprogress?.filter((item) =>
+            item?.status == null ? item?.status != null : item?.status !== "pending",
+          )
 
           onCalculateSchedule(selectProgress?.length, schedules?.length)
 
           return
         }
+
         setWtp2([])
       } catch (error: unknown) {
         Dialog.show({
@@ -240,12 +275,20 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
         setSchedules(result)
       }
     }
+    const [selectedShift, setSelectedShift] = useState(() => {
+      const result = getCurrentTimeAndShift(dummyShifts, getCurrentTime())
+      const currShift = result.type + " " + "(" + result.time + ")"
+      // console.log(currShift)
+      return currShift
+    })
     useEffect(() => {
       fetchScehdules()
 
       if (datePicker.value) {
         fetchTimePanel()
       }
+
+      return () => {}
     }, [datePicker.value, selectedShift])
     useEffect(() => {
       onSearchItem()
@@ -272,25 +315,6 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
                   if (e.type === "set") {
                     setSelectProgess(0)
-                    // setShifts([
-                    //   {
-                    //     id: 1,
-                    //     name: "S1",
-                    //     schedules: [
-                    //       { time: "7:00", isWarning: false },
-                    //       { time: "13:00", isWarning: false },
-                    //     ],
-                    //   },
-                    //   {
-                    //     id: 2,
-                    //     name: "S2",
-                    //     schedules: [
-                    //       { time: "18:00", isWarning: false },
-                    //       { time: "22:00", isWarning: false },
-                    //     ],
-                    //   },
-                    // ])
-
                     setSelectedShift(`S1 (7:00)`)
                   }
                 }}
@@ -315,7 +339,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               ]}
             >
               <View style={styles.leftPane}>
-                <ScrollView scrollEnabled>
+                <ScrollView >
                   {shifts?.map((item) => {
                     return item.schedules.map((subitem, index) => {
                       return (
@@ -369,6 +393,9 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                 </View>
                 <View style={$useflex}>
                   <FlatList
+                  showsVerticalScrollIndicator
+                  persistentScrollbar
+                  
                     refreshControl={
                       <RefreshControl
                         colors={[colors.primary]}

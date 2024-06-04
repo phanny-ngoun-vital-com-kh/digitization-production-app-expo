@@ -140,7 +140,6 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       }
     }
 
-    // console.log(route)
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,

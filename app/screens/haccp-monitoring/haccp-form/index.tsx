@@ -1,4 +1,4 @@
-import React, { FC, useLayoutEffect, useMemo, useState } from "react"
+import React, { FC, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/Ionicons"
 import { AppStackScreenProps } from "app/navigators"
@@ -9,23 +9,19 @@ import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import { Checkbox, Divider, List } from "react-native-paper"
 import { ScrollView } from "react-native-gesture-handler"
 import { useNavigation, useRoute } from "@react-navigation/native"
-import InstructionModal from "app/components/v2/InstructionModal"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { useTheme } from "app/theme-v2"
+import InstructionList from "app/components/v2/HACCP/InstructionList"
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
+
     const route = useRoute().params
     const { colors } = useTheme()
     const navigation = useNavigation()
     const [showinstruction, setShowInstruction] = useState(true)
     const [showActivitylog, setShowActivitylog] = useState(false)
-    const tasks = [
-      "Check the treated water pressure for bottle rinsing from pressure gauge every 2 hours by Line Leader",
-      "Check 32/40 nozzles to verify they are not clog if there is no clogged tick ✔ ",
-      "Smell test of ozone after capping with bottling every 2 hours and Verify ozone concenstration with QC every 4 hours",
-      "In case, ozone concentration or pressure is smaller than critical limit or there is one of them clogged, Line Leader must stop to find root cause and take action",
-    ]
+
     const [formLineA, setFormLineA] = useState({
       side_wall: "",
       air_pressure: "",
@@ -40,9 +36,9 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       water_pressure: "",
       nozzie_rinser: "",
       FG: "",
-      over_control: false,
-      under_control: false,
-      smell: false,
+      over_control: null,
+      under_control: null,
+      smell: null,
       instruction: "",
       other: "",
     })
@@ -76,6 +72,8 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       if (notvalid) {
         return
       }
+      console.log("click")
+      console.log(formLineB, formLineA)
       navigation.goBack()
     }
 
@@ -83,14 +81,17 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       const errorlists = errorsLineB
       delete errorlists.instruction
       delete errorlists.other
-      delete errorlists.under_control
-      delete errorlists.over_control
-      delete errorlists.smell
       const notvalid = Object.values(errorlists).some((err) => err === true)
       if (notvalid) {
         return
       }
+      console.log(formLineB)
+
       navigation.goBack()
+    }
+
+    const onShowInstruction = () => {
+      setShowInstruction((pre) => !pre)
     }
 
     useLayoutEffect(() => {
@@ -101,10 +102,10 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center" }}
             onPress={() => {
-              if ([4, 5, 6].includes(route?.line)) {
+              if ([4, 5, 6].includes(+route?.line)) {
                 validateLineA(errorsLineA)
               }
-              if ([2, 3].includes(route?.line)) {
+              if ([2, 3].includes(+route?.line)) {
                 validateLineB(errorsLineB)
               }
             }}
@@ -120,9 +121,9 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
 
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={$root}>
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator persistentScrollbar stickyHeaderIndices={[]}>
           <View style={[$outerContainer]}>
-            {[4, 5, 6].includes(route?.line) && (
+            {[4, 5, 6].includes(+route?.line) && (
               <>
                 <ActivityBar
                   direction="end"
@@ -250,123 +251,145 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       />
                     </View>
                     <View style={[$width, { marginTop: 20 }]}>
-                      <Text style={{ margin: 0, fontSize: 18 }}>Activity Control</Text>
+                      <Text style={{ margin: 0, fontSize: 18 }} semibold>
+                        Activity Control
+                      </Text>
 
-                      <View style={[$containerHorizon, { marginTop: 10 }]}>
-                        <TouchableOpacity
-                          style={$containerHorizon}
-                          onPress={() => {
-                            if (!formLineA.over_control) {
-                              setFormLineA((pre) => ({
-                                ...pre,
-                                over_control: true,
-                                under_control: false,
-                              }))
-                            } else {
-                              setFormLineA((pre) => ({
-                                ...pre,
-                                over_control: true,
-                                under_control: false,
-                              }))
-                            }
-
-                            setErrorsLineA((pre) => ({
-                              ...pre,
-                              under_control: false,
-                              over_control: false,
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            status={
-                              !formLineA?.over_control
-                                ? false
-                                : formLineA?.over_control
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              if (!formLineA.over_control) {
-                                setFormLineA((pre) => ({
-                                  ...pre,
-                                  over_control: true,
-                                  under_control: false,
-                                }))
-                              } else {
-                                setFormLineA((pre) => ({
-                                  ...pre,
-                                  over_control: true,
-                                  under_control: false,
-                                }))
-                              }
-
-                              setErrorsLineA((pre) => ({
-                                ...pre,
-                                under_control: false,
-                                over_control: false,
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>Overcontrol</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={$containerHorizon}
-                          onPress={() => {
-                            if (!formLineA.under_control) {
-                              setFormLineA((pre) => ({
-                                ...pre,
-                                under_control: true,
-                                over_control: false,
-                              }))
-                            } else {
-                              setFormLineA((pre) => ({
-                                ...pre,
-                                under_control: true,
-                                over_control: false,
-                              }))
-                            }
-
-                            setErrorsLineA((pre) => ({
-                              ...pre,
-                              under_control: false,
-                              over_control: false,
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            status={
-                              !formLineA?.under_control
-                                ? false
-                                : formLineA?.under_control
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              if (!formLineA.under_control) {
-                                setFormLineA((pre) => ({
-                                  ...pre,
-                                  under_control: true,
-                                  over_control: false,
-                                }))
-                              } else {
-                                setFormLineA((pre) => ({
-                                  ...pre,
-                                  under_control: true,
-                                  over_control: false,
-                                }))
-                              }
-
-                              setErrorsLineA((pre) => ({
-                                ...pre,
-                                under_control: false,
-                                over_control: false,
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>UnderControl</Text>
-                        </TouchableOpacity>
+                      <View style={$containerHorizon}>
+                        <View>
+                          <Text style={{ marginTop: 10 }} semibold body2>
+                            <Text errorColor>*</Text> Under Control
+                          </Text>
+                          <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                            <View style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineA((pre) => ({ ...pre, under_control: false }))
+                                  setFormLineA((pre) => ({
+                                    ...pre,
+                                    under_control: true,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineA?.under_control === null
+                                      ? "unchecked"
+                                      : formLineA?.under_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineA((pre) => ({ ...pre, under_control: false }))
+                                    setFormLineA((pre) => ({
+                                      ...pre,
+                                      under_control: true,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Yes </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineA((pre) => ({ ...pre, under_control: false }))
+                                  setFormLineA((pre) => ({
+                                    ...pre,
+                                    under_control: false,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineA?.under_control === null
+                                      ? "unchecked"
+                                      : !formLineA?.under_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineA((pre) => ({ ...pre, under_control: false }))
+                                    setFormLineA((pre) => ({
+                                      ...pre,
+                                      under_control: false,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>No</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
+                        <View>
+                          <Text style={{ marginTop: 10 }} semibold body2>
+                            <Text errorColor>*</Text> Over Control
+                          </Text>
+                          <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                            <View style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineA((pre) => ({ ...pre, over_control: false }))
+                                  setFormLineA((pre) => ({
+                                    ...pre,
+                                    over_control: true,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineA?.over_control === null
+                                      ? "unchecked"
+                                      : formLineA?.over_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineA((pre) => ({ ...pre, over_control: false }))
+                                    setFormLineA((pre) => ({
+                                      ...pre,
+                                      over_control: true,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Yes </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineA((pre) => ({ ...pre, over_control: false }))
+                                  setFormLineA((pre) => ({
+                                    ...pre,
+                                    over_control: false,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineA?.over_control === null
+                                      ? "unchecked"
+                                      : !formLineA?.over_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineA((pre) => ({ ...pre, over_control: false }))
+                                    setFormLineA((pre) => ({
+                                      ...pre,
+                                      over_control: false,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>No</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
                       </View>
                       <Text errorColor caption1 style={{ marginTop: 10 }}>
                         {errorsLineA?.over_control && errorsLineA?.under_control
@@ -380,6 +403,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                     <View style={$width}>
                       <CustomInput
                         showIcon={false}
+                        showAsterick={false}
                         onChangeText={(text) => {}}
                         label="Instruction "
                         errormessage={""}
@@ -390,45 +414,23 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
               </>
             )}
 
-            {[2, 3].includes(route?.line) && (
+            {[2, 3].includes(+route?.line) && (
               <>
-                <ActivityBar
-                  direction="end"
-                  showInfo
-                  onClickinfo={() => setShowInstruction(true)}
-                  onActivity={() => setShowActivitylog(true)}
+                <InstructionList
+                  showinstruction={showinstruction}
+                  handleToggle={onShowInstruction}
                 />
-                <View style={{ marginVertical: 25 }}>
-                  <List.Section title="" style={{ backgroundColor: "#F6F6F6" }}>
-                    <List.Accordion
-                      id={1}
-                      titleStyle={{ color: "white", fontSize:16}}
-                      
-                      title="Instruction"
-                      
-                      style={{ backgroundColor: colors.primary }}
-                      left={(props) => <List.Icon {...props} icon="folder" color="white" />}
-                      expanded={showinstruction}
-                      theme={{colors: {text: "red"}}}
-                      right={(props) => <List.Icon {...props} icon={
-                        showinstruction ?
-                        "chevron-up" :       "chevron-down" 
-                      } color="white" />}
 
-                      onPress={() => setShowInstruction((pre) => !pre)}
-                    >
-                      {tasks.map((task, index) => (
-                        <View key={index}>
-                          {/* <Text subhead>{index + 1} .</Text> */}
-
-                          <List.Item title={index + 1 + "/. " +task} />
-                        </View>
-                      ))}
-                    </List.Accordion>
-                  </List.Section>
+                <View style={[$containerHorizon, { justifyContent: "space-between" }]}>
+                  <Text title3>Bottle and Cap rinsing</Text>
+                  <ActivityBar
+                    direction="end"
+                    showInfo
+                    onClickinfo={() => setShowInstruction(true)}
+                    onActivity={() => setShowActivitylog(true)}
+                  />
                 </View>
 
-                <Text title3>Bottle and Cap rinsing</Text>
                 <Divider style={{ marginVertical: 30, backgroundColor: "#A49B9B" }} />
                 <View style={{ rowGap: 25 }}>
                   <View style={$containerHorizon}>
@@ -485,7 +487,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                   <Text title3>Filling and Capping</Text>
                   <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
 
-                  <View style={$containerHorizon}>
+                  <View style={[$containerHorizon, { gap: 0 }]}>
                     <View style={$width}>
                       <CustomInput
                         hintLimit="0.05 - 0.4 ppm"
@@ -510,97 +512,213 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                     </View>
 
                     <View style={[$width, { marginTop: 20 }]}>
-                      <Text style={{ margin: 5, fontSize: 18 }} semibold >Activity Control</Text>
+                      <Text style={{ margin: 5, fontSize: 18 }} semibold>
+                        Activity Control
+                      </Text>
 
-                      <View style={[$containerHorizon, { marginTop: 10 }]}>
-                        <TouchableOpacity
-                          style={$containerHorizon}
-                          onPress={() => {
-                            setErrorsLineB((pre) => ({ ...pre, smell: false }))
-                            setFormLineB((pre) => ({
-                              ...pre,
-                              smell: pre?.smell === null ? true : !formLineB?.smell,
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            status={
-                              !formLineB?.smell ? false : formLineB?.smell ? "checked" : "unchecked"
-                            }
-                            onPress={() => {
-                              setErrorsLineB((pre) => ({ ...pre, smell: false }))
-                              setFormLineB((pre) => ({
-                                ...pre,
-                                smell: pre?.smell === null ? true : !formLineB?.smell,
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>Smell</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={$containerHorizon}
-                          onPress={() => {
-                            setErrorsLineB((pre) => ({ ...pre, over_control: false }))
-                            setFormLineB((pre) => ({
-                              ...pre,
-                              over_control:
-                                pre?.over_control === null ? true : !formLineB?.over_control,
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            status={
-                              !formLineB?.over_control
-                                ? false
-                                : formLineB?.over_control
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setErrorsLineB((pre) => ({ ...pre, over_control: false }))
-                              setFormLineB((pre) => ({
-                                ...pre,
-                                over_control:
-                                  pre?.over_control === null ? true : !formLineB?.over_control,
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>Overcontrol</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={$containerHorizon}
-                          onPress={() => {
-                            setErrorsLineB((pre) => ({ ...pre, under_control: false }))
-                            setFormLineB((pre) => ({
-                              ...pre,
-                              under_control:
-                                pre?.under_control === null ? true : !formLineB?.under_control,
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            status={
-                              !formLineB?.under_control
-                                ? false
-                                : formLineB?.under_control
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setErrorsLineB((pre) => ({ ...pre, under_control: false }))
-                              setFormLineB((pre) => ({
-                                ...pre,
-                                under_control:
-                                  pre?.under_control === null ? true : !formLineB?.under_control,
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>UnderControl</Text>
-                        </TouchableOpacity>
+                      <View style={$containerHorizon}>
+                        <View>
+                          <Text style={{ marginTop: 10 }} semibold body2>
+                            <Text errorColor>*</Text> Smell
+                          </Text>
+                          <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                            <View style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineB((pre) => ({ ...pre, smell: false }))
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    smell: true,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineB?.smell === null
+                                      ? "unchecked"
+                                      : formLineB?.smell
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, smell: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      smell: true,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Yes </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  console.log("change")
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    smell: false,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineB?.smell === null
+                                      ? "unchecked"
+                                      : !formLineB?.smell
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, smell: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      smell: false,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>No</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
+                        <View>
+                          <Text style={{ marginTop: 10 }} semibold body2>
+                            <Text errorColor>*</Text> UnderConrol
+                          </Text>
+                          <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                            <View style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineB((pre) => ({ ...pre, under_control: false }))
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    under_control: true,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineB?.under_control === null
+                                      ? "unchecked"
+                                      : formLineB?.under_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, under_control: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      under_control: true,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Yes </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  console.log("change")
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    under_control: false,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineB?.under_control === null
+                                      ? "unchecked"
+                                      : !formLineB?.under_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, under_control: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      under_control: false,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>No</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
+
+                        <View>
+                          <Text style={{ marginTop: 10 }} semibold body2>
+                            <Text errorColor>*</Text> OverControl
+                          </Text>
+                          <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                            <View style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineB((pre) => ({ ...pre, over_control: false }))
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    over_control: true,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineB?.over_control === null
+                                      ? "unchecked"
+                                      : formLineB?.over_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, over_control: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      over_control: true,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Yes </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  console.log("change")
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    over_control: false,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
+                                  status={
+                                    formLineB?.over_control != null && !formLineB?.over_control
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, over_control: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      over_control: false,
+                                    }))
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>No</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
                       </View>
+
                       <Text errorColor caption1 style={{ marginTop: 10 }}>
                         {errorsLineB?.over_control &&
                         errorsLineB?.under_control &&
@@ -617,12 +735,14 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         showIcon={false}
                         onChangeText={(text) => {}}
                         label="Take Action  "
+                        showAsterick={false}
                         errormessage={""}
                       />
                     </View>
                     <View style={$width}>
                       <CustomInput
                         showIcon={false}
+                        showAsterick={false}
                         onChangeText={(text) => {}}
                         label="Other "
                         errormessage={""}

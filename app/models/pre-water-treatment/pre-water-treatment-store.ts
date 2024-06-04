@@ -32,6 +32,17 @@ export const PreWaterTreatmentStoreModel = types
           throw Error(rs.kind)
         }
       },
+      getListPreTreatmentByDate: async (assign_date: string) => {
+        const rs = await prewaterTreatmentApi.getPreWTPListByDate({
+          assign_date,
+        })
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
       getSelectedPretreatment: async (
         time = "2024-05-20",
         pre_treatment_id = "d0474edf-40a3-4cbe-8b09-ed6715278226",

@@ -1,18 +1,19 @@
-import React, { FC, useLayoutEffect, useState } from "react"
+import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/AntDesign"
-import { DataTable } from "react-native-paper"
+import { DataTable, PaperProvider, Portal } from "react-native-paper"
 import { FlatList, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { Button, Text } from "app/components/v2"
 import styles from "./styles"
 import { TouchableOpacity } from "react-native-gesture-handler"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useRoute } from "@react-navigation/native"
 import { $containerHorizon } from "app/screens/wtp-control-screen/water-treatment-plan"
 import { useTheme } from "app/theme-v2"
 import StateButton from "app/components/v2/HACCP/StateButton"
-// import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "app/models"
+import EmptyFallback from "app/components/EmptyFallback"
+import linesDummy from "../../../utils/dummy/haccp/index.json"
+import AlertDialog from "app/components/v2/AlertDialog"
 
 interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> {}
 
@@ -25,21 +26,44 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     onClick: (item: any) => void
   }) {
     const navigation = useNavigation()
+    const route = useRoute().params
     const { colors } = useTheme()
+    const [waterLines, setWaterLines] = useState<WaterTreatmentLine[] | []>([])
     const lineStatus = ["normal", "pending", "warning"]
     const [selectedStatus, setSelectStatus] = useState("")
+    const getRouteLine = () => route?.title.split(" ")[1]
+    const [visible, setVisible] = useState(false)
+    const showModal = () => {
+      console.log("click ")
+      setVisible(true)
+    }
+    const hideModal = () => setVisible(false)
+    const times = [
+      {
+        name: "7:00",
+        value: 1,
+      },
+      {
+        name: "9:00",
+        value: 2,
+      },
+      {
+        name: "11:00",
+        value: 3,
+      },
+    ]
     useLayoutEffect(() => {
       navigation.setOptions({
+        title: route?.title,
         headerRight: () => (
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center" }}
             onPress={() => {
-              navigation.navigate("HaccpLineForm", { line: 2 })
+              navigation.navigate("HaccpLineForm", { line: getRouteLine() })
             }}
           >
             <Icon name="plus" size={22} color={"#0081F8"} />
             <Text style={{ fontSize: 14 }} primaryColor semibold>
-              {" "}
               Add New
             </Text>
           </TouchableOpacity>
@@ -47,31 +71,37 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       })
     }, [navigation])
 
-    console.log("render time ")
-    const rendertableLine1 = ({ item, index }) => (
-      <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm", { line: 2 })}>
+    useEffect(() => {
+      const records = linesDummy.lines.filter((line) => +line.id === +route?.id ?? 0)
+      setWaterLines(records.map((record) => record.lines)[0])
+    }, [navigation, route])
+
+    const getMachineStatus = (status: any) => (status === "normal" ? "#0081F8" : "#FF0000")
+
+    const rendertableLine1 = ({ item, index }: { item: WaterTreatmentLine; index: number }) => (
+      <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm", { line: 4 })}>
         <DataTable style={{ margin: 10, marginTop: 0 }}>
           <DataTable.Row key={1}>
             <DataTable.Cell style={{ flex: 0.4 }}>{index + 1}</DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.7 }}>7:00</DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.7 }}>{item.time}</DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.9 }}>
-              <Text style={{ marginLeft: 18 }}>250</Text>
+              <Text style={{ marginLeft: 18 }}>{item?.side_wall}</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 1 }}>
-              <Text style={{ marginLeft: 28 }}>122</Text>
+              <Text style={{ marginLeft: 28 }}>{item?.air_pressure}</Text>
             </DataTable.Cell>
 
             <DataTable.Cell style={{ flex: 0.9 }}>
-              <Text style={{ marginLeft: 44 }}>25</Text>
+              <Text style={{ marginLeft: 44 }}>{item?.temp_preform}</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.55 }}>
-              <Text style={{ marginLeft: 4 }}>13</Text>
+              <Text style={{ marginLeft: 4 }}>{item?.FG}</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.9 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                 <View
                   style={{
-                    backgroundColor: "#0081F8",
+                    backgroundColor: getMachineStatus(item?.status),
                     width: 15,
                     height: 15,
                     borderRadius: 100,
@@ -80,64 +110,160 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 <Text>normal</Text>
               </View>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.9 }}>Hour VirekBoth</DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.9 }}>{item?.assign_to ?? "N / A"}</DataTable.Cell>
           </DataTable.Row>
         </DataTable>
       </TouchableOpacity>
     )
 
-    const rendertableLine4 = ({ item, index }) => {
+    const rendertableLine4 = ({ item, index }: { item: WaterTreatmentLine; index: number }) => {
       return (
-        <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm", { line: 2 })}>
-          <DataTable style={{ margin: 10, marginTop: 0 }}>
-            <DataTable.Row key={1}>
-              <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
-              <DataTable.Cell style={{ flex: 0.5 }}>13:00:00</DataTable.Cell>
+        <DataTable style={{ margin: 10, marginTop: 0 }}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("HaccpLineForm", { line: 2 })}
+            activeOpacity={1} // Ensures the touchable area does not extend into the button
+          >
+            <View>
+              <DataTable.Row key={1}>
+                <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text style={{ marginLeft: 15 }}>{item?.time}</Text>
+                </DataTable.Cell>
 
-              <DataTable.Cell style={{ flex: 0.8 }}>
-                <Text style={{ marginLeft: 70 }}>250</Text>
-              </DataTable.Cell>
-              <DataTable.Cell style={{ flex: 0.5 }}>
-                <Text style={{ marginLeft: 30 }}>133</Text>
-              </DataTable.Cell>
-              <DataTable.Cell style={{ flex: 0.5 }}>
-                <Text style={{ marginLeft: 40 }}>13</Text>
-              </DataTable.Cell>
-              <DataTable.Cell style={{ flex: 0.5 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <View
-                    style={{
-                      backgroundColor: "#FF0000",
-                      width: 15,
-                      height: 15,
-                      borderRadius: 100,
-                    }}
-                  ></View>
-                  <Text>warning</Text>
-                </View>
-              </DataTable.Cell>
-              <DataTable.Cell style={{ flex: 0.5 }}>
-                <Text style={{ marginLeft: 20 }}>Vorn</Text>
-              </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.8 }}>
+                  <Text style={{ marginLeft: 70 }}>{item?.bottle_cap_rinsing?.water_pressure}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text style={{ marginLeft: 30 }}>{item?.bottle_cap_rinsing?.nozzies_rinser}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text style={{ marginLeft: 40 }}>{item?.filling_cap?.FG}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    <View
+                      style={{
+                        backgroundColor: getMachineStatus(item?.status),
+                        width: 15,
+                        height: 15,
+                        borderRadius: 100,
+                      }}
+                    ></View>
+                    <Text style={{ marginLeft: 5 }}>{item?.status}</Text>
+                  </View>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text style={{ marginLeft: 8 }}>{item?.assign_to ?? "N/A"}</Text>
+                </DataTable.Cell>
 
-              <DataTable.Cell style={{ flex: 0.6 }}>
-                <Text style={{ marginRight: 0 }}>lorem lorem lorem lorem lorem lorem </Text>
-              </DataTable.Cell>
-            </DataTable.Row>
-          </DataTable>
-        </TouchableOpacity>
+                <DataTable.Cell style={{ flex: 0.6 }}>
+                  <Text style={{ marginRight: 0 }}> {item?.instruction} </Text>
+                </DataTable.Cell>
+              </DataTable.Row>
+            </View>
+          </TouchableOpacity>
+        </DataTable>
       )
     }
-    if (type === "2") {
-      return (
-        <View style={$root}>
-          <View style={$outerContainer}>
-            <View style={[$containerHorizon, { marginBottom: 20 }]}>
-              <TouchableOpacity style={{}} onPress={() => null}>
-                <Icon name="up" size={15} color={"black"} />
-                <Icon name="down" size={15} color={"black"} />
-              </TouchableOpacity>
 
+    if (getRouteLine() <= 3) {
+      return (
+        <PaperProvider>
+          <Portal>
+            <View style={$root}>
+              <View style={$outerContainer}>
+                <View style={[$containerHorizon, { marginBottom: 20 }]}>
+                  <TouchableOpacity style={{}} onPress={() => null}>
+                    <Icon name="up" size={15} color={"black"} />
+                    <Icon name="down" size={15} color={"black"} />
+                  </TouchableOpacity>
+
+                  <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
+                    {lineStatus.map((item, index) => (
+                      <View key={index.toString()}>
+                        <StateButton
+                          onPress={() => setSelectStatus(item)}
+                          isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
+                          placeholder={item[0].toUpperCase() + item.slice(1)}
+                          color={
+                            item === "pending"
+                              ? "#777777"
+                              : item === "warning"
+                              ? "#FF0000"
+                              : colors.primary
+                          }
+                        />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+                <DataTable style={{ margin: 10, marginTop: 0 }}>
+                  <DataTable.Header>
+                    <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>
+                      No
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                      Time
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 1 }} textStyle={styles.textHeader}>
+                      Water Pressure
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                      Nozzie Rinser
+                    </DataTable.Title>
+
+                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
+                      FG
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
+                      Status
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                      Done by
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>
+                      Instruction
+                    </DataTable.Title>
+                  </DataTable.Header>
+                </DataTable>
+
+                <FlatList
+                  data={waterLines || []}
+                  ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={rendertableLine4}
+                />
+
+                {waterLines?.length ? (
+                  <Button
+                    style={{ position: "absolute", bottom: 50, width: "100%" }}
+                    onPress={showModal}
+                  >
+                    <Text whiteColor body2 style={{ marginLeft: 12 }}>
+                      Enroll
+                    </Text>
+                  </Button>
+                ) : (
+                  <></>
+                )}
+              </View>
+            </View>
+            <AlertDialog
+              visible={visible}
+              content="You're about to entroll this Line , Click confirm to accept it"
+              hideDialog={hideModal}
+              onPositive={hideModal}
+              onNegative={() => setVisible(false)}
+            />
+          </Portal>
+        </PaperProvider>
+      )
+    }
+    return (
+      <PaperProvider>
+        <Portal>
+          <View style={$root}>
+            <View style={$outerContainer}>
               <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
                 {lineStatus.map((item, index) => (
                   <View key={index.toString()}>
@@ -156,102 +282,67 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                   </View>
                 ))}
               </View>
-            </View>
-            <DataTable style={{ margin: 10, marginTop: 0 }}>
-              <DataTable.Header>
-                <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>
-                  No
-                </DataTable.Title>
-                <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
-                  Time
-                </DataTable.Title>
-                <DataTable.Title style={{ flex: 1 }} textStyle={styles.textHeader}>
-                  Water Pressure
-                </DataTable.Title>
-                <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
-                  Nozzie Rinser
-                </DataTable.Title>
+              <DataTable style={{ margin: 10, marginTop: 5 }}>
+                <DataTable.Header>
+                  <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>
+                    No
+                  </DataTable.Title>
+                  <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                    Time
+                  </DataTable.Title>
+                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                    Side Wall
+                  </DataTable.Title>
+                  <DataTable.Title style={{ flex: 1 }} textStyle={styles.textHeader}>
+                    Air Pressure
+                  </DataTable.Title>
 
-                <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
-                  FG
-                </DataTable.Title>
-                <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
-                  Status
-                </DataTable.Title>
-                <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
-                  Done by
-                </DataTable.Title>
-                <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>
-                  Instruction
-                </DataTable.Title>
-              </DataTable.Header>
-            </DataTable>
+                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                    Temperature
+                  </DataTable.Title>
+                  <DataTable.Title style={{ flex: 0.55 }} textStyle={styles.textHeader}>
+                    FG
+                  </DataTable.Title>
+                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                    Status
+                  </DataTable.Title>
+                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                    Done by
+                  </DataTable.Title>
+                </DataTable.Header>
+              </DataTable>
 
-            <FlatList
-              data={Array.from({ length: 20 }, (item, index) => index)}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={rendertableLine4}
-            />
-          </View>
-        </View>
-      )
-    }
-    return (
-      <View style={$root}>
-        <View style={$outerContainer}>
-          <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
-            {lineStatus.map((item, index) => (
-              <View key={index.toString()}>
-                <StateButton
-                  onPress={() => setSelectStatus(item)}
-                  isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
-                  placeholder={item[0].toUpperCase() + item.slice(1)}
-                  color={
-                    item === "pending" ? "#777777" : item === "warning" ? "#FF0000" : colors.primary
-                  }
+              <View>
+                <FlatList
+                  data={waterLines || []}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={rendertableLine1}
+                  ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
                 />
               </View>
-            ))}
-          </View>
-          <DataTable style={{ margin: 10, marginTop: 5 }}>
-            <DataTable.Header>
-              <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>
-                No
-              </DataTable.Title>
-              <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
-                Time
-              </DataTable.Title>
-              <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
-                Side Wall
-              </DataTable.Title>
-              <DataTable.Title style={{ flex: 1 }} textStyle={styles.textHeader}>
-                Air Pressure
-              </DataTable.Title>
-
-              <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
-                Temperature
-              </DataTable.Title>
-              <DataTable.Title style={{ flex: 0.55 }} textStyle={styles.textHeader}>
-                FG
-              </DataTable.Title>
-              <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
-                Status
-              </DataTable.Title>
-              <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
-                Done by
-              </DataTable.Title>
-            </DataTable.Header>
-          </DataTable>
-
-          <View>
-            <FlatList
-              data={Array.from({ length: 20 }, (item, index) => index)}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={rendertableLine1}
+              {waterLines?.length ? (
+                <Button
+                  style={{ position: "absolute", bottom: 50, width: "100%" }}
+                  onPress={showModal}
+                >
+                  <Text whiteColor body2 style={{ marginLeft: 12 }}>
+                    Enroll
+                  </Text>
+                </Button>
+              ) : (
+                <></>
+              )}
+            </View>
+            <AlertDialog
+              content="You're about to entroll this Line , Click confirm to accept it"
+              visible={visible}
+              hideDialog={hideModal}
+              onPositive={hideModal}
+              onNegative={() => setVisible(false)}
             />
           </View>
-        </View>
-      </View>
+        </Portal>
+      </PaperProvider>
     )
   },
 )

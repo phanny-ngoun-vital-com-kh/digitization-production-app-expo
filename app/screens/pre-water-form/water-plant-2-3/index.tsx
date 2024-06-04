@@ -95,8 +95,12 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         delete modifedForm.air_released
         delete modifedForm?.remarks
 
+
+   
         for (const key in modifedForm) {
           if (oldRoute[key] !== null) {
+            // console.log("current Form", form[key], key)
+            // console.log("old Route", oldRoute[key], key)
             if (form[key] != oldRoute[key]) {
               arractions.push({
                 name: key,
@@ -118,10 +122,10 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         str.push("" + item.name.toUpperCase() + " from " + item.oldValue + " to " + item.value)
       }
       return !arrActions.length
-        ? "has modified this machine"
-        : route?.item?.status
+        ? "has modified and completed this machine"
+        : route?.item?.status !== null || route?.item?.status !== "pending"
         ? "has modified " + str.join(" , ")
-        : "completed the check"
+        : "has modified this machine with no changes"
     }
     const checkWarningCount = () => {
       let warning = 0
@@ -208,13 +212,14 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         if (route?.type?.toLowerCase().includes("air")) {
           setLoading(true)
           const modifiedForm = Object.assign({}, form)
+   
           const actions = getActionUser()
-
           const payload = PreTreatmentListItemModel.create({
             pre_treatment_type: route?.item?.pre_treatment_type,
             id: route?.item?.id,
             pre_treatment_id: route?.item?.pre_treatment_id,
             action: actions,
+
             sf: form.air_released?.sf ? "1" : "0",
             acf: form.air_released?.acf ? "1" : "0",
             resin: form.air_released?.resin ? "1" : "0",
@@ -246,13 +251,12 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         } else {
           setLoading(true)
           const actions = getActionUser()
-
           const getWarningcount = checkWarningCount()
           const payload = PreTreatmentListItemModel.create({
             pre_treatment_type: route?.item?.pre_treatment_type,
             id: route?.item?.id,
             pre_treatment_id: route?.item?.pre_treatment_id,
-            action: getActionUser(),
+            action: actions,
             sf: form.sf1,
             acf: form.acf1,
             resin: form.resin,
@@ -264,12 +268,12 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
           })
 
           setRoute({
-            sf1: form.sf1,
-            acf1: form.acf1,
-            resin: form.resin,
+            sf1: form.sf1 ?? null,
+            acf1: form.acf1 ?? null,
+            resin: form.resin ?? null,
             raw_water: form.raw_water ?? null,
-            um5: form.fiveMm,
-            remark: form.remarks,
+            fiveMm: form.fiveMm ?? null,
+            remark: form.remarks ?? null,
           })
 
           setLoading(true)
@@ -298,6 +302,8 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         setLoading(false)
       }
     }
+
+  
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
@@ -321,8 +327,8 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
           </TouchableOpacity>
         ),
       })
-    }, [form, route, errors])
-
+    }, [form, route, errors, oldRoute])
+    
     useEffect(() => {
       fetchUserActivity()
       let airReleased
@@ -373,7 +379,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         air_released: false,
       })
     }, [route])
-    console.log(form)
+
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
         {isloading && (
@@ -391,15 +397,15 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
               {route?.type?.toLowerCase().includes("air") ? (
                 <></>
               ) : route?.type?.toLowerCase().includes("tds") ? (
-                <Text errorColor regular>
+                <Text errorColor semibold body1>
                   {"* Warning Level ( > 300 ppm ) "}
                 </Text>
               ) : route?.type?.toLowerCase().includes("ph") ? (
-                <Text errorColor regular>
+                <Text errorColor semibold body1>
                   {"* Warning Level ( 6.5 - 8.5  ) "}
                 </Text>
               ) : (
-                <Text errorColor regular>
+                <Text errorColor semibold body1>
                   {"* Warning Level ( 0.1 - 0.3 Mpa ) "}
                 </Text>
               )}
@@ -414,7 +420,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                       <Text body1 semibold style={{ marginBottom: 15 }}>
                         Air Released SF
                         {form.air_released.sf && (
-                          <View style={{alignItems:"center"}} >
+                          <View style={{ alignItems: "center" }}>
                             <BadgeWarning value={"!"} status="warning" />
                           </View>
                         )}
@@ -485,12 +491,11 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                     <View style={{ marginVertical: 25, flex: 1 }}>
                       <Text body1 semibold style={{ marginBottom: 15 }}>
                         Air Released ACF
-                        {form.air_released.acf&& (
+                        {form.air_released.acf && (
                           <View>
                             <BadgeWarning value={"!"} status="warning" />
                           </View>
                         )}
-                      
                       </Text>
                       <Text body1 semibold>
                         <Text errorColor>* </Text> ACF
@@ -576,7 +581,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                             <BadgeWarning value={"!"} status="warning" />
                           </View>
                         )}
-                   
                       </Text>
                       <Text body1 semibold>
                         <Text errorColor>* </Text> Resin
@@ -680,7 +684,9 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                       showIcon={false}
                       value={form.sf1?.toString()}
                       warning={
-                        form.sf1 && route?.type?.toLowerCase().includes("ph")
+                        form.sf1 === null
+                          ? false
+                          : route?.type?.toLowerCase().includes("ph")
                           ? +form?.sf1 < 6.5 || +form?.sf1 > 8.5
                           : route?.type?.toLowerCase().includes("pressure")
                           ? +form.sf1 < 0.1 || +form?.sf1 > 0.3
@@ -709,7 +715,9 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                       showIcon={false}
                       value={form.acf1}
                       warning={
-                        form.acf1 && route?.type?.toLowerCase().includes("ph")
+                        form.acf1 === null
+                          ? false
+                          : route?.type?.toLowerCase().includes("ph")
                           ? +form?.acf1 < 6.5 || +form?.acf1 > 8.5
                           : route?.type?.toLowerCase().includes("pressure")
                           ? +form.acf1 < 0.1 || +form?.acf1 > 0.3
@@ -767,7 +775,9 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                       keyboardType="decimal-pad"
                       showIcon={false}
                       warning={
-                        form.resin && route?.type?.toLowerCase().includes("ph")
+                        form.resin === null
+                          ? false
+                          : route?.type?.toLowerCase().includes("ph")
                           ? +form?.resin < 6.5 || +form?.resin > 8.5
                           : route?.type?.toLowerCase().includes("pressure")
                           ? +form.resin < 0.1 || +form?.resin > 0.3
@@ -806,7 +816,9 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           : setErrors((pre) => ({ ...pre, fiveMm: true }))
                       }}
                       warning={
-                        form.fiveMm && route?.type?.toLowerCase().includes("ph")
+                        form.fiveMm === null
+                          ? false
+                          : route?.type?.toLowerCase().includes("ph")
                           ? +form?.fiveMm < 6.5 || +form?.fiveMm > 8.5
                           : route?.type?.toLowerCase().includes("pressure")
                           ? +form.fiveMm < 0.1 || +form?.fiveMm > 0.3

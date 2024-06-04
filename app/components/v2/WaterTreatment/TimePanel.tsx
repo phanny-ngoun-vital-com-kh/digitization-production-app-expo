@@ -3,6 +3,7 @@ import { TouchableOpacity, View, ViewStyle } from "react-native"
 import { ProgressBar, Badge } from "react-native-paper"
 import { Text } from "app/components/v2"
 import { TimePanelProps } from "./type"
+import BadgeTriangle from "../BadgeV2"
 const TimePanel = ({
   time = "  7: 00",
   progressValue = 1,
@@ -31,18 +32,8 @@ const TimePanel = ({
       >
         <View>
           {isWarning && (
-            <Badge
-              style={{
-                fontSize: 12.5,
-                borderRadius: 0,
-                position: "relative",
-                right: -40,
-                overflow: "hidden",
-                transform: [{ rotate: "45deg" }],
-              }}
-            >
-              Warning
-            </Badge>
+          
+            <BadgeTriangle label="Warning"/>
           )}
         </View>
 

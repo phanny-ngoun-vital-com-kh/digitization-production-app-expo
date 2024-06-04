@@ -121,6 +121,14 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
             },
+            {
+              id:5,
+              name: "Dashboard",
+              subname: "Overview and Analytic",
+              navigation: "Dashboard",
+              iconname: "view-dashboard-outline",
+              icontype: "MaterialCommunityIcons",
+            },
           ]
           setList(updatedList)
         }
@@ -128,7 +136,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         console.log(e)
       }
     }
-
 
     role()
   }, [])

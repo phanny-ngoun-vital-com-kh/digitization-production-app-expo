@@ -1,53 +1,141 @@
 {
   "lines": [
-    { "id": 1, "name": "line-2" },
-    { "id": 2, "name": "line-3" },
-    { "id": 3, "name": "line-4" },
-    { "id": 4, "name": "line-5" },
-    { "id": 5, "name": "line-6" }
+    {
+      "id": 11,
+      "name": "line 2",
+      "date": "2024-05-31",
+      "lines": [
+        {
+          "id": 1,
+          "line": 2,
+          "time": "7:00",
+          "created_at": "2024-05-31",
+          "side_wall": null,
+          "air_pressure": null,
+          "temp_preform": null,
+          "tw_pressure": null,
+          "FG": null,
+          "activity_control": {
+            "over_control": null,
+            "under_control": null
+          },
+          "bottle_cap_rinsing": {
+            "water_pressure": 0.4,
+            "nozzies_rinser": 13
+          },
+          "filling_cap": {
+            "FG": 0.05,
+            "smell": false,
+            "over_control": true,
+            "under_control": false
+          },
+          "smell": true,
+          "under_control": true,
+          "over_control": false,
+          "status": "normal",
+          "warning_count": 0,
+          "assign_to": "ware2",
+          "instruction": "manually interact",
+          "other": "N/A"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "line 3",
+      "date": "2024-05-31",
+      "lines": [
+        {
+          "id": 1,
+          "line": 3,
+          "time": "7:00",
+          "created_at": "2024-05-31",
+          "side_wall": 100,
+          "air_pressure": 1.4,
+          "temp_preform": 85,
+          "tw_pressure": 2,
+          "FG": 0.1,
+          "activity_control": {
+            "over_control": true,
+            "under_control": false
+          },
+          "smell": true,
+          "under_control": true,
+          "over_control": false,
+          "bottle_cap_rinsing": {
+            "water_pressure": 0.7,
+            "nozzies_rinser": 32
+          },
+          "filling_cap": {
+            "FG": 0.35,
+            "smell": true,
+            "over_control": true,
+            "under_control": false
+          },
+          "status": "normal",
+          "warning_count": 0,
+          "assign_to": "prod1",
+          "instruction": "Stop this line 3"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "line 4",
+      "date": "2024-05-31",
+      "lines": [
+        {
+          "id": 1,
+          "line": 3,
+          "time": "7:00",
+          "created_at": "2024-05-31",
+          "side_wall": 100,
+          "air_pressure": 1.4,
+          "temp_preform": 85,
+          "tw_pressure": 2,
+          "FG": 0.1,
+          "activity_control": {
+            "over_control": true,
+            "under_control": false
+          },
+          "smell": true,
+          "under_control": true,
+          "over_control": false,
+          "bottle_cap_rinsing": {
+            "water_pressure": null,
+            "nozzies_rinser": null
+          },
+          "filling_cap": {
+            "FG": null,
+            "smell": null,
+            "over_control": null,
+            "under_control": null
+          },
+          "status": "normal",
+          "warning_count": 0,
+          "assign_to": "ware1",
+          "instruction": ""
+        }
+      ]
+    },
+    { "id": 14, "name": "line 5", "date": "2024-05-31", "lines": [] },
+    { "id": 15, "name": "line 6", "date": "2024-05-31", "lines": [] }
   ],
-  "record": [
+  "line_record2": [
     {
       "id": 1,
-      "line": 3,
-      "time": "7:00:00",
-      "created_at": "2024-05-15",
-      "side_wall": 100,
-      "air_pressure": 1.4,
-      "temp_preform": 85,
-      "tw_pressure": 2,
-      "FG": 0.1,
+      "line": 2,
+      "time": "7:00",
+      "created_at": "2024-05-31",
+      "side_wall": null,
+      "air_pressure": null,
+      "temp_preform": null,
+      "tw_pressure": null,
+      "FG": null,
       "activity_control": {
-        "over_control": true,
-        "under_control": false
+        "over_control": null,
+        "under_control": null
       },
-      "assign_to": "virek both",
-      "instruction": "check the lid and close in time",
-      "inspection_status": true
-    },
-    {
-      "id": 2,
-      "line": 4,
-      "time": "9:00:00",
-      "created_at": "2024-05-15",
-      "side_wall": 150,
-      "air_pressure": 2.4,
-      "temp_preform": 111,
-      "tw_pressure": 21,
-      "FG": 0.5,
-      "activity_control": {
-        "over_control": false,
-        "under_control": true
-      },
-      "assign_to": "virek both",
-      "instruction": "reuse the machine item",
-      "inspection_status": true
-    },
-    {
-      "id": 3,
-      "line": 1,
-      "time": "7:00:00",
-      "created_at": "2024-05-15",
       "bottle_cap_rinsing": {
         "water_pressure": 0.4,
         "nozzies_rinser": 13
@@ -58,10 +146,83 @@
         "over_control": true,
         "under_control": false
       },
+      "smell": true,
+      "under_control": true,
+      "over_control": false,
+      "status": "normal",
+      "warning_count": 0,
       "assign_to": "panhavorn",
       "instruction": "manually interact",
-      "other": "N/A",
-      "inspection_status": true
+      "other": "N/A"
+    }
+  ],
+  "line_record3": [
+    {
+      "id": 1,
+      "line": 3,
+      "time": "7:00",
+      "created_at": "2024-05-31",
+      "side_wall": 100,
+      "air_pressure": 1.4,
+      "temp_preform": 85,
+      "tw_pressure": 2,
+      "FG": 0.1,
+      "activity_control": {
+        "over_control": true,
+        "under_control": false
+      },
+      "smell": true,
+      "under_control": true,
+      "over_control": false,
+      "bottle_cap_rinsing": {
+        "water_pressure": null,
+        "nozzies_rinser": null
+      },
+      "filling_cap": {
+        "FG": null,
+        "smell": null,
+        "over_control": null,
+        "under_control": null
+      },
+      "status": "normal",
+      "warning_count": 0,
+      "assign_to": "virek both",
+      "instruction": "check the lid and close in time"
+    }
+  ],
+  "line_record4": [
+    {
+      "id": 1,
+      "line": 4,
+      "time": "9:00",
+      "created_at": "2024-05-31",
+      "side_wall": 150,
+      "air_pressure": 2.4,
+      "temp_preform": 111,
+      "tw_pressure": 1.5,
+      "FG": 0.5,
+      "activity_control": {
+        "over_control": false,
+        "under_control": true
+      },
+
+      "bottle_cap_rinsing": {
+        "water_pressure": null,
+        "nozzies_rinser": null
+      },
+      "filling_cap": {
+        "FG": null,
+        "smell": null,
+        "over_control": null,
+        "under_control": null
+      },
+      "status": "normal",
+      "warning_count": 0,
+      "smell": null,
+      "under_control": null,
+      "over_control": null,
+      "assign_to": "virek both",
+      "instruction": "reuse the machine item"
     }
   ]
 }
