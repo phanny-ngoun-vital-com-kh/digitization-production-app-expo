@@ -10,6 +10,7 @@ import LinePanel from "app/components/v2/HACCP/LinePanel"
 import EmptyFallback from "app/components/EmptyFallback"
 import linesDummy from "../../utils/dummy/haccp/index.json"
 import moment from "moment"
+import { useStores } from "app/models"
 
 interface HccpMonitorScreenProps extends AppStackScreenProps<"HccpMonitor"> {}
 
@@ -22,7 +23,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
   const [selectedLine, setSelectedLine] = useState({ name: "", value: null })
   const [waterLines, setWaterLine] = useState<ListWTPLines[] | []>([])
   const navigation = useNavigation()
-
+  const {haccpMonitoringStore} = useStores()
   const renderItem = ({ item, index }: { item: ListWTPLines; index: number }) => {
     return (
       <LinePanel
@@ -47,7 +48,11 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
 
       setWaterLine(filterDate)
     }
+    // haccpMonitoringStore.removeLines()
   }, [selectedLine, datePicker.value])
+
+  console.log("Length is ",haccpMonitoringStore.haccpMonitoringList.length)
+
   return (
     <View style={$root}>
       <View style={[$outerContainer]}>

@@ -12,16 +12,22 @@ import { useNavigation, useRoute } from "@react-navigation/native"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { useTheme } from "app/theme-v2"
 import InstructionList from "app/components/v2/HACCP/InstructionList"
+import {
+  HaccpMonitoringModel,
+  LinesItemModel,
+} from "app/models/haccp-monitoring/haccp-monitoring-model"
+import { getCurrentTime } from "app/utils-v2/getCurrTime"
+import { useStores } from "app/models"
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
-
     const route = useRoute().params
+    const { linesStore } = useStores()
     const { colors } = useTheme()
     const navigation = useNavigation()
     const [showinstruction, setShowInstruction] = useState(true)
     const [showActivitylog, setShowActivitylog] = useState(false)
-
     const [formLineA, setFormLineA] = useState({
       side_wall: "",
       air_pressure: "",
@@ -72,9 +78,10 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       if (notvalid) {
         return
       }
-      console.log("click")
-      console.log(formLineB, formLineA)
-      navigation.goBack()
+      // console.log("click")
+
+      // console.log(formLineB, formLineA)
+      // navigation.goBack()
     }
 
     const validateLineB = (errorsLineB) => {
@@ -85,9 +92,54 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       if (notvalid) {
         return
       }
-      console.log(formLineB)
+      const lineModel = LinesItemModel.create({
+        id: Date.now(),
+        side_wall: +formLineB.water_pressure,
+        bottle_cap_rinsing: {
+          nozzies_rinser: +formLineB.nozzie_rinser,
+          water_pressure: +formLineB.water_pressure,
+        },
+        created_at: new Date(Date.now()).toISOString(),
+        line: "line " + route?.line || "line 0",
+        time: getCurrentTime(),
+        filling_cap: {
+          FG: +formLineB.FG,
+          over_control: formLineB.over_control,
+          under_control: formLineB.under_control,
+          smell: formLineB.smell,
+        },
+        FG: +formLineB.FG,
+        status: "normal",
 
-      navigation.goBack()
+        instruction: formLineB.instruction || "N/A",
+        other: formLineB.other,
+        activity_control: {
+          over_control: formLineB.over_control,
+          under_control: formLineB.under_control,
+        },
+      })
+      // lineModel.reset()
+      // console.log('reseting',lineModel)
+
+      // const payload = HaccpMonitoringModel.create({
+      //   date: new Date(Date.now()).toISOString(),
+      //   id: 2,
+      //   name: "line " + route?.line ?? "Line A",
+      //   lines: [lineModel],
+      // })
+
+      console.log("adding line")
+      // console.log('payload',payload)
+
+      linesStore.add(2, "line " + route?.line ?? "Line A", date, lineModel)
+      Dialog.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "ជោគជ័យ",
+        textBody: "រក្សាទុកបានជោគជ័យ",
+        // button: 'close',
+        autoClose: 200,
+      })
+      // navigation.goBack()
     }
 
     const onShowInstruction = () => {
@@ -555,7 +607,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                               <TouchableOpacity
                                 style={$containerHorizon}
                                 onPress={() => {
-                                  console.log("change")
+                                  // console.log("change")
                                   setFormLineB((pre) => ({
                                     ...pre,
                                     smell: false,
@@ -622,7 +674,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                               <TouchableOpacity
                                 style={$containerHorizon}
                                 onPress={() => {
-                                  console.log("change")
+                                  // console.log("change")
                                   setFormLineB((pre) => ({
                                     ...pre,
                                     under_control: false,
@@ -690,7 +742,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                               <TouchableOpacity
                                 style={$containerHorizon}
                                 onPress={() => {
-                                  console.log("change")
+                                  // console.log("change")
                                   setFormLineB((pre) => ({
                                     ...pre,
                                     over_control: false,

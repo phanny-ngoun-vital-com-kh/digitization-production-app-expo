@@ -14,6 +14,7 @@ import StateButton from "app/components/v2/HACCP/StateButton"
 import EmptyFallback from "app/components/EmptyFallback"
 import linesDummy from "../../../utils/dummy/haccp/index.json"
 import AlertDialog from "app/components/v2/AlertDialog"
+import { useStores } from "app/models"
 
 interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> {}
 
@@ -27,6 +28,9 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
   }) {
     const navigation = useNavigation()
     const route = useRoute().params
+    const {
+haccpMonitoringStore
+    } = useStores()
     const { colors } = useTheme()
     const [waterLines, setWaterLines] = useState<WaterTreatmentLine[] | []>([])
     const lineStatus = ["normal", "pending", "warning"]
@@ -72,7 +76,13 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     }, [navigation])
 
     useEffect(() => {
-      const records = linesDummy.lines.filter((line) => +line.id === +route?.id ?? 0)
+      const all = haccpMonitoringStore.haccpMonitoringList
+
+  
+      const records = all.filter((line) => +line.id === +route?.id ?? 0)
+
+      console.log(records)
+   
       setWaterLines(records.map((record) => record.lines)[0])
     }, [navigation, route])
 
