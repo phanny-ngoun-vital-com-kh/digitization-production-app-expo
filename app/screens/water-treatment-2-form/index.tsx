@@ -12,25 +12,15 @@ import { ActivityIndicator, Checkbox } from "react-native-paper"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { useStores } from "app/models"
 import { Activities, TreatmentModel } from "app/models/water-treatment/water-treatment-model"
-import {
-  KeyboardAvoidingView,
-  ScrollView,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-  Alert,
-} from "react-native"
+import { KeyboardAvoidingView, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { styles } from "./styles"
-import { ImagetoText } from "app/utils-v2/ocr"
+import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 interface WaterTreatmentPlant2FormScreenProps
-  extends AppStackScreenProps<"WaterTreatmentPlant2Form"> { }
+  extends AppStackScreenProps<"WaterTreatmentPlant2Form"> {}
 
 export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenProps> = observer(
   function WaterTreatmentPlant2FormScreen() {
-    // Pull in one of our MST stores
-    // const { someStore, anotherStore } = useStores()
-
-    // Pull in navigation via hook
+    const { waterTreatmentStore, authStore } = useStores()
     const navigation = useNavigation()
     const [isLoading, setLoading] = useState({
       image: false,
@@ -41,11 +31,9 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       iswarning: false,
       warning_count: 0,
     })
-
     const [activities, setActivities] = useState<Activities[]>([])
+    const [isEditable, setEditable] = useState(false)
     const route = useRoute().params
-    const { waterTreatmentStore } = useStores()
-
     const [oldRoute, setRoute] = useState({})
     const [form, setForm] = useState({
       tds: "",
@@ -76,28 +64,51 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
     })
 
     const [image, setImage] = useState(null)
-    const [extractedText, setExtractedText] = useState()
+    const checkUserRole = async () => {
+      // console.log("machine user assign to", route?.items?.assign_to_user)
+      if (!route?.items?.assign_to_user) {
+        setEditable(false)
+
+        return
+      }
+      const currUser = await getCurrentUserName()
+
+      const arrUsers = route?.items?.assign_to_user?.split(" ") as string[]
+      if (arrUsers.includes(currUser)) {
+        setEditable(true)
+      } else {
+        setEditable(false)
+      }
+    }
 
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
         title: route?.type || "Raw Water",
-        headerRight: () => (
-          <TouchableOpacity
-            style={{ flexDirection: "row", alignItems: "center" }}
-            onPress={() => validate()}
-          >
-            <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
-            <Text primaryColor body1 semibold>
-              Save
-            </Text>
-          </TouchableOpacity>
-        ),
+        headerRight: () => {
+          return isEditable ? (
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center" }}
+              onPress={() => validate()}
+            >
+              <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
+              <Text primaryColor body1 semibold>
+                Save
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <Text></Text>
+            </>
+          )
+        },
       })
       validateStateMachine()
-    }, [errors, navigation, route, form])
+    }, [errors, navigation, route, form, isEditable])
     useEffect(() => {
       if (route?.items) {
+        // setCurrUser(route?.items?.assign_to_user)
+        checkUserRole()
         fetchUserActivities()
         setForm({
           tds: route?.items?.tds,
@@ -129,10 +140,9 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
         })
       }
     }, [route])
-
     const fetchUserActivities = async () => {
       const result = await waterTreatmentStore.getTreatmentActivitiesMachine(route?.items?.id, 20)
-      setActivities(result?.items)
+      setActivities(result?.items?.sort((a, b) => (a.id > b.id ? -1 : 1)))
     }
     const checkChanges = (form, route) => {
       const arractions = []
@@ -159,9 +169,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       return arractions // Return false if no values have changed
     }
 
-    const sendBack = () => {
-      console.log("Sending back")
-    }
     const getActionUser = () => {
       const arrActions = checkChanges(form, oldRoute)
       const str = []
@@ -174,42 +181,40 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
     const onlaunchGallery = async () => {
       try {
-        const result = await ImagePicker.launchImageLibraryAsync({
-          allowsEditing: true,
-          allowsMultipleSelection: false,
-          base64: true,
-
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        })
+        const result = await getResultImageGallery()
         if (!result.canceled) {
           // Set the selected image in state
           performOCR(result.assets[0])
           setImage(result.assets[0].uri)
         }
       } catch (error) {
-        Alert.alert("Error has been occur")
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
       }
     }
     const onlaunchCamera = async () => {
       try {
-        const result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          allowsMultipleSelection: false,
-          base64: true,
-
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        })
+        const result = await getResultImageCamera()
         if (!result.canceled) {
           // Set the selected image in state
           performOCR(result.assets[0])
           setImage(result.assets[0].uri)
         }
       } catch (error) {
-        Alert.alert("Error has been occur")
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
       }
     }
-
-    console.log(route?.items?.status)
 
     const handleSubmit = async (warningCount: string) => {
       try {
@@ -385,7 +390,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
       try {
         const result = await ImagetoText(file)
-        setExtractedText(result["annotations"])
         setScanToform(result["annotations"])
       } catch (error) {
         Dialog.show({
@@ -485,7 +489,11 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
         })
       }
     }
-
+    const getCurrentUserName = async () => {
+      const userinfo = await authStore.getUserInfo()
+      const { login } = userinfo.data
+      return login
+    }
     return (
       <>
         <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
@@ -516,25 +524,11 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                   onActivity={() => setShowlog(true)}
                   onAttachment={onlaunchGallery}
                 />
-                {/* 
-                {image && (
-                  <>
-                    <Text>Image Preview</Text>
-                    <Image
-                      source={{ uri: image }}
-                      style={{
-                        width: 250,
-                        height: 250,
-                        objectFit: "contain",
-                      }}
-                    />
-                    <Text>{extractedText}</Text>
-                  </>
-                )} */}
 
                 <View style={[$containerHorizon, { marginBottom: 40, marginTop: 15 }]}>
                   <View style={$width}>
                     <CustomInput
+                      disabled={isEditable}
                       warning={form.tds && +form?.tds > 300}
                       hintLimit="<=300 ppm"
                       showIcon={false}
@@ -559,6 +553,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                   {route?.type?.toLowerCase()?.startsWith("reverses") ? (
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         hintLimit="6.5 - 8.5"
                         warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
                         keyboardType="decimal-pad"
@@ -583,7 +578,9 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                   ) : (
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         hintLimit="25 - 35 °C"
+                        disabled={isEditable}
                         keyboardType="decimal-pad"
                         warning={
                           (form.temperature && +form?.temperature < 25) || +form?.temperature > 35
@@ -613,6 +610,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                   <View style={$containerHorizon}>
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         hintLimit="6.5 - 8.5"
                         showIcon={false}
                         warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
@@ -636,6 +634,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     </View>
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         showIcon={false}
                         value={form.other?.toString() || ""}
                         onChangeText={(text) => {
@@ -651,64 +650,69 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     {(route?.type?.toLowerCase() === "sand filter" ||
                       route?.type?.toLowerCase() === "carbon filter" ||
                       route?.type?.toLowerCase() === "resin filter") && (
-                        <View style={$width}>
-                          <Text style={{ margin: 5, fontSize: 18 }} semibold>
-                            Air Released
-                          </Text>
+                      <View style={$width}>
+                        <Text style={{ margin: 5, fontSize: 18 }} semibold>
+                          Air Released
+                        </Text>
 
-                          <View style={[$containerHorizon, { marginTop: 10 }]}>
-                            <TouchableOpacity
-                              style={$containerHorizon}
+                        <View style={[$containerHorizon, { marginTop: 10 }]}>
+                          <TouchableOpacity
+                            disabled={!isEditable}
+                            style={$containerHorizon}
+                            onPress={() => {
+                              setErrors((pre) => ({ ...pre, air_release: false }))
+                              setForm((pre) => ({ ...pre, air_release: true }))
+                            }}
+                          >
+                            <Checkbox
+                              disabled={!isEditable}
+                              status={
+                                form.air_release == null
+                                  ? "unchecked"
+                                  : form?.air_release === "true" || form.air_release === true
+                                  ? "checked"
+                                  : "unchecked"
+                              }
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
                                 setForm((pre) => ({ ...pre, air_release: true }))
                               }}
-                            >
-                              <Checkbox
-                                status={
-                                  form.air_release == null
-                                    ? "unchecked"
-                                    : form?.air_release === "true" || form.air_release === true
-                                      ? "checked"
-                                      : "unchecked"
-                                }
-                                onPress={() => {
-                                  setErrors((pre) => ({ ...pre, air_release: false }))
-                                  setForm((pre) => ({ ...pre, air_release: true }))
-                                }}
-                                color="#0081F8"
-                              />
-                              <Text>Yes </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={$containerHorizon}
+                              color="#0081F8"
+                            />
+                            <Text>Yes </Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            disabled={!isEditable}
+                            style={$containerHorizon}
+                            onPress={() => {
+                              setErrors((pre) => ({ ...pre, air_release: false }))
+                              setForm((pre) => ({ ...pre, air_release: false }))
+                            }}
+                          >
+                            <Checkbox
+                              disabled={!isEditable}
+                              status={
+                                form.air_release == null
+                                  ? "unchecked"
+                                  : form?.air_release === "false" || form.air_release === false
+                                  ? "checked"
+                                  : "unchecked"
+                              }
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
                                 setForm((pre) => ({ ...pre, air_release: false }))
                               }}
-                            >
-                              <Checkbox
-                                status={
-                                  form.air_release == null
-                                    ? "unchecked"
-                                    : form?.air_release === "false" || form.air_release === false
-                                      ? "checked"
-                                      : "unchecked"
-                                }
-                                onPress={() => {
-                                  setErrors((pre) => ({ ...pre, air_release: false }))
-                                  setForm((pre) => ({ ...pre, air_release: false }))
-                                }}
-                                color="#0081F8"
-                              />
-                              <Text>No</Text>
-                            </TouchableOpacity>
-                          </View>
-                          <Text caption1 errorColor>
-                            {errors?.air_release ? "*សូម​ត្រួតពិនិត្យ air release " : ""}
-                          </Text>
+                              color="#0081F8"
+                            />
+                            <Text>No</Text>
+                          </TouchableOpacity>
                         </View>
-                      )}
+                        <Text caption1 errorColor>
+                          {errors?.air_release ? "*សូម​ត្រួតពិនិត្យ air release " : ""}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -716,6 +720,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                   <View style={[$containerHorizon, { marginTop: 30 }]}>
                     <View style={{ flex: 0.5 }}>
                       <CustomInput
+                        disabled={isEditable}
                         keyboardType="decimal-pad"
                         showIcon={false}
                         value={form?.pressure}
@@ -742,6 +747,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                   <View style={[$containerHorizon, { marginBottom: 40, marginTop: 15 }]}>
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         keyboardType="decimal-pad"
                         value={form.press_inlet?.toString() || ""}
                         showIcon={false}
@@ -769,6 +775,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         warning={
                           (form?.press_treat && form?.press_treat && +form?.press_treat < 0.01) ||
                           +form?.press_treat > 0.3
@@ -795,6 +802,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     </View>
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         warning={
                           (form?.press_drain && form?.press_drain && +form?.press_drain < 0.01) ||
                           +form?.press_drain > 0.3
@@ -830,6 +838,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
                       <View style={[$containerHorizon, { marginTop: 10 }]}>
                         <TouchableOpacity
+                          disabled={!isEditable}
                           style={$containerHorizon}
                           onPress={() => {
                             if (!form.odor) {
@@ -842,6 +851,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={form?.odor || false ? "checked" : "unchecked"}
                             onPress={() => {
                               if (!form.odor) {
@@ -857,6 +867,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                           <Text>Odor</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                          disabled={!isEditable}
                           style={$containerHorizon}
                           onPress={() => {
                             if (!form.taste) {
@@ -868,6 +879,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={form?.taste || false ? "checked" : "unchecked"}
                             onPress={() => {
                               if (!form.taste) {

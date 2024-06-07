@@ -19,6 +19,7 @@ import {
 import { getCurrentTime } from "app/utils-v2/getCurrTime"
 import { useStores } from "app/models"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
+import { getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
@@ -145,7 +146,40 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
     const onShowInstruction = () => {
       setShowInstruction((pre) => !pre)
     }
-
+    const onlaunchGallery = async () => {
+      try {
+        const result = await getResultImageGallery()
+        if (!result.canceled) {
+          // Set the selected image in state
+    
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
+      }
+    }
+    const onlaunchCamera = async () => {
+      try {
+        const result = await getResultImageCamera()
+        if (!result.canceled) {
+          // Set the selected image in state
+     
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
+      }
+    }
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
@@ -180,6 +214,8 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                 <ActivityBar
                   direction="end"
                   showInfo
+                  onAttachment={onlaunchGallery}
+                  onScanCamera={onlaunchCamera}
                   onClickinfo={() => setShowInstruction(true)}
                   onActivity={() => setShowActivitylog(true)}
                 />
@@ -478,6 +514,8 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                   <ActivityBar
                     direction="end"
                     showInfo
+                    onAttachment={onlaunchGallery}
+                    onScanCamera={onlaunchCamera}
                     onClickinfo={() => setShowInstruction(true)}
                     onActivity={() => setShowActivitylog(true)}
                   />

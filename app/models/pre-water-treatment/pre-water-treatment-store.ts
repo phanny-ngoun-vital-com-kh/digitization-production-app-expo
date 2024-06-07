@@ -70,6 +70,22 @@ export const PreWaterTreatmentStoreModel = types
           throw Error(rs.kind)
         }
       },
+      assignMachine :async (
+        id:number ,
+        assign_to_user:string,
+        pre_treatment_type:string
+      ) =>{
+        const rs = await prewaterTreatmentApi.saveAssign({
+          id, assign_to_user,pre_treatment_type
+
+        })
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      }
     }
   }) // eslint-disable-line @typescript-eslint/no-unused-vars
   .actions((self) => {

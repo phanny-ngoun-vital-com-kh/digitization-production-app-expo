@@ -28,34 +28,18 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
   }) {
     const navigation = useNavigation()
     const route = useRoute().params
-    const {
-haccpMonitoringStore
-    } = useStores()
+    const { haccpMonitoringStore } = useStores()
     const { colors } = useTheme()
     const [waterLines, setWaterLines] = useState<WaterTreatmentLine[] | []>([])
     const lineStatus = ["normal", "pending", "warning"]
     const [selectedStatus, setSelectStatus] = useState("")
     const getRouteLine = () => route?.title.split(" ")[1]
     const [visible, setVisible] = useState(false)
+
     const showModal = () => {
-      console.log("click ")
       setVisible(true)
     }
     const hideModal = () => setVisible(false)
-    const times = [
-      {
-        name: "7:00",
-        value: 1,
-      },
-      {
-        name: "9:00",
-        value: 2,
-      },
-      {
-        name: "11:00",
-        value: 3,
-      },
-    ]
     useLayoutEffect(() => {
       navigation.setOptions({
         title: route?.title,
@@ -78,11 +62,10 @@ haccpMonitoringStore
     useEffect(() => {
       const all = haccpMonitoringStore.haccpMonitoringList
 
-  
       const records = all.filter((line) => +line.id === +route?.id ?? 0)
 
       console.log(records)
-   
+
       setWaterLines(records.map((record) => record.lines)[0])
     }, [navigation, route])
 
@@ -344,8 +327,8 @@ haccpMonitoringStore
               )}
             </View>
             <AlertDialog
-              content="You're about to entroll this Line , Click confirm to accept it"
-              visible={visible}
+                  content="Are you sure about that?"
+                  visible={visible}
               hideDialog={hideModal}
               onPositive={hideModal}
               onNegative={() => setVisible(false)}

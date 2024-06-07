@@ -19,14 +19,16 @@ import { useStores } from "app/models"
 import { PreTreatmentListItemModel } from "app/models/pre-water-treatment/pre-water-treatment-model"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ActivityModal from "app/components/v2/ActivitylogModal"
+import { getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 
 interface PreWaterForm2ScreenProps extends AppStackScreenProps<"PreWaterForm2"> {}
 
 export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
   function PreWaterForm2Screen() {
-    const { preWaterTreatmentStore } = useStores()
+    const { preWaterTreatmentStore, authStore } = useStores()
     const navigation = useNavigation()
     const route = useRoute().params
+    const [activities, setActivities] = useState([])
     const [showLog, setShowlog] = useState<boolean>(false)
     const [isLoading, setLoading] = useState<boolean>(false)
     const [form, setForm] = useState({
@@ -41,6 +43,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       buffer: "",
     })
 
+    const [isEditable, setEditable] = useState(false)
     const [errors, setErrors] = useState({
       sf1: true,
       sf2: true,
@@ -117,6 +120,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         setLoading(true)
 
         await preWaterTreatmentStore.addPretreatments(payload).savePreWtp4()
+        fetchUserActivity()
         route?.onBack()
 
         Dialog.show({
@@ -139,51 +143,115 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         setLoading(false)
       }
     }
+    const onlaunchGallery = async () => {
+      try {
+        const result = await getResultImageGallery()
+        if (!result.canceled) {
+          // Set the selected image in state
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
+      }
+    }
+    const onlaunchCamera = async () => {
+      try {
+        const result = await getResultImageCamera()
+        if (!result.canceled) {
+          // Set the selected image in state
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
+      }
+    }
+    const fetchUserActivity = async () => {
+      const result = await preWaterTreatmentStore.getActivitiesList(
+        route?.item?.id,
+        route?.item?.pre_treatment_type,
+      )
+      setActivities(result.sort((a, b) => new Date(b.actionDate) - new Date(a.actionDate)))
+    }
+    const getCurrentUserName = async () => {
+      const userinfo = await authStore.getUserInfo()
+      const { login } = userinfo.data
+      return login
+    }
+    const checkUserRole = async () => {
+      // console.log("machine user assign to", route?.items?.assign_to_user)
+      if (!route?.item?.assign_to_user) {
+        setEditable(false)
 
+        return
+      }
+      const currUser = await getCurrentUserName()
+
+      console.log(currUser, route?.item?.assign_to_user)
+      const arrUsers = route?.item?.assign_to_user?.split(" ") as string[]
+      if (arrUsers.includes(currUser)) {
+        setEditable(true)
+      } else {
+        setEditable(false)
+      }
+    }
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
         title: route?.type,
 
-        headerRight: () => (
-          <TouchableOpacity
-            style={$horizon}
-            onPress={() => {
-              if (route?.type?.toLowerCase()?.startsWith("pressure")) {
-                let errorslist = errors
-                delete errorslist.raw_water
-                delete errorslist.buffer
-                delete errorslist.remarks
+        headerRight: () =>
+          isEditable ? (
+            <TouchableOpacity
+              style={$horizon}
+              onPress={() => {
+                if (route?.type?.toLowerCase()?.startsWith("pressure")) {
+                  let errorslist = errors
+                  delete errorslist.raw_water
+                  delete errorslist.buffer
+                  delete errorslist.remarks
 
-                const isvalid = Object.values(errorslist).every((error) => error === false)
-                if (!isvalid) {
-                  return
+                  const isvalid = Object.values(errorslist).every((error) => error === false)
+                  if (!isvalid) {
+                    return
+                  }
+                } else {
+                  let errorslist = errors
+                  delete errorslist.remarks
+
+                  const isvalid = Object.values(errorslist).every((error) => error === false)
+                  if (!isvalid) {
+                    return
+                  }
                 }
-              } else {
-                let errorslist = errors
-                delete errorslist.remarks
 
-                const isvalid = Object.values(errorslist).every((error) => error === false)
-                if (!isvalid) {
-                  return
-                }
-              }
+                // navigation.goBack()
 
-              // navigation.goBack()
-
-              handleSubmitting()
-            }}
-          >
-            <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
-            <Text primaryColor body1 semibold>
-              Save
-            </Text>
-          </TouchableOpacity>
-        ),
+                handleSubmitting()
+              }}
+            >
+              <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
+              <Text primaryColor body1 semibold>
+                Save
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <></>
+          ),
       })
-    }, [navigation, route, errors, form])
+    }, [navigation, route, errors, form, isEditable])
 
     useEffect(() => {
+      checkUserRole()
       setForm({
         sf1: route?.item?.sf1,
         sf2: route?.item?.sf2,
@@ -195,6 +263,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         remarks: route?.item?.remark,
         buffer: route?.item?.buffer_st002,
       })
+      fetchUserActivity()
       setErrors({
         sf1: !route?.item?.sf1,
         sf2: !route?.item?.sf2,
@@ -220,11 +289,17 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         )}
         <ScrollView>
           <View style={$outerContainer}>
-            <ActivityBar direction="end" onActivity={() => setShowlog(true)} />
+            <ActivityBar
+              direction="end"
+              onActivity={() => setShowlog(true)}
+              onScanCamera={onlaunchCamera}
+              onAttachment={onlaunchGallery}
+            />
 
             <View style={$horizon}>
               <View style={$width}>
                 <CustomInput
+                  disabled={isEditable}
                   keyboardType="decimal-pad"
                   showIcon={false}
                   warning={(form.sf1 && +form.sf1 < 0.2) || +form.sf1 > 0.5}
@@ -248,6 +323,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               </View>
               <View style={$width}>
                 <CustomInput
+                  disabled={isEditable}
                   keyboardType="decimal-pad"
                   showIcon={false}
                   warning={(form.sf2 && +form.sf2 < 0.2) || +form.sf2 > 0.5}
@@ -273,6 +349,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
             <View style={$horizon}>
               <View style={$width}>
                 <CustomInput
+                  disabled={isEditable}
                   warning={(form.acf1 && +form.acf1 < 0.2) || +form.acf1 > 0.5}
                   value={form.acf1?.toString() || ""}
                   keyboardType="decimal-pad"
@@ -296,6 +373,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               </View>
               <View style={$width}>
                 <CustomInput
+                  disabled={isEditable}
                   warning={(form.acf2 && +form.acf2 < 0.2) || +form.acf2 > 0.5}
                   value={form.acf2?.toString() || ""}
                   keyboardType="decimal-pad"
@@ -321,6 +399,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
             <View style={$horizon}>
               <View style={$width}>
                 <CustomInput
+                  disabled={isEditable}
                   warning={(form?.tenMm1 && +form.tenMm1 < 1) || +form?.tenMm1 > 2.5}
                   value={form.tenMm1?.toString() || ""}
                   keyboardType="decimal-pad"
@@ -344,6 +423,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               </View>
               <View style={$width}>
                 <CustomInput
+                  disabled={isEditable}
                   value={form.tenMm2?.toString() || ""}
                   warning={(form?.tenMm2 && +form.tenMm2 < 1) || +form?.tenMm2 > 2.5}
                   keyboardType="decimal-pad"
@@ -371,6 +451,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               <View style={$horizon}>
                 <View style={$width}>
                   <CustomInput
+                    disabled={isEditable}
                     keyboardType="decimal-pad"
                     value={form?.raw_water ?? ""}
                     showIcon={false}
@@ -394,6 +475,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                 </View>
                 <View style={$width}>
                   <CustomInput
+                    disabled={isEditable}
                     keyboardType="decimal-pad"
                     value={form?.buffer ?? ""}
                     showIcon={false}

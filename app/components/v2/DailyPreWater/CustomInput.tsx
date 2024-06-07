@@ -73,6 +73,8 @@ const CustomInput = forwardRef(
           {showIcon && <Icon style={{ marginLeft: 5 }} name="search1" size={19} color={"gray"} />}
 
           <TextInput
+            {...textInputProps}
+            
             style={{ backgroundColor: "white", width: "100%" }}
             ref={ref} // Forwarded ref
             multiline={false}
@@ -80,7 +82,7 @@ const CustomInput = forwardRef(
             placeholder={placeholder || "Please Enter"}
             placeholderTextColor="gray"
             onChangeText={(text) => onChangeText(text)}
-            {...textInputProps}
+          
           ></TextInput>
         </TouchableOpacity>
 

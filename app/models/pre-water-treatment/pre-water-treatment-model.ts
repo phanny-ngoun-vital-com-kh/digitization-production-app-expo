@@ -28,6 +28,7 @@ export const PreTreatmentListItemModel = types
     buffer_st002: types.maybeNull(types.string),
     status: types.string,
     warning_count: types.number,
+    assign_to_user: types.maybeNull(types.string),
     remark: types.maybeNull(types.string),
     createdBy: types.maybeNull(types.string),
     createdDate: types.maybeNull(types.string),
@@ -50,7 +51,7 @@ export const PreTreatmentListItemModel = types
           pre_treatment_id: self.pre_treatment_id ?? "",
           id: self.id,
           raw_water: self.raw_water ?? null,
-
+          assign_to_user: self.assign_to_user ?? null,
           pre_treatment_type: self.pre_treatment_type ?? "",
         })
         if (rs.kind === "ok") {

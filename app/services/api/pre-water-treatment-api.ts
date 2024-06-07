@@ -3,11 +3,13 @@ import { BaseApi } from "./base-api"
 import { DataResponse } from "./response-util"
 
 const ApiURL = {
-  getPrewtpBydate: "get_pre_treatment_by_date_assign",
+  getPrewtpBydate: "get_pre_treatment_by_date",
+
   postWTP: "post_daily_pre_water_treatment",
-  getAllByDateOnly:"get-treatment-daily",
+  getAllByDateOnly: "get-treatment-daily",
   getWtpbyDate: "get_pre_treatment_by_date_time",
   getCtlActivity: "get-control-activities",
+  assignMachine: "assign-self-pre",
 }
 
 export class PreWaterTreatmentApi extends BaseApi {
@@ -63,10 +65,30 @@ export class PreWaterTreatmentApi extends BaseApi {
     pre_treatment_id: string
     id: string | number
     raw_water: string | null
+    assign_to_user: string | null
+
     pre_treatment_type: string
   }): Promise<any> {
     try {
       const rs = await this.requestService.exec(ApiURL.postWTP, {
+        ...params,
+      })
+
+      return DataResponse(rs)
+    } catch (e: any) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data" }
+    }
+  }
+  async saveAssign(params: {
+    id: string
+    action: string
+    pre_treatment_type: string | null
+    pre_treatment_id: string | null
+  }): Promise<any> {
+    try {
+  
+      const rs = await this.requestService.exec(ApiURL.assignMachine, {
         ...params,
       })
 

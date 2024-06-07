@@ -26,6 +26,7 @@ export const TreatmentModel = types
     taste: types.maybeNull(types.string),
     other: types.maybeNull(types.string),
     createdBy: types.maybeNull(types.string),
+    assign_to_user: types.maybeNull(types.string),
     createdDate: types.maybeNull(types.string),
     lastModifiedBy: types.maybeNull(types.string),
     lastModifiedDate: types.maybeNull(types.string),
@@ -50,6 +51,7 @@ export const TreatmentModel = types
           press_drain: self.press_drain ?? null,
           odor: self.odor,
           taste: self.taste,
+          assign_to_user: self.assign_to_user ?? null,
           treatment_id: self.treatment_id ?? null,
           pressure: self.pressure,
         })
@@ -94,6 +96,7 @@ export const WaterTreatmentModel = types
     createdBy: types.string,
     createdDate: types.string,
     lastModifiedBy: types.maybeNull(types.string),
+    assign_date: types.maybeNull(types.string),
     lastModifiedDate: types.maybeNull(types.string),
     treatmentlist: types.optional(types.array(TreatmentModel), []),
   })

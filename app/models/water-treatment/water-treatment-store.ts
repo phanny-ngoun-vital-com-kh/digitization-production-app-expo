@@ -132,6 +132,19 @@ export const WaterTreatmentStoreModel = types
           throw Error(rs.kind)
         }
       },
+      assignMachine: async (id: string, action: string, treatment_id: string) => {
+        const rs = await watertreatmentApi.saveAssign({
+          id,
+          action,
+          treatment_id
+        })
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
     }
   })
 

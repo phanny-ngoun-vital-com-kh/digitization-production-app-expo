@@ -7,6 +7,7 @@ import { Divider } from "react-native-paper"
 import { $containerHorizon } from "app/screens"
 import { MACHINE_STATE, MachinePanelProps } from "./type"
 import BadgeWarning from "../Badgewarn"
+import { useStores } from "app/models"
 
 const MachinePanel = ({
   machine_type = "Raw Water Stock",
@@ -14,12 +15,16 @@ const MachinePanel = ({
   assign_to = "Vicheaka",
   time = "7:00",
   created_date,
+  id,
+  currUser,
+  assign_to_user,
   warning_count = 0,
   handleAssigntask,
   onPress,
 }: MachinePanelProps) => {
   const getStatus = (status: MACHINE_STATE) =>
     status === "normal" ? "#0081F8" : status === "pending" ? "#8CC8FF" : "red"
+  // console.log(assign_to_user?.split(" "))
   return (
     <View
       style={{
@@ -60,12 +65,21 @@ const MachinePanel = ({
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
           <View style={[$containerHorizon, { gap: 20 }]}>
-            <View style={$containerHorizon}>
+            {assign_to_user?.split(" ").includes(currUser ?? "") && (
+              <View style={$containerHorizon}>
+                <Icon name="checkcircle" size={18} color="#40A578" />
+                <Text semibold caption1 style={{ marginLeft: 5, color: "#40A578" }}>
+                  You are assigned
+                </Text>
+              </View>
+            )}
+
+            {/* <View style={$containerHorizon}>
               <Icon name="search1" size={20} color="black" />
               <Text semibold caption1>
                 Assign to : {assign_to}
               </Text>
-            </View>
+            </View> */}
             <View style={$containerHorizon}>
               <Icon name="clockcircleo" style={{ marginRight: 5 }} size={18} color="black" />
               <Text semibold caption1>
@@ -86,18 +100,44 @@ const MachinePanel = ({
             </TouchableOpacity>
           </View>
         </View>
+    
 
-        {status === "pending" && (
-          <TouchableOpacity
-          onPress={handleAssigntask}
+        {status === "pending" && 
+        
+        assign_to_user?.split(" ").includes(currUser ?? "") === false  ? (
+          <View
+            style={[
+              $containerHorizon,
+              { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
+            ]}
           >
-            <View style={[$containerHorizon, { justifyContent: "center", marginBottom: 20 ,marginTop:15}]}>
+            <TouchableOpacity
+              onPress={() => handleAssigntask!(id, assign_to_user)}
+              style={$containerHorizon}
+            >
               <Icon name="edit" size={18} color="#0081F8" />
               <Text semibold caption1 style={{ marginLeft: 5, color: "#0081F8" }}>
                 Enroll this task
               </Text>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View
+            style={[
+              $containerHorizon,
+              { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={() => handleAssigntask!(id, assign_to_user)}
+              style={$containerHorizon}
+            >
+              <Icon name="closecircle" size={18} color="#D32600" />
+              <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
+                Unassign this task
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
       </TouchableOpacity>
     </View>

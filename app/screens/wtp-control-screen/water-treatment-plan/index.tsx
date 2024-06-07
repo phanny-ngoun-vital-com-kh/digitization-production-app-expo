@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useLayoutEffect, useState } from "react"
+import React, { FC, useEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import moment from "moment"
 import { useTheme } from "app/theme-v2"
@@ -25,6 +25,7 @@ import EmptyFallback from "app/components/EmptyFallback"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import AlertDialog from "app/components/v2/AlertDialog"
 import { convertToMinutes, getCurrentTime } from "app/utils-v2/getCurrTime"
+import { checkConnectivitity } from "app/utils-v2/Connectivity"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 
@@ -44,6 +45,17 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       value: new Date(Date.now()),
       // value: null,
     })
+    const [assignUser, setAssignUser] = useState<{
+      id: number | null
+      treatment_id: string
+      currUser?: string | null
+    }>({
+      treatment_id: "",
+      id: null,
+      currUser: "",
+    })
+
+    const [taskAssignto, setTaskAssignTo] = useState("")
     const [sort, setSort] = useState("asc")
     const [query, setQuery] = useState("")
 
@@ -77,27 +89,28 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
     const handleAssignTask = async () => {
       try {
-        console.log(await authStore.getUserInfo())
-        const userinfo = await authStore.getUserInfo()
-        const { login } = userinfo.data
-        const payload = await waterTreatmentStore.assignTask(
-          selectedShift,
-          login,
-          moment(datePicker.value).format("YYYY-MM-DD"),
+        setVisible(false)
+
+        await waterTreatmentStore.assignMachine(
+          assignUser!.id?.toString() || "",
+          taskAssignto.split(" ").includes(assignUser?.currUser ?? "")
+            ? "has remove the assignment from this machine"
+            : "has self assign this machine",
+          assignUser!.treatment_id,
         )
 
         // console.log("full finished", payload)
       } catch (error) {
-        console.log(error.message)
+        // console.log(error.message)
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "បរាជ័យ",
           textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
           button: "បិទ",
         })
+      } finally {
+        refresh()
       }
-
-      setVisible(false)
     }
 
     const onCalculateSchedule = (completed: string, total: string) => {
@@ -107,17 +120,26 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
         setSelectProgess(progress)
       }
     }
+
     const hideDialog = () => setVisible(false)
 
+    // console.log("machine and user", assignUser)
     const renderItem = ({ item }: { item: WaterTreatment }) =>
-      schedules?.map((subitem, index) => {
+      schedules?.map((subitem: Treatment, index) => {
         //Sub Collection of treatmentlist that contain the machines
         return (
           <MachinePanel
-            handleAssigntask={() => setVisible(true)}
+            handleAssigntask={(id: number, assign_to_user: string) => {
+              setVisible(true)
+              setTaskAssignTo(assign_to_user)
+              setAssignUser((pre) => ({ ...pre, id, treatment_id: item?.treatment_id ?? "" }))
+            }}
+            currUser={assignUser?.currUser}
             key={index.toString()}
+            id={subitem.id}
+            assign_to_user={subitem.assign_to_user ?? ""}
             status={subitem?.status ?? "pending"}
-            created_date={moment(subitem.createdDate).format("LL")}
+            created_date={moment(item?.assign_date).format("LL")}
             machine_type={subitem?.machine}
             assign_to={item?.assign_to ?? "vorn"}
             warning_count={subitem?.warning_count ?? 0}
@@ -140,6 +162,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       setRefreshing(true)
       fetchScehdules()
     }
+
     const getCurrentTimeAndShift = (dummyShifts, getCurrentTime) => {
       const currentTime = getCurrentTime
       const currentTimeInMinutes = convertToMinutes(currentTime)
@@ -206,6 +229,11 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
       setShifts(updatedShifts)
     }
+    const getCurrentUserName = async () => {
+      const userinfo = await authStore.getUserInfo()
+      const { login } = userinfo.data
+      setAssignUser((pre) => ({ ...pre, currUser: login }))
+    }
     const fetchScehdules = async () => {
       try {
         setQuery("")
@@ -221,7 +249,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           )) as []
 
           setWtp2(results)
-          console.log(results.length)
+
           const schedules = results.map((item) => item?.treatmentlist)[0]
           setSchedules(schedules)
           setScheduleSnapshot(schedules)
@@ -283,7 +311,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     })
     useEffect(() => {
       fetchScehdules()
-
+      getCurrentUserName()
       if (datePicker.value) {
         fetchTimePanel()
       }
@@ -294,6 +322,12 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       onSearchItem()
       return () => setSchedules(scheduleSnapshot)
     }, [query])
+
+    useEffect(() => {
+      const unsubscribe = checkConnectivitity()
+
+      return () => unsubscribe()
+    }, [])
 
     return (
       <Provider>
@@ -339,7 +373,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               ]}
             >
               <View style={styles.leftPane}>
-                <ScrollView >
+                <ScrollView>
                   {shifts?.map((item) => {
                     return item.schedules.map((subitem, index) => {
                       return (
@@ -393,9 +427,8 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                 </View>
                 <View style={$useflex}>
                   <FlatList
-                  showsVerticalScrollIndicator
-                  persistentScrollbar
-                  
+                    showsVerticalScrollIndicator
+                    persistentScrollbar
                     refreshControl={
                       <RefreshControl
                         colors={[colors.primary]}
@@ -413,6 +446,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                 </View>
                 <AlertDialog
                   visible={visible}
+                  content="Are you sure about that?"
                   hideDialog={hideDialog}
                   onPositive={handleAssignTask}
                   onNegative={() => setVisible(false)}

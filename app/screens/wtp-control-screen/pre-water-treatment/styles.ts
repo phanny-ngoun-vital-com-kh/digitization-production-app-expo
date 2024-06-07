@@ -12,9 +12,15 @@ export default StyleSheet.create({
   rightPane: {
     flex: 1,
     paddingHorizontal: 10,
-    paddingVertical:0
+    paddingVertical: 0,
 
     // paddingBottom:20
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.59)",
+    zIndex: 10000,
+    justifyContent: "center",
   },
   displayButton: {
     borderWidth: 1,

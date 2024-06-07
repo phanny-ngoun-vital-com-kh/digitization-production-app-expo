@@ -4,20 +4,24 @@ export type TimePanelProps = {
   isSelected?: boolean
   bgColor?: string
   color?: string
-  onPress?:()=>void
-  isWarning?:boolean
+  onPress?: () => void
+  isWarning?: boolean
 }
 
 export type MachinePanelProps = {
-  machine_type: string  | undefined
-  status?: MACHINE_STATE   
-  assign_to: string  | undefined
+  machine_type: string | undefined
+  status?: MACHINE_STATE
+  assign_to: string | undefined
   time: string | undefined
-  onPress:()=>void
-  handleAssigntask?:()=>void
-  warning_count?:string 
+  onPress: () => void
+  currUser?: string | null
+  handleAssigntask?: (id: number, assign_to_user: string) => void
+  id: number
+  pre_treatment_type ?:string 
+  pre_treatment_id?:string 
+  assign_to_user: string
+  warning_count?: string | number
   created_date: string | Date | undefined
-
 }
 
 export type MACHINE_STATE = "normal" | "pending" | "warning"

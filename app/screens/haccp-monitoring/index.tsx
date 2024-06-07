@@ -17,7 +17,7 @@ interface HccpMonitorScreenProps extends AppStackScreenProps<"HccpMonitor"> {}
 export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function HccpMonitorScreen() {
   const [datePicker, setDatePicker] = useState({
     show: false,
-    value: null,
+    value: new Date(Date.now()),
   })
   const [isLoading, setLoading] = useState(false)
   const [selectedLine, setSelectedLine] = useState({ name: "", value: null })
@@ -51,7 +51,6 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
     // haccpMonitoringStore.removeLines()
   }, [selectedLine, datePicker.value])
 
-  console.log("Length is ",haccpMonitoringStore.haccpMonitoringList.length)
 
   return (
     <View style={$root}>

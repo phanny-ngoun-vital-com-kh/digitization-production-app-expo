@@ -86,7 +86,7 @@ export const createLinesItemDefaultModel = () => ({
 // Define the main HaccpMonitoringModel
 export const HaccpMonitoringModel = types
   .model("HaccpMonitoring", {
-    id: types.identifierNumber,
+    id: types.maybeNull(types.identifierNumber),
     name: types.string,
     date: types.string,
     lines: types.array(LinesItemModel),
@@ -107,4 +107,6 @@ export interface HaccpMonitoring extends Instance<typeof HaccpMonitoringModel> {
 export interface HaccpMonitoringSnapshotOut extends SnapshotOut<typeof HaccpMonitoringModel> {}
 export interface LinesItemList extends SnapshotOut<typeof LinesItemModel> {}
 export interface HaccpMonitoringSnapshotIn extends SnapshotIn<typeof HaccpMonitoringModel> {}
-export const createHaccpMonitoringDefaultModel = () => types.optional(HaccpMonitoringModel, {});
+export const createHaccpMonitoringDefaultModel = () => types.optional(HaccpMonitoringModel, {
+  
+});

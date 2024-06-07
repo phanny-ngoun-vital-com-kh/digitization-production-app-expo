@@ -21,6 +21,7 @@ import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { styles } from "../styles"
 import BadgeWarning from "app/components/v2/Badgewarn"
+import { getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 // import { useNavigation } from "@react-navigation/native"
 // import { useStores } from "app/models"
 
@@ -30,7 +31,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
   function PreWaterForm1Screen() {
     const navigation = useNavigation()
     const [activities, setActivities] = useState([])
-    const { preWaterTreatmentStore } = useStores()
+    const { preWaterTreatmentStore, authStore } = useStores()
     const [isloading, setLoading] = useState(false)
     const route = useRoute().params
     const [showLog, setShowlog] = useState<boolean>(false)
@@ -49,7 +50,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     })
 
     const [oldRoute, setRoute] = useState({})
-
+    const [isEditable, setEditable] = useState(false)
     const [errors, setErrors] = useState({
       sf1: true,
       acf1: true,
@@ -95,8 +96,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         delete modifedForm.air_released
         delete modifedForm?.remarks
 
-
-   
         for (const key in modifedForm) {
           if (oldRoute[key] !== null) {
             // console.log("current Form", form[key], key)
@@ -212,7 +211,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         if (route?.type?.toLowerCase().includes("air")) {
           setLoading(true)
           const modifiedForm = Object.assign({}, form)
-   
+
           const actions = getActionUser()
           const payload = PreTreatmentListItemModel.create({
             pre_treatment_type: route?.item?.pre_treatment_type,
@@ -302,34 +301,92 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         setLoading(false)
       }
     }
+    const onlaunchGallery = async () => {
+      try {
+        const result = await getResultImageGallery()
+        if (!result.canceled) {
+          // Set the selected image in state
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
+      }
+    }
+    const onlaunchCamera = async () => {
+      try {
+        const result = await getResultImageCamera()
+        if (!result.canceled) {
+          // Set the selected image in state
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
+          // button: 'close',
+          autoClose: 100,
+        })
+      }
+    }
+    const getCurrentUserName = async () => {
+      const userinfo = await authStore.getUserInfo()
+      const { login } = userinfo.data
+      return login
+    }
+    const checkUserRole = async () => {
+      // console.log("machine user assign to", route?.items?.assign_to_user)
+      if (!route?.item?.assign_to_user) {
+        setEditable(false)
 
-  
+        return
+      }
+      const currUser = await getCurrentUserName()
+
+      console.log(currUser, route?.item?.assign_to_user)
+      const arrUsers = route?.item?.assign_to_user?.split(" ") as string[]
+      if (arrUsers.includes(currUser)) {
+        setEditable(true)
+      } else {
+        setEditable(false)
+      }
+    }
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
         title: route?.type,
 
-        headerRight: () => (
-          <TouchableOpacity
-            style={$horizon}
-            onPress={() => {
-              // navigation.goBack()
-              const hasError = formvalidation()
-              if (!hasError) {
-                handleSubmit()
-              }
-            }}
-          >
-            <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
-            <Text primaryColor body1 semibold>
-              Save
-            </Text>
-          </TouchableOpacity>
-        ),
+        headerRight: () =>
+          isEditable ? (
+            <TouchableOpacity
+              style={$horizon}
+              onPress={() => {
+                // navigation.goBack()
+                const hasError = formvalidation()
+                if (!hasError) {
+                  handleSubmit()
+                }
+              }}
+            >
+              <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
+              <Text primaryColor body1 semibold>
+                Save
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <Text></Text>
+            </>
+          ),
       })
-    }, [form, route, errors, oldRoute])
-    
+    }, [form, route, errors, oldRoute, isEditable])
+
     useEffect(() => {
+      checkUserRole()
       fetchUserActivity()
       let airReleased
       if (route.item.sf == null) {
@@ -409,7 +466,12 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                   {"* Warning Level ( 0.1 - 0.3 Mpa ) "}
                 </Text>
               )}
-              <ActivityBar direction="end" onActivity={() => setShowlog(true)} />
+              <ActivityBar
+                direction="end"
+                onScanCamera={onlaunchCamera}
+                onAttachment={onlaunchGallery}
+                onActivity={() => setShowlog(true)}
+              />
             </View>
 
             {route?.type?.toLowerCase().includes("air") ? (
@@ -432,6 +494,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
 
                       <View style={[$horizon, { marginTop: 20 }]}>
                         <TouchableOpacity
+                          disabled={!isEditable}
                           style={$horizon}
                           onPress={() => {
                             setForm((pre) => ({
@@ -441,6 +504,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={
                               form?.air_released?.sf === null
                                 ? "unchecked"
@@ -459,6 +523,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           <Text>Yes </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                          disabled={!isEditable}
                           style={$horizon}
                           onPress={() => {
                             // setErrors((pre) => ({ ...pre, air_release: false }))
@@ -469,6 +534,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={
                               form?.air_released?.sf === null
                                 ? "unchecked"
@@ -503,6 +569,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
 
                       <View style={[$horizon, { marginTop: 20 }]}>
                         <TouchableOpacity
+                          disabled={!isEditable}
                           style={$horizon}
                           onPress={() => {
                             setForm((pre) => ({
@@ -512,6 +579,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={
                               form.air_released?.acf == null
                                 ? "unchecked"
@@ -531,6 +599,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           <Text>Yes </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                          disabled={!isEditable}
                           style={$horizon}
                           onPress={() => {
                             // setErrors((pre) => ({ ...pre, air_release: false }))
@@ -541,6 +610,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={
                               form.air_released?.acf == null
                                 ? "unchecked"
@@ -575,7 +645,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                     </View>
                     <View style={{ marginVertical: 25, flex: 1 }}>
                       <Text body1 semibold style={{ marginBottom: 15 }}>
-                        Air Released Resin{" "}
+                        Air Released Resin
                         {form.air_released.resin && (
                           <View>
                             <BadgeWarning value={"!"} status="warning" />
@@ -589,6 +659,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                       <View style={[$horizon, { marginTop: 20 }]}>
                         <TouchableOpacity
                           style={$horizon}
+                          disabled={!isEditable}
                           onPress={() => {
                             setForm((pre) => ({
                               ...pre,
@@ -597,6 +668,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={
                               form.air_released?.resin == null
                                 ? "unchecked"
@@ -617,6 +689,8 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={$horizon}
+                          disabled={!isEditable}
+
                           onPress={() => {
                             // setErrors((pre) => ({ ...pre, air_release: false }))
                             setForm((pre) => ({
@@ -626,6 +700,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                           }}
                         >
                           <Checkbox
+                            disabled={!isEditable}
                             status={
                               form.air_released?.resin == null
                                 ? "unchecked"
@@ -661,6 +736,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                   </View>
                   <View style={$width}>
                     <CustomInput
+                      disabled={isEditable}
                       showAsterick={false}
                       showIcon={false}
                       onChangeText={(text) => {
@@ -681,6 +757,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                 <View style={$horizon}>
                   <View style={$width}>
                     <CustomInput
+                      disabled={isEditable}
                       showIcon={false}
                       value={form.sf1?.toString()}
                       warning={
@@ -711,6 +788,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                   </View>
                   <View style={$width}>
                     <CustomInput
+                      disabled={isEditable}
                       keyboardType="decimal-pad"
                       showIcon={false}
                       value={form.acf1}
@@ -741,6 +819,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                   {route?.type?.toLowerCase().includes("ph") && (
                     <View style={$width}>
                       <CustomInput
+                        disabled={isEditable}
                         keyboardType="decimal-pad"
                         showIcon={false}
                         value={form.raw_water}
@@ -772,6 +851,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                 <View style={$horizon}>
                   <View style={$width}>
                     <CustomInput
+                      disabled={isEditable}
                       keyboardType="decimal-pad"
                       showIcon={false}
                       warning={
@@ -801,6 +881,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                   </View>
                   <View style={$width}>
                     <CustomInput
+                      disabled={isEditable}
                       keyboardType="decimal-pad"
                       showIcon={false}
                       value={form.fiveMm}
