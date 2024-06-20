@@ -1,78 +1,99 @@
 import React from "react"
-import Icon from "react-native-vector-icons/AntDesign"
+import Icon from "react-native-vector-icons/FontAwesome"
 import styles from "./styles"
 import { Text } from "app/components/v2"
-import { View, Modal, ViewStyle, TouchableOpacity, ScrollView, FlatList } from "react-native"
+import { View, TouchableOpacity, FlatList } from "react-native"
 import { Activities } from "app/models/water-treatment/water-treatment-model"
 import moment from "moment"
 import EmptyFallback from "app/components/EmptyFallback"
+import { Modal } from "react-native-paper"
+import { HaccpActionType } from "app/models/haccp-monitoring/haccp-lines-model"
+
 interface ActivityModalProps {
   isVisible: boolean
+  title?: string
   onClose: () => void
-  log: Activities[] | null
+  type?: "default" | "roles"
+  log: Activities[] | HaccpActionType[] | string[] | null
 }
-const ActivityModal = ({ isVisible = true, onClose, log = [] }: ActivityModalProps) => {
+
+const ActivityModal = ({
+  title = "Activity Log",
+  isVisible = true,
+  onClose,
+  log = [],
+  type ="default",
+}: ActivityModalProps) => {
   return (
     <Modal
-      animationType="slide"
-      transparent={true}
       visible={isVisible}
-      onRequestClose={() => {
-        onClose()
-      }}
+      onDismiss={onClose}
+      style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 0 }}
+      contentContainerStyle={styles.modalContainer}
     >
-      <View style={styles.container}>
-        <View style={styles.model}>
-          <View style={{ backgroundColor: "#0081F8", padding: 10 }}>
-            <View style={$hori}>
+      <View style={styles.modalContent}>
+        {/* <View style={styles.header}>
+          <Text title3 whiteColor regular>
+            Activity Log
+          </Text>
+          <TouchableOpacity onPress={onClose}>
+            <Icon size={22.5} name="close" color={"white"} />
+          </TouchableOpacity>
+        </View> */}
+
+        <FlatList
+          showsVerticalScrollIndicator
+          persistentScrollbar
+          // stickyHeaderIndices={[0]}
+          stickyHeaderIndices={[0]}
+          ListHeaderComponent={() => (
+            <View style={styles.header}>
+              <Icon
+                name={"user"}
+                size={25}
+                color="white"
+                style={{ marginBottom: 10, marginLeft: 10 }}
+              />
+
               <Text title3 whiteColor regular>
-                Activity Log
+                {title}
               </Text>
-
-              <View style={[$hori, { gap: 20 }]}>
-                <TouchableOpacity onPress={() => onClose()}>
-                  <Icon size={22.5} name="close" color={"white"} />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity onPress={onClose}>
+                <Icon size={22.5} name="close" color={"white"} />
+              </TouchableOpacity>
             </View>
-          </View>
+          )}
+          data={log || []}
+          keyExtractor={(item, index) => index.toString()}
+          contentContainerStyle={styles.flatListContent}
+          ListEmptyComponent={<EmptyFallback placeholder="No Activity found for this Machine" />}
+          renderItem={({ item, index }) => {
+            return type === "default" ? (
+              <View style={styles.listItem} key={index.toString()}>
+                <Text title1>{`\u2022 `}</Text>
+                <Text body2>
+                  {moment(item?.actionDate).format("LLL") ?? Date.now().toLocaleString()} :{" "}
+                  {item?.actionBy} {item?.action}
+                </Text>
+              </View>
+            ) : (
+              <View style={[styles.listItem, { alignItems: "center" }]} key={index.toString()}>
+                <Icon
+                  name={"check"}
+                  size={20}
+                  color="black"
+                  style={{ marginLeft: 10 }}
+                />
 
-          <FlatList
-            data={log}
-            keyExtractor={(item, index) => index.toString()}
-            contentContainerStyle={{
-              paddingHorizontal:25
-            }}
-            ListEmptyComponent={<EmptyFallback placeholder="No Activity found for this Machine" />}
-            renderItem={({ item, index }) => {
-              return (
-                <View
-                  style={[
-                    $hori,
-                    { justifyContent: "flex-start", paddingHorizontal: 10, paddingVertical: 10 },
-                  ]}
-                  key={index.toString()}
-                >
-                  <Text title1>{`\u2022 `}</Text>
-                  <Text body2>
-                    {moment(item?.actionDate).format("LLL") ?? Date.now().toLocaleString()} :{" "}
-                    {item?.actionBy} {item?.action}
-                  </Text>
-                </View>
-              )
-            }}
-          />
-        </View>
+                <Text body1> This line has assigned to {item}</Text>
+              </View>
+            )
+          }}
+        />
+        {!log?.length ? <View style={{ marginBottom: 100 }}></View> : <></>}
       </View>
     </Modal>
   )
-}
-
-const $hori: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 10,
 }
 
 export default ActivityModal

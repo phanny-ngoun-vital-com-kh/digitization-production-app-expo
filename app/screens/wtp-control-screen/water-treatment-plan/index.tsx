@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react"
+import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import moment from "moment"
 import { useTheme } from "app/theme-v2"
@@ -9,6 +9,7 @@ import {
   ScrollView,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import styles from "./styles"
@@ -24,8 +25,14 @@ import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import EmptyFallback from "app/components/EmptyFallback"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import AlertDialog from "app/components/v2/AlertDialog"
-import { convertToMinutes, getCurrentTime } from "app/utils-v2/getCurrTime"
-import { checkConnectivitity } from "app/utils-v2/Connectivity"
+import {
+  cleanTimeCurrent,
+  cleanTimeString,
+  convertToMinutes,
+  getCurrentTime,
+} from "app/utils-v2/getCurrTime"
+import { Text } from "app/components/v2"
+import { isLoading } from "expo-font"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 
@@ -87,6 +94,15 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       { time: "22:00", type: "S2" },
     ]
 
+    const invalidDate = (created_date: any) =>
+      moment(Date.now()).format("LL") === moment(created_date).format("LL")
+
+    const isValidShift = (time: any) =>
+      getCurrentTime() > cleanTimeCurrent(!time.includes("(") ? time : time?.split(" ")[1]) &&
+      getCurrentTime().localeCompare(
+        cleanTimeString(!time.includes("(") ? time : time?.split(" ")[1]),
+      )
+
     const handleAssignTask = async () => {
       try {
         setVisible(false)
@@ -128,30 +144,40 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       schedules?.map((subitem: Treatment, index) => {
         //Sub Collection of treatmentlist that contain the machines
         return (
-          <MachinePanel
-            handleAssigntask={(id: number, assign_to_user: string) => {
-              setVisible(true)
-              setTaskAssignTo(assign_to_user)
-              setAssignUser((pre) => ({ ...pre, id, treatment_id: item?.treatment_id ?? "" }))
-            }}
-            currUser={assignUser?.currUser}
-            key={index.toString()}
-            id={subitem.id}
-            assign_to_user={subitem.assign_to_user ?? ""}
-            status={subitem?.status ?? "pending"}
-            created_date={moment(item?.assign_date).format("LL")}
-            machine_type={subitem?.machine}
-            assign_to={item?.assign_to ?? "vorn"}
-            warning_count={subitem?.warning_count ?? 0}
-            time={item?.shift ?? "S1 (7:00)"}
-            onPress={() => {
-              navigation.navigate("WaterTreatmentPlant2Form", {
-                type: subitem?.machine ?? "",
-                items: subitem,
-                onReturn: sendBack,
-              })
-            }}
-          />
+          <View key={index.toString()}>
+            <MachinePanel
+              handleAssigntask={(id: number, assign_to_user: string) => {
+                setVisible(true)
+                setTaskAssignTo(assign_to_user)
+                setAssignUser((pre) => ({ ...pre, id, treatment_id: item?.treatment_id ?? "" }))
+              }}
+              currUser={assignUser?.currUser}
+              key={index.toString()}
+              id={subitem.id}
+              validDate={invalidDate(item?.createdDate)}
+              validShift={isValidShift(item?.shift)}
+              isAssign={subitem.assign_to_user?.split(" ").includes(assignUser?.currUser ?? "")}
+              assign_to_user={subitem.assign_to_user ?? ""}
+              status={subitem?.status ?? "pending"}
+              created_date={item?.assign_date}
+              machine_type={subitem?.machine}
+              assign_to={item?.assign_to ?? "vorn"}
+              warning_count={subitem?.warning_count ?? 0}
+              time={item?.shift ?? "S1 (7:00)"}
+              onPress={(shift: any) => {
+                console.log("Shift is valid", isValidShift(item?.shift))
+                navigation.navigate("WaterTreatmentPlant2Form", {
+                  type: subitem?.machine ?? "",
+                  items: subitem,
+                  onReturn: sendBack,
+                  isValidShift: shift === -1 ? true : false,
+                  isvalidDate:
+                    moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                  isEdit: subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? ""),
+                })
+              }}
+            />
+          </View>
         )
       })
 
@@ -231,14 +257,16 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }
     const getCurrentUserName = async () => {
       const userinfo = await authStore.getUserInfo()
-      const { login } = userinfo.data
-      setAssignUser((pre) => ({ ...pre, currUser: login }))
+      const user = userinfo?.data
+      setAssignUser((pre) => ({ ...pre, currUser: user?.login ?? "" }))
     }
     const fetchScehdules = async () => {
       try {
+        getCurrentUserName()
         setQuery("")
         setSort("asc")
         setLoading(true)
+        setRefreshing(true)
 
         if (datePicker.value) {
           const assign_date = moment(datePicker?.value).format("YYYY-MM-DD")
@@ -274,7 +302,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
         })
         console.log(error?.message)
       } finally {
-        setLoading(false)
+        setTimeout(() => {
+          setLoading(false)
+        }, 500)
+
         setRefreshing(false)
       }
     }
@@ -295,10 +326,12 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       const result = schedules?.filter((item) =>
         item.machine?.trim().toLowerCase().includes(query?.trim().toLowerCase()),
       )
-
-      if (!result?.length || query === "") {
-        //length = 0 meaning no result, > 0  have result so we set to schedule
+      if (query === "") {
         setSchedules(scheduleSnapshot)
+      }
+      if (!result?.length) {
+        //length = 0 meaning no result, > 0  have result so we set to schedule
+        setSchedules([])
       } else {
         setSchedules(result)
       }
@@ -309,25 +342,21 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       // console.log(currShift)
       return currShift
     })
-    useEffect(() => {
+    useLayoutEffect(() => {
       fetchScehdules()
-      getCurrentUserName()
+
       if (datePicker.value) {
         fetchTimePanel()
       }
 
-      return () => {}
+      // return () => {
+      //   setSelectedShift('S1 (7:00)')
+      // }
     }, [datePicker.value, selectedShift])
     useEffect(() => {
       onSearchItem()
       return () => setSchedules(scheduleSnapshot)
     }, [query])
-
-    useEffect(() => {
-      const unsubscribe = checkConnectivitity()
-
-      return () => unsubscribe()
-    }, [])
 
     return (
       <Provider>
@@ -349,7 +378,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
                   if (e.type === "set") {
                     setSelectProgess(0)
-                    setSelectedShift(`S1 (7:00)`)
+                    // setSelectedShift(`S1 (7:00)`)
                   }
                 }}
                 onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
@@ -374,7 +403,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             >
               <View style={styles.leftPane}>
                 <ScrollView>
-                  {shifts?.map((item) => {
+                  {shifts?.map((item, i) => {
                     return item.schedules.map((subitem, index) => {
                       return (
                         <TimePanel
@@ -433,13 +462,15 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                       <RefreshControl
                         colors={[colors.primary]}
                         tintColor={colors.primary}
-                        refreshing={isloading ? true : refreshing}
+                        refreshing={refreshing}
                         onRefresh={() => refresh()}
                       />
                     }
                     style={$useflex}
                     data={wtp2}
-                    ListEmptyComponent={<EmptyFallback placeholder="No Schedule yet" />}
+                    ListEmptyComponent={
+                      !refreshing ? <EmptyFallback placeholder="No Schedule yet" /> : <></>
+                    }
                     keyExtractor={(_, index) => index.toString()}
                     renderItem={renderItem}
                   />

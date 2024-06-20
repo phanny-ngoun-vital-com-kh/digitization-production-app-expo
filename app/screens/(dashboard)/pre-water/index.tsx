@@ -1,244 +1,464 @@
-import { Dropdown } from "react-native-element-dropdown"
+import React, { FC, useState } from "react"
+import { LineChart, PieChart } from "react-native-gifted-charts"
 import { Divider } from "react-native-paper"
-import { BarChart, PieChart, LineChart } from "react-native-gifted-charts"
-import React, { FC } from "react"
 import { observer } from "mobx-react-lite"
-import { ScrollView, View, ViewStyle, useWindowDimensions } from "react-native"
+import { View, ViewStyle, useWindowDimensions } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
-import { Text, Button } from "app/components/v2"
+import { Button, Text } from "app/components/v2"
 import styles from "./styles"
-import { $horiContainer } from "../daily-water"
 import BadgeChart from "app/components/v2/Chart/BadgeChart"
-// import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "app/models"
+import MultiSelectComponent from "app/components/v2/DropMulti"
+import DateRangePicker from "app/components/v2/DateRange"
+import { ScrollView } from "react-native-gesture-handler"
+import { Dropdown } from "react-native-element-dropdown"
+import { FlatList } from "react-native"
+import { TouchableOpacity } from "react-native"
+import { DataSetProps } from "../daily-water/type"
+import EmptyLineChart from "app/components/v2/Dashboard/EmptyLineChart"
 
 interface PreWaterDsScreenProps extends AppStackScreenProps<"PreWaterDs"> {}
 
 export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function PreWaterDsScreen() {
   const { width: maxWidth } = useWindowDimensions()
-  const lines = [
-    { name: "line 1", value: 1 },
-    { name: "line 2", value: 2 },
+  const [modalVisible, setModalVisible] = useState(false)
+  const [selectionDate, setSelectionDate] = useState({
+    start: "",
+    end: "",
+  })
+  const data = [
+    { label: "Pressure", value: "Pressure" },
+    { label: "Air Released", value: "Air Released" },
+    { label: "TDS", value: "TDS" },
+    { label: "PH", value: "PH" },
+    { label: "Pressure Drop", value: "Pressure Drop" },
   ]
-  const machines = [
-    { name: "Water Treatment Plant 2", value: 1 },
-    { name: "Water Treatment Plant 3", value: 2 },
-    { name: "Water Treatment Plant 4", value: 3 },
-  ]
-
-  const controls = [
+  const wtps = [
     {
-      name: "Pressure",
-    },
-    {
-      name: "Air Released",
-    },
-    {
-      name: "TDS",
-    },
-    {
-      name: "PH",
-    },
-    {
-      name: "Pressure Drop",
-    },
-  ]
-  const barData = [
-    {
+      name: "Water Treatment Plant 2",
       value: 1,
-      label: "Mon",
-      frontColor: "#0081F8",
-      topLabelComponent: () => (
-        <Text style={{ color: "#0081F8", fontSize: 15, marginBottom: 6 }}>1 bar</Text>
-      ),
-    },
-
-    {
-      value: 0.8,
-      label: "Tues",
-      frontColor: "#0081F8",
-      topLabelComponent: () => (
-        <Text style={{ color: "#0081F8", fontSize: 15, marginBottom: 6 }}>0.8 bar</Text>
-      ),
-    },
-
-    {
-      value: 0.75,
-      label: "Wed",
-      frontColor: "#0081F8",
-      topLabelComponent: () => (
-        <Text style={{ color: "#0081F8", fontSize: 15, marginBottom: 6 }}>0.75 bar</Text>
-      ),
-    },
-
-    {
-      value: 0.8,
-      label: "Fri",
-      frontColor: "#0081F8",
-      topLabelComponent: () => (
-        <Text style={{ color: "#0081F8", fontSize: 15, marginBottom: 6 }}>0.8 bar</Text>
-      ),
-    },
-
-    {
-      value: 1.25,
-      label: "Sat",
-      frontColor: "#0081F8",
-      topLabelComponent: () => (
-        <Text style={{ color: "#0081F8", fontSize: 15, marginBottom: 6 }}>1.25 bar</Text>
-      ),
     },
     {
-      value: 1,
-      label: "Sun",
-      frontColor: "#0081F8",
-      topLabelComponent: () => (
-        <Text style={{ color: "#0081F8", fontSize: 15, marginBottom: 6 }}>1 bar</Text>
-      ),
+      name: "Water Treatment Plant 3",
+      value: 2,
+    },
+    {
+      name: "Water Treatment Plant 4",
+      value: 3,
     },
   ]
+  const [selectSecondaryMachine, setSelectSecondaryMachine] = useState<string[]>([])
+  const [selectedControl, setSelectedControl] = useState<any>([])
+  const [selectedMachine, setSelectedMachine] = useState<string[]>([])
+  const [selectColors, setSelectColors] = useState<{ label: string; color: string }[]>([])
+  const [dataSet, setDataSet] = useState<DataSetProps[]>([])
+
   const pieData = [
-    { value: 50, color: "#177AD5" },
+    { value: 54, color: "#177AD5" },
 
-    { value: 10, color: "#8CC8FF" },
+    { value: 40, color: "#79D2DE" },
 
-    { value: 30, color: "#ED6665" },
+    { value: 20, color: "#ED6665" },
   ]
+  const [selectDate, setSelectDate] = useState<{
+    value: Date | null
+    range: number
+  }>({
+    value: null,
+    range: 0,
+  })
+  const onSelectRangeDate = (inDay: number) =>
+    setSelectDate(() => {
+      const today = new Date(Date.now())
+      return {
+        range: inDay,
+        value: new Date(today.getFullYear(), today.getMonth(), today.getDate() - inDay),
+      }
+    })
+  const onChangeMachine = (item: string) => {
+    setSelectedControl(item)
+  }
+  const onComfirmDate = (startDate: string, endDate: string) => {
+    setSelectionDate({
+      start: startDate,
+      end: endDate,
+    })
+    setModalVisible(false)
+  }
+
   return (
-    <ScrollView>
-      <View style={$root}>
-        <View style={$innerContainer}>
+    <View style={$root}>
+      <View style={$innerContainer}>
+        <ScrollView showsVerticalScrollIndicator persistentScrollbar>
           <View style={styles.row1}>
             <View style={[styles.activityLineChart]}>
-              <View style={[$horiContainer, { justifyContent: "space-between", marginBottom: 20 }]}>
-                <Text semibold body1>
-                  Machine Usage
+              <View style={{ flex: 1, marginBottom: 20 }}>
+                <Text semibold body1 style={{ marginBottom: 10 }}>
+                  <Text errorColor>* </Text> Select Machine
                 </Text>
-                <View style={$horiContainer}>
-                  <Dropdown
-                    style={styles.dropdown}
-                    data={lines}
-                    labelField="name"
-                    valueField="value"
-                    placeholder="Select Machine"
-                    placeholderStyle={{ fontSize: 14.5 }}
-                    // onSelect={onSelectLine}
-                    search
-                    value={{}}
-                    onChangeText={(text: any) => {}}
-                    onChange={(item) => {}}
-                  />
-                  <Dropdown
-                    style={styles.dropdown}
-                    data={lines}
-                    labelField="name"
-                    valueField="value"
-                    placeholder="Select Control"
-                    placeholderStyle={{ fontSize: 14.5 }}
-                    // onSelect={onSelectLine}
-                    search
-                    value={{}}
-                    onChangeText={(text: any) => {}}
-                    onChange={(item) => {}}
-                  />
-                </View>
+                <Dropdown
+                  style={[
+                    styles.dropdown,
+                    {
+                      width: "100%",
+                      marginLeft: 0,
+                      marginRight: 0,
+                    },
+                  ]}
+                  data={wtps}
+                  labelField="name"
+                  valueField="value"
+                  selectedTextStyle={{
+                    fontSize: 13.5,
+                  }}
+                  placeholder="Select Water Treatment"
+                  itemTextStyle={{ fontSize: 13.5 }}
+                  placeholderStyle={{ fontSize: 13.5, marginLeft: 10 }}
+                  // onSelect={onSelectLine}
+                  search
+                  value={selectedMachine}
+                  onChangeText={(text: any) => {}}
+                  onChange={(item) => {
+                    setSelectedMachine(item)
+                  }}
+                />
               </View>
+
+              <FlatList
+                horizontal
+                renderItem={({ item, index }) => {
+                  return (
+                    <TouchableOpacity
+                      // disabled={selectedMachine?.length >= 4}
+                      onPress={() => {
+                        if (selectSecondaryMachine?.length >= 4) {
+                          if (selectSecondaryMachine.includes(item.value)) {
+                            console.log("true")
+                            setSelectedMachine((pre) =>
+                              pre.filter((machine) => machine !== item.value),
+                            )
+                            return
+                          }
+                        } else {
+                          if (selectSecondaryMachine.includes(item.value)) {
+                            console.log("true")
+                            setSelectedMachine((pre) =>
+                              pre.filter((machine) => machine !== item.value),
+                            )
+                            return
+                          } else {
+                            setSelectedMachine((pre) => pre.concat(item.value))
+                          }
+                        }
+                      }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          borderRadius: 10,
+
+                          backgroundColor: selectSecondaryMachine.includes(item.value)
+                            ? "#0081F8"
+                            : "#EEEEEE",
+                          // shadowColor: '#000',
+                          gap: 10,
+                          marginTop: 8,
+                          marginRight: 12,
+                          paddingHorizontal: 12,
+                          paddingVertical: 10,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            color: selectSecondaryMachine.includes(item.value) ? "white" : "gray",
+                          }}
+                        >
+                          {item.label}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )
+                }}
+                data={data}
+                keyExtractor={(item, index) => index.toString()}
+              />
+
+              <Text semibold body1 style={{ marginTop: 20 }}>
+                Machine Activity
+              </Text>
 
               <View
                 style={[$horiContainer, { marginVertical: 20, justifyContent: "space-between" }]}
               >
                 <View style={$horiContainer}>
-                  <Button style={[styles.dateAgo, { backgroundColor: "#0081F8" }]}>
-                    <Text caption1 whiteColor>
+                  <Button
+                    style={[
+                      styles.dateAgo,
+                      selectDate.range === 7 && { backgroundColor: "#0081F8" },
+                    ]}
+                    outline
+                    onPress={() => onSelectRangeDate(7)}
+                    styleText={{
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <Text caption1 primaryColor whiteColor={selectDate.range === 7}>
                       7 days
                     </Text>
                   </Button>
-                  <Button style={styles.dateAgo} outline>
-                    <Text caption1 primaryColor>
+                  <Button
+                    style={[
+                      styles.dateAgo,
+                      selectDate.range === 14 && { backgroundColor: "#0081F8" },
+                    ]}
+                    outline
+                    onPress={() => onSelectRangeDate(14)}
+                    styleText={{
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <Text caption1 primaryColor whiteColor={selectDate.range === 14}>
                       14 days
                     </Text>
                   </Button>
-                  <Button style={styles.dateAgo} outline>
-                    <Text caption1 primaryColor>
+                  <Button
+                    style={[
+                      styles.dateAgo,
+                      selectDate.range === 21 && { backgroundColor: "#0081F8" },
+                    ]}
+                    outline
+                    styleText={{
+                      fontWeight: "bold",
+                    }}
+                    onPress={() => onSelectRangeDate(21)}
+                  >
+                    <Text caption1 primaryColor whiteColor={selectDate.range === 21}>
                       21 days
                     </Text>
                   </Button>
-                  <Button style={styles.dateAgo} outline>
+                  <Button
+                    style={styles.dateAgo}
+                    outline
+                    onPress={() => setModalVisible(true)}
+                    styleText={{
+                      fontWeight: "bold",
+                    }}
+                  >
                     <Text caption1 primaryColor>
-                      Custom
+                      {!selectionDate.start
+                        ? "Date Range"
+                        : selectionDate.start + "-" + selectionDate.end}
                     </Text>
                   </Button>
                 </View>
               </View>
 
-              <Divider />
+              <Divider style={{ marginVertical: 20 }} />
 
-              <View style={{ paddingHorizontal: 20, paddingVertical: 35 }}>
-                <View style={$horiContainer}>
-                  <Text body1 semibold>
-                    PH
+              <View
+                style={[
+                  { paddingHorizontal: 20, paddingVertical: 35, overflow: "hidden" },
+                  $horiContainer,
+                ]}
+              >
+                <View style={{ marginVertical: 0, flex: 1, zIndex: 0 }}>
+                  {dataSet && dataSet.length > 0 && (
+                    <LineChart
+                      dataSet={dataSet}
+                      data={dataSet[0]?.data}
+                      data2={dataSet[1]?.data}
+                      data3={dataSet[2]?.data}
+                      data4={dataSet[3]?.data}
+                      color1={selectColors[0]?.color}
+                      color2={selectColors[1]?.color}
+                      color3={selectColors[2]?.color}
+                      color4={selectColors[3]?.color}
+                      data5={dataSet[4]?.data}
+                      thickness={2}
+                      height={400}
+                      // width={maxWidth * 1}
+                      width={maxWidth * 0.65}
+                      maxValue={100}
+                      isAnimated
+                      // maxValue={110}
+                      noOfSections={4}
+                      yAxisLabelSuffix="%"
+                      rulesType="solid"
+                      // yAxisThickness={2}
+                      // xAxisThickness={2}
+                      endOpacity={0.1}
+                      spacing={maxWidth / 10}
+                      // maxValue={100}
+                      scrollAnimation
+                      showScrollIndicator={true}
+                      animationDuration={2000}
+                      // maxValue={100}
+                      initialSpacing={20}
+                      dataPointsHeight={16}
+                      dataPointsWidth={16}
+                      color="blue"
+                      textShiftY={-12}
+                      adjustToWidth
+                      animateTogether
+                      textShiftX={-3}
+                      yAxisTextStyle={{
+                        fontSize: 13,
+                        // fontWeight:"600"
+                      }}
+                      textFontSize={12}
+                      curved
+                      pointerConfig={{
+                        pointerStripUptoDataPoint: false,
+                        pointerStripColor: "gray",
+                        pointerStripWidth: 2,
+                        strokeDashArray: [2, 5],
+                        pointerColor: "transparent",
+
+                        radius: 4,
+
+                        activatePointersOnLongPress: true,
+                        pointerLabelComponent: (items) => {
+                          const datatoshow = dataSet?.map((item) => item.data)[0]
+                          const indexFound = datatoshow?.findIndex(
+                            (item) => item.value === items[0]?.value,
+                          )
+
+                          return (
+                            <View
+                              style={[
+                                {
+                                  zIndex: 1000,
+                                  backgroundColor: "#EEF5FF",
+                                  width: 200,
+                                  position: "absolute",
+
+                                  // Adjust height as needed
+                                  // justifyContent: "center",
+                                  borderRadius: 15,
+                                  // alignItems: "start",
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 10,
+                                },
+
+                                indexFound === dataSet?.length - 1 ? { left: 0 } : { right: 0 },
+                              ]}
+                            >
+                              <Text caption1 semibold style={{ marginVertical: 10 }}>
+                                Week of Jan 23 - Jan 29
+                              </Text>
+                              {dataSet.map((item, index) => (
+                                <View key={index}>
+                                  <Text caption1 errorColor>
+                                    {selectColors[index]?.label} warning count:
+                                    {item?.data[indexFound]?.value}
+                                  </Text>
+                                </View>
+                              ))}
+                              <Divider style={{ marginVertical: 15 }} />
+                              <Text caption1 regular style={{ marginVertical: 10 }} primaryColor>
+                                Percentage 75.50 %
+                              </Text>
+                            </View>
+                          )
+                        },
+                      }}
+                    />
+                  )}
+                  {selectedMachine?.length === 0 && <EmptyLineChart />}
+                </View>
+                <View style={[styles.activityPieChart]}>
+                  <Text semibold body1>
+                    Warning Statistic
                   </Text>
-                </View>
 
-                <View style={{ marginVertical: 20, overflow: "hidden" }}>
-                  <BarChart
-                    showFractionalValues
-                    showYAxisIndices
-                    noOfSections={4}
-                    barWidth={maxWidth * 0.05}
-                    height={250}
-                    width={maxWidth * 0.5}
-                    maxValue={2}
-                    spacing={50}
-                    xAxisThickness={1}
-                    // spacing={maxWidth / 20}
-                    data={barData}
-                    // isAnimated
-                  />
-                </View>
-              </View>
-            </View>
-            <View style={[styles.activityPieChart]}>
-              <Text semibold body1>
-                Activity Machine
-              </Text>
+                  <View style={{ paddingHorizontal: 20, paddingVertical: 35, zIndex: 0 }}>
+                    <View
+                      style={{
+                        marginVertical: 20,
+                        justifyContent: "center",
+                        flexDirection: "row",
+                      }}
+                    >
+                      <PieChart
+                        data={pieData}
+                        showText
+                        textColor="black"
+                        radius={100}
+                        textSize={20}
+                        focusOnPress
+                        showValuesAsLabels
+                        showTextBackground
+                        textBackgroundRadius={26}
+                      />
+                    </View>
 
-              <View style={{ paddingHorizontal: 20, paddingVertical: 35 }}>
-                <View
-                  style={{ marginVertical: 20, justifyContent: "center", flexDirection: "row" }}
-                >
-                  <PieChart
-                    data={pieData}
-                    showText
-                    textColor="black"
-                    radius={150}
-                    textSize={20}
-                    focusOnPress
-                    showValuesAsLabels
-                    showTextBackground
-                    textBackgroundRadius={26}
-                  />
-                  <View style={[{ justifyContent: "center", gap: 20 }]}>
-                    <BadgeChart title="Normal" bgColor="#177AD5" />
-                    <BadgeChart title="Pending" bgColor="#8CC8FF" />
-                    <BadgeChart title="Warning" bgColor="#ED6665" />
+                    <View style={[$horiContainer, { justifyContent: "center" }]}>
+                      <BadgeChart title="Normal" bgColor="#177AD5" />
+                      <BadgeChart title="Pending" bgColor="#79D2DE" />
+                      <BadgeChart title="Warning" bgColor="#ED6665" />
+                    </View>
                   </View>
                 </View>
               </View>
             </View>
+
+            {/* <View style={[styles.activityPieChart]}>
+            <Text semibold body1>
+              Type of Status
+            </Text>
+
+            <View style={{ paddingHorizontal: 20, paddingVertical: 35 }}>
+              <View style={{ marginVertical: 20, justifyContent: "center", flexDirection: "row" }}>
+                <PieChart
+                  data={pieData}
+                  showText
+                  textColor="black"
+                  radius={150}
+                  textSize={20}
+                  focusOnPress
+                  showValuesAsLabels
+                  showTextBackground
+                  textBackgroundRadius={26}
+                />
+              </View>
+
+              <View style={[$horiContainer, { justifyContent: "center" }]}>
+                <BadgeChart title="Normal" bgColor="#177AD5" />
+                <BadgeChart title="Pending" bgColor="#79D2DE" />
+                <BadgeChart title="Warning" bgColor="#ED6665" />
+              </View>
+            </View>
+          </View> */}
           </View>
-        </View>
+        </ScrollView>
+        <DateRangePicker
+          onComfirm={onComfirmDate}
+          isVisible={modalVisible}
+          defaultEndDate={selectionDate.end}
+          defaultStartDate={selectionDate.start}
+          onClose={() => setModalVisible(false)}
+        />
       </View>
-    </ScrollView>
+    </View>
   )
 })
 
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: "white",
+  zIndex: 0,
 }
 
-const $innerContainer: ViewStyle = {
-  paddingVertical: 40,
+export const $innerContainer: ViewStyle = {
+  paddingVertical: 0,
   paddingHorizontal: 30,
+}
+
+export const $horiContainer: ViewStyle = {
+  flexDirection: "row",
+  gap: 10,
+
+  alignItems: "center",
 }

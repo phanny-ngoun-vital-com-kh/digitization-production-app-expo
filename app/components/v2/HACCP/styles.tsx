@@ -21,8 +21,8 @@ export default StyleSheet.create({
     alignItems: "center",
   },
   linePanel: {
-    paddingHorizontal: 50,
-    paddingVertical: 30,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#BFB6B6",
     borderBottomWidth: 1,
@@ -38,7 +38,7 @@ export default StyleSheet.create({
     shadowRadius: 4.65,
     // elevation: 3,
     // height: 1,
-    // width: "100%",
+    width: 360,
     // width:,
  
     flexDirection: "column",

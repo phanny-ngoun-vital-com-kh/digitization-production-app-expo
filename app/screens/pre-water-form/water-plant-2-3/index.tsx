@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import Icon from "react-native-vector-icons/Ionicons"
+import * as ImagePicker from "expo-image-picker"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
 import {
@@ -21,7 +22,7 @@ import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { styles } from "../styles"
 import BadgeWarning from "app/components/v2/Badgewarn"
-import { getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
+import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 // import { useNavigation } from "@react-navigation/native"
 // import { useStores } from "app/models"
 
@@ -33,7 +34,9 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     const [activities, setActivities] = useState([])
     const { preWaterTreatmentStore, authStore } = useStores()
     const [isloading, setLoading] = useState(false)
+    const [isScanning, setScanning] = useState(false)
     const route = useRoute().params
+    const [image, setImage] = useState(null)
     const [showLog, setShowlog] = useState<boolean>(false)
     const [form, setForm] = useState({
       sf1: "",
@@ -301,13 +304,77 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         setLoading(false)
       }
     }
+    const setImageToform = (result: string[]) => {
+      const blocktext = result as string[]
+      const numeric = []
+      if (route?.type?.toLowerCase().includes("air")) {
+        return
+      }
+      const isNumeric = (string) => /^[+-]?\d+(\.\d+)?$/.test(string)
+
+      for (let i = 0; i < blocktext.length; i++) {
+        const values = blocktext[i]
+
+        // Check if the value is numeric and not in the ignore list
+        if (isNumeric(values)) {
+          numeric.push(values)
+        } else if (values === "✓") {
+          numeric.push(values)
+        }
+      }
+      if (route?.type?.toLowerCase().includes("ph")) {
+        const [sf1, resin, acf1, mM5, raw_water] = numeric
+
+        setForm({
+          sf1: sf1,
+          acf1: acf1,
+          resin: resin,
+          raw_water: raw_water,
+          fiveMm: mM5,
+        })
+        setErrors({
+          sf1: false,
+          acf1: false,
+          raw_water: false,
+          resin: false,
+          fiveMm: false,
+        })
+        return
+      }
+      const [sf1, resin, acf1, mM5] = numeric
+
+      console.log(numeric)
+
+      setForm({
+        sf1: sf1,
+        acf1: acf1,
+        resin: resin,
+        fiveMm: mM5,
+      })
+      setErrors({
+        sf1: false,
+        acf1: false,
+        resin: false,
+        fiveMm: false,
+      })
+    }
+
     const onlaunchGallery = async () => {
       try {
         const result = await getResultImageGallery()
-        if (!result.canceled) {
+
+        if (!result) {
+          return
+        }
+        if (!result?.canceled) {
+          performOCR(result?.assets[0])
+          setImage(result?.assets[0]?.uri)
           // Set the selected image in state
+        } else {
+          console.log("Cancel scan")
         }
       } catch (error) {
+        console.error(error.message)
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "បរាជ័យ",
@@ -320,8 +387,15 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     const onlaunchCamera = async () => {
       try {
         const result = await getResultImageCamera()
-        if (!result.canceled) {
+        if (!result) {
+          return
+        }
+        if (!result?.canceled) {
+          performOCR(result?.assets[0])
+          setImage(result?.assets[0]?.uri)
           // Set the selected image in state
+        } else {
+          console.log("Cancel scan")
         }
       } catch (error) {
         Dialog.show({
@@ -333,6 +407,77 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         })
       }
     }
+    const performOCR = async (file: ImagePicker.ImagePickerAsset) => {
+      setScanning(true)
+
+      try {
+        const result = await ImagetoText(file)
+        if (!result) {
+          Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: "រក​មិនឃើញ",
+            autoClose: 500,
+            textBody: "យើងមិនអាចស្រង់ចេញបានទេ។",
+          })
+          setScanning(false)
+          return
+        }
+        const annotations = result["annotations"]
+        // Function to check if a sequence of words matches the pattern to ignore
+        let shouldIgnoreSequence: any
+        if (route?.type?.toLowerCase().includes("ph")) {
+          console.log("true ph ")
+          shouldIgnoreSequence = (sequence) => {
+            const ignorePattern = ["*", "Warning", "Level", "(", "6.5", "-", "8.5", ")"]
+            for (let i = 0; i < ignorePattern.length; i++) {
+              if (sequence[i] !== ignorePattern[i]) {
+                return false
+              }
+            }
+            return true
+          }
+        } else {
+          shouldIgnoreSequence = (sequence) => {
+            const ignorePattern = ["*", "Warning", "Level", "(", "0.1", "-0.3", "Mpa", ")"]
+            for (let i = 0; i < ignorePattern.length; i++) {
+              if (sequence[i] !== ignorePattern[i]) {
+                return false
+              }
+            }
+            return true
+          }
+        }
+
+        // Function to filter out unwanted sequences
+        const filterAnnotations = (annotations) => {
+          let filteredAnnotations = []
+          for (let i = 0; i < annotations.length; i++) {
+            // Check if the current sequence matches the ignore pattern
+            if (i <= annotations.length - 8 && shouldIgnoreSequence(annotations.slice(i, i + 8))) {
+              // Skip the next 8 items
+              i += 7
+            } else {
+              filteredAnnotations.push(annotations[i])
+            }
+          }
+          return filteredAnnotations
+        }
+
+        const filteredAnnotations = filterAnnotations(annotations)
+        setImageToform(filteredAnnotations)
+      } catch (error) {
+        console.error(error.message)
+        Dialog.show({
+          type: ALERT_TYPE.WARNING,
+          title: "បរាជ័យ",
+          autoClose: 500,
+          textBody: "ស្កែនរូបភាពទៅជាអត្ថបទមិនជោគជ័យទេ។",
+        })
+      } finally {
+        setScanning(false)
+      }
+    }
+
     const getCurrentUserName = async () => {
       const userinfo = await authStore.getUserInfo()
       const { login } = userinfo.data
@@ -361,7 +506,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         title: route?.type,
 
         headerRight: () =>
-          isEditable ? (
+          route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift ? (
             <TouchableOpacity
               style={$horizon}
               onPress={() => {
@@ -444,6 +589,15 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             <ActivityIndicator color="#8CC8FF" size={35} />
             <View style={{ marginVertical: 15 }}></View>
             <Text whiteColor textAlign={"center"}>
+              Scanning ...
+            </Text>
+          </View>
+        )}
+        {isScanning && (
+          <View style={styles.overlay}>
+            <ActivityIndicator color="#8CC8FF" size={35} />
+            <View style={{ marginVertical: 15 }}></View>
+            <Text whiteColor textAlign={"center"}>
               Saving record ...
             </Text>
           </View>
@@ -466,12 +620,15 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                   {"* Warning Level ( 0.1 - 0.3 Mpa ) "}
                 </Text>
               )}
-              <ActivityBar
-                direction="end"
-                onScanCamera={onlaunchCamera}
-                onAttachment={onlaunchGallery}
-                onActivity={() => setShowlog(true)}
-              />
+
+              {route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift && (
+                <ActivityBar
+                  direction="end"
+                  onScanCamera={onlaunchCamera}
+                  onAttachment={onlaunchGallery}
+                  onActivity={() => setShowlog(true)}
+                />
+              )}
             </View>
 
             {route?.type?.toLowerCase().includes("air") ? (
@@ -690,7 +847,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                         <TouchableOpacity
                           style={$horizon}
                           disabled={!isEditable}
-
                           onPress={() => {
                             // setErrors((pre) => ({ ...pre, air_release: false }))
                             setForm((pre) => ({

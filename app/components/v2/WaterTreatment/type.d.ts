@@ -11,14 +11,17 @@ export type TimePanelProps = {
 export type MachinePanelProps = {
   machine_type: string | undefined
   status?: MACHINE_STATE
+  isAssign?: boolean | null
   assign_to: string | undefined
+  validDate : boolean ,
+  validShift : number ,
   time: string | undefined
-  onPress: () => void
+  onPress: (isValidShift:any) => void
   currUser?: string | null
   handleAssigntask?: (id: number, assign_to_user: string) => void
   id: number
-  pre_treatment_type ?:string 
-  pre_treatment_id?:string 
+  pre_treatment_type?: string
+  pre_treatment_id?: string
   assign_to_user: string
   warning_count?: string | number
   created_date: string | Date | undefined

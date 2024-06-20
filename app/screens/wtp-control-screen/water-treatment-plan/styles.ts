@@ -68,6 +68,13 @@ export default StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.59)',
+    zIndex:10000,
+    justifyContent:"center"
+ 
+  },
 
   divider_space: {
     marginTop: 20,

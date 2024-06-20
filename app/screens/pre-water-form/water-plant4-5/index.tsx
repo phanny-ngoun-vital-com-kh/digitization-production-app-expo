@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import Icon from "react-native-vector-icons/Ionicons"
+import * as ImagePicker from "expo-image-picker"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
 import {
@@ -19,7 +20,7 @@ import { useStores } from "app/models"
 import { PreTreatmentListItemModel } from "app/models/pre-water-treatment/pre-water-treatment-model"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ActivityModal from "app/components/v2/ActivitylogModal"
-import { getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
+import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 
 interface PreWaterForm2ScreenProps extends AppStackScreenProps<"PreWaterForm2"> {}
 
@@ -28,6 +29,9 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
     const { preWaterTreatmentStore, authStore } = useStores()
     const navigation = useNavigation()
     const route = useRoute().params
+    const [isScanning, setScanning] = useState(false)
+    const [image, setImage] = useState(null)
+
     const [activities, setActivities] = useState([])
     const [showLog, setShowlog] = useState<boolean>(false)
     const [isLoading, setLoading] = useState<boolean>(false)
@@ -36,7 +40,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       sf2: "",
       acf1: "",
       acf2: "",
-      tenMm1: null,
+      tenMm1: "",
       tenMm2: "",
       raw_water: "",
       remarks: "",
@@ -143,10 +147,206 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         setLoading(false)
       }
     }
+
+    const setImageToform = (result: string[]) => {
+      const blocktext = result as string[]
+      const numeric = []
+
+      const isNumeric = (string) => /^[+-]?\d+(\.\d+)?$/.test(string)
+
+      for (let i = 0; i < blocktext.length; i++) {
+        const values = blocktext[i]
+
+        // Check if the value is numeric and not in the ignore list
+        if (isNumeric(values)) {
+          numeric.push(values)
+        } else if (values === "✓") {
+          numeric.push(values)
+        }
+      }
+      if (route?.type?.toLowerCase().startsWith("pressure")) {
+        const [sf1, sf2, mM102, acf1, acf2, _mM102, mM101] = numeric
+
+        console.log(numeric)
+
+        setForm({
+          acf1: acf1 ?? "",
+          acf2: acf2 ?? "",
+          tenMm1: mM101 ?? "",
+          tenMm2: mM102 ?? "",
+          sf1: sf1 ?? "",
+          sf2: sf2 ?? "",
+        })
+        setErrors({
+          acf1: !!acf1,
+          acf2: !!acf2,
+          tenMm1: !!mM101,
+          tenMm2: !!mM102,
+          sf1: !!sf1,
+          sf2: !!sf2,
+        })
+      }
+
+      if (route?.type?.toLowerCase().startsWith("tds")) {
+        // const [sf1, sf2, acf1, acf2, mM101, mM102,raw_water,buffer] = numeric
+
+        const num = numeric.filter((item) => Number(item) > 2)
+        const [sf1, acf1, sf2, acf2, mM101, mM102, raw_water, buffer] = num
+        setForm({
+          raw_water: raw_water,
+          sf1: sf1,
+          sf2: sf2,
+          acf1: acf1,
+          acf2: acf2,
+          tenMm1: mM101,
+          tenMm2: mM102,
+          buffer: buffer,
+        })
+        setErrors({
+          raw_water: !!raw_water,
+          sf1: !!sf1,
+          sf2: !!sf2,
+          acf1: !!acf1,
+          acf2: !!acf2,
+          tenMm1: !!mM101,
+          tenMm2: !!mM102,
+          buffer: !!buffer,
+        })
+      }
+      if (route?.type?.toLowerCase().startsWith("ph")) {
+        const num = numeric.filter((item) => Number(item) > 2)
+        const [sf1, sf2, acf1, acf2, mM101, mM102, raw_water, buffer] = num
+        setForm({
+          raw_water: raw_water,
+          sf1: sf1,
+          sf2: sf2,
+          acf1: acf1,
+          acf2: acf2,
+          tenMm1: mM101,
+          tenMm2: mM102,
+          buffer: buffer,
+        })
+        setErrors({
+          raw_water: !!raw_water,
+          sf1: !!sf1,
+          sf2: !!sf2,
+          acf1: !!acf1,
+          acf2: !!acf2,
+          tenMm1: !!mM101,
+          tenMm2: !!mM102,
+          buffer: !!buffer,
+        })
+      }
+      setScanning(false)
+    }
+    const performOCR = async (file: ImagePicker.ImagePickerAsset) => {
+      try {
+        const result = await ImagetoText(file)
+        if (!result) {
+          Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: "រក​មិនឃើញ",
+            autoClose: 500,
+            textBody: "យើងមិនអាចស្រង់ចេញបានទេ។",
+          })
+          setScanning(false)
+          return
+        }
+        const annotations = result["annotations"]
+     
+ 
+
+        // Function to check if a sequence of words matches the pattern to ignore
+        let shouldIgnoreSequence: any
+        if (route?.type?.toLowerCase().startsWith("pressure")) {
+          shouldIgnoreSequence = (sequence) => {
+            const ignorePatterns = [
+              ["(", "0.2-0.5", "bar", ")"],
+              ["(", "1", "<", "2.5", "bar", ")"],
+              ["*", "ACF", "1"],
+              ["*", "ACF", "2"],
+              ["*", "SF", "1"],
+              ["*", "SF", "2"],
+              ["*", "10Mm", "1"],
+              ["*", "10Mm", "2"],
+            ]
+
+            return ignorePatterns.some((pattern) => {
+              if (sequence.length < pattern.length) {
+                return false
+              }
+              for (let i = 0; i < pattern.length; i++) {
+                if (sequence[i] !== pattern[i]) {
+                  return false
+                }
+              }
+              return true
+            })
+          }
+        } else {
+          shouldIgnoreSequence = (sequence) => false
+        }
+
+        if (route?.type?.toLowerCase().startsWith("tds")) {
+          shouldIgnoreSequence = (sequence) => {
+            const ignorePattern = ["Level", "TDS", "<", "300", "mg/l"]
+            for (let i = 0; i < ignorePattern.length; i++) {
+              if (sequence[i] !== ignorePattern[i]) {
+                return false
+              }
+            }
+            return true
+          }
+        }
+        if (route?.type?.toLowerCase().startsWith("ph")) {
+          shouldIgnoreSequence = (sequence) => {
+            const ignorePattern = ["Level", "PH", "6.5", "-", "8.5"]
+            for (let i = 0; i < ignorePattern.length; i++) {
+              if (sequence[i] !== ignorePattern[i]) {
+                return false
+              }
+            }
+            return true
+          }
+        }
+        // Function to filter out unwanted sequences
+        const filterAnnotations = (annotations) => {
+          let filteredAnnotations = []
+          for (let i = 0; i < annotations.length; i++) {
+            // Check if the current sequence matches the ignore pattern
+            if (i <= annotations.length - 8 && shouldIgnoreSequence(annotations.slice(i, i + 8))) {
+              // Skip the next 8 items
+              i += 7
+            } else {
+              filteredAnnotations.push(annotations[i])
+            }
+          }
+          return filteredAnnotations
+        }
+
+        const filteredAnnotations = filterAnnotations(annotations)
+        setImageToform(filteredAnnotations)
+      } catch (error) {
+        console.error(error.message)
+        Dialog.show({
+          type: ALERT_TYPE.WARNING,
+          title: "បរាជ័យ",
+          autoClose: 500,
+          textBody: "ស្កែនរូបភាពទៅជាអត្ថបទមិនជោគជ័យទេ។",
+        })
+      }
+    }
     const onlaunchGallery = async () => {
       try {
+        setScanning(true)
         const result = await getResultImageGallery()
+        if (!result) {
+          setScanning(false)
+          return
+        }
         if (!result.canceled) {
+          performOCR(result?.assets[0])
+          setImage(result?.assets[0]?.uri)
           // Set the selected image in state
         }
       } catch (error) {
@@ -161,8 +361,18 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
     }
     const onlaunchCamera = async () => {
       try {
+        setScanning(true)
+
         const result = await getResultImageCamera()
+        if (!result) {
+          setScanning(false)
+
+          return
+        }
+
         if (!result.canceled) {
+          performOCR(result?.assets[0])
+          setImage(result?.assets[0]?.uri)
           // Set the selected image in state
         }
       } catch (error) {
@@ -210,9 +420,10 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         title: route?.type,
 
         headerRight: () =>
-          isEditable ? (
+          route?.isvalidDate && route?.item?.assign_to_user ? (
             <TouchableOpacity
               style={$horizon}
+              disabled={isScanning}
               onPress={() => {
                 if (route?.type?.toLowerCase()?.startsWith("pressure")) {
                   let errorslist = errors
@@ -248,7 +459,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
             <></>
           ),
       })
-    }, [navigation, route, errors, form, isEditable])
+    }, [navigation, route, errors, form, isEditable, isScanning])
 
     useEffect(() => {
       checkUserRole()
@@ -278,6 +489,15 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
     }, [route])
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={$root}>
+        {isScanning && (
+          <View style={styles.overlay}>
+            <ActivityIndicator color="#8CC8FF" size={35} />
+            <View style={{ marginVertical: 15 }}></View>
+            <Text whiteColor textAlign={"center"}>
+              Progressing Image ...
+            </Text>
+          </View>
+        )}
         {isLoading && (
           <View style={styles.overlay}>
             <ActivityIndicator color="#8CC8FF" size={35} />
@@ -289,12 +509,29 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         )}
         <ScrollView>
           <View style={$outerContainer}>
-            <ActivityBar
-              direction="end"
-              onActivity={() => setShowlog(true)}
-              onScanCamera={onlaunchCamera}
-              onAttachment={onlaunchGallery}
-            />
+            <View style={[$horizon, { justifyContent: "space-between" }]}>
+              {route?.type?.toLowerCase().includes("pressure") ? (
+                <>
+                  <Text></Text>
+                </>
+              ) : route?.type?.toLowerCase().includes("ph") ? (
+                <Text errorColor semibold body1>
+                  {"Level PH 6.5 - 8.5"}
+                </Text>
+              ) : (
+                <Text errorColor semibold body1>
+                  {"Level TDS < 300 mg/l"}
+                </Text>
+              )}
+              {route?.isvalidDate && route?.item?.assign_to_user && (
+                <ActivityBar
+                  direction="end"
+                  onScanCamera={onlaunchCamera}
+                  onAttachment={onlaunchGallery}
+                  onActivity={() => setShowlog(true)}
+                />
+              )}
+            </View>
 
             <View style={$horizon}>
               <View style={$width}>
@@ -317,7 +554,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                     setForm((pre) => ({ ...pre, sf1: text.trim() }))
                   }}
                   label="SF 1"
-                  hintLimit="0.2 - 0.5 bar"
+                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
                   errormessage={errors?.sf1 ? "សូមជ្រើសរើស SF1" : ""}
                 />
               </View>
@@ -341,7 +578,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                     setForm((pre) => ({ ...pre, sf2: text.trim() }))
                   }}
                   label="SF 2"
-                  hintLimit="0.2 - 0.5 bar"
+                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
                   errormessage={errors?.sf2 ? "សូមជ្រើសរើស SF2" : ""}
                 />
               </View>
@@ -367,7 +604,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                     setForm((pre) => ({ ...pre, acf1: text.trim() }))
                   }}
                   label="ACF 1"
-                  hintLimit="0.2 - 0.5 bar"
+                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
                   errormessage={errors?.acf1 ? "សូមជ្រើសរើស ACF1" : ""}
                 />
               </View>
@@ -391,7 +628,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                     setForm((pre) => ({ ...pre, acf2: text.trim() }))
                   }}
                   label="ACF 2"
-                  hintLimit="0.2 - 0.5 bar"
+                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
                   errormessage={errors?.acf2 ? "សូមជ្រើសរើស ACF2" : ""}
                 />
               </View>
@@ -417,7 +654,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                     setForm((pre) => ({ ...pre, tenMm1: text.trim() }))
                   }}
                   label="10Mm 1"
-                  hintLimit="1 < 2.5 bar"
+                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "1 < 2.5 bar"}
                   errormessage={errors?.tenMm1 ? "សូមជ្រើសរើស 10Mm1" : ""}
                 />
               </View>
@@ -441,7 +678,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                     setForm((pre) => ({ ...pre, tenMm2: text.trim() }))
                   }}
                   label="10Mm 2"
-                  hintLimit="1 < 2.5 bar"
+                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "1 < 2.5 bar"}
                   errormessage={errors?.tenMm2 ? "សូមជ្រើសរើស 10Mm2" : ""}
                 />
               </View>
@@ -468,7 +705,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                       setForm((pre) => ({ ...pre, raw_water: text.trim() }))
                     }}
                     label="Raw Water"
-                    hintLimit="6.5 - 8.5"
+                    hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "6.5 - 8.5"}
                     warning={(form?.raw_water && +form.raw_water < 6.5) || +form?.raw_water > 8.5}
                     errormessage={errors?.raw_water ? "សូមជ្រើសរើស Raw Water" : ""}
                   />
@@ -492,7 +729,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                       setForm((pre) => ({ ...pre, buffer: text.trim() }))
                     }}
                     label="Buffer ST0002"
-                    hintLimit="6.5 - 8.5"
+                    hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "6.5 - 8.5"}
                     warning={(form?.buffer && +form.buffer < 6.5) || +form?.buffer > 8.5}
                     errormessage={errors?.buffer ? "សូមជ្រើសរើស Buffer" : ""}
                   />

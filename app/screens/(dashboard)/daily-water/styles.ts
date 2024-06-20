@@ -3,7 +3,8 @@ import { StyleSheet } from "react-native"
 export default StyleSheet.create({
   activityLineChart: {
     padding: 25,
-    flex: 0.8,
+    flex: 1,
+    gap: 10,
     backgroundColor: "white",
     elevation: 2,
     shadowColor: "#000",
@@ -14,8 +15,10 @@ export default StyleSheet.create({
     },
   },
   activityPieChart: {
-    padding: 25,
-    flex: 0.5,
+    flex: 0.3,
+    padding: 10,
+    zIndex: 10,
+    height:"full",
     backgroundColor: "white",
     elevation: 2,
     shadowColor: "#000",
@@ -24,13 +27,14 @@ export default StyleSheet.create({
       width: 0,
       height: 1,
     },
+    // marginLeft:110
   },
   row1: {
     flexDirection: "row",
     gap: 5,
   },
 
-  dateAgo: { height: 40,backgroundColor:"white" },
+  dateAgo: { height: 40, backgroundColor: "white" },
   dropdown: {
     marginLeft: 10,
     marginRight: 10,

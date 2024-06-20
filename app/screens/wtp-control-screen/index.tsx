@@ -17,13 +17,8 @@ export const WaterTreatmentControlListScreen: FC<WaterTreatmentControlListScreen
   function WaterTreatmentControlListScreen() {
     const {
       authStore: { getUserInfo },
-      waterTreatmentStore,
     } = useStores()
     const navigation = useNavigation()
-    const { width: ScreenWidth } = Dimensions.get("screen")
-    const [isNotiVisible, setNotiVisible] = useState(false)
-    const icon1 = <IconFontisto name="arrow-swap" size={40} color="#000" />
-    const icon2 = <IconMaterialCommunityIcons name="warehouse" size={40} />
 
     useEffect(() => {
       const updatedList = [

@@ -1,16 +1,16 @@
 import { Text } from "app/components/v2"
 import React from "react"
-import { TouchableOpacity, View } from "react-native"
+import { TouchableOpacity, View, TouchableOpacityProps } from "react-native"
 
 type StateButtonProps = {
   color: string
   placeholder: string
   isSelected?: boolean
-  onPress?:()=>void 
-}
-const StateButton = ({ color, placeholder, isSelected, onPress}: StateButtonProps) => {
+  onPress?: () => void
+} & TouchableOpacityProps
+const StateButton = ({ color, placeholder, isSelected, onPress, ...props  }: StateButtonProps) => {
   return (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity onPress={onPress} {...props}>
       <View
         style={{
           borderColor: color,

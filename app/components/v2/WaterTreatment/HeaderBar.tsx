@@ -1,5 +1,5 @@
-import React, { useRef } from "react"
-import Icon from "react-native-vector-icons/Entypo"
+import React, { useEffect, useRef, useState } from "react"
+import Icon from "react-native-vector-icons/AntDesign"
 import DatePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import { Text } from "app/components/v2"
 import { View, Platform, TextStyle, TouchableOpacity } from "react-native"
@@ -37,6 +37,8 @@ const HeaderBar = ({
     { name: "line 2", value: 2 },
   ]
 
+  const [clock, setClock] = useState("")
+
   const wtps = [
     {
       name: "Water Treatment Plant 2",
@@ -52,6 +54,14 @@ const HeaderBar = ({
     },
   ]
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setClock(moment(new Date(Date.now())).format("LTS"))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <>
       <View style={{ marginLeft: 50, alignItems: "center" }}>
@@ -63,7 +73,14 @@ const HeaderBar = ({
         </Text>
       </View>
 
-      <View style={{ flexDirection: "row" }}>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {/* <Icon name="clockcircle" size={22} color={"black"} />
+        <View style={{marginRight:10}}>
+
+        </View>
+        <Text semibold style={{
+          color:"black"
+        }}>{clock || moment(new Date(Date.now())).format("LTS")} </Text> */}
         {showLine && (
           <Dropdown
             style={styles.dropdown}
@@ -74,9 +91,8 @@ const HeaderBar = ({
             placeholderStyle={{ fontSize: 14.5 }}
             // onSelect={onSelectLine}
             search
-            value={selectedLine }
-            onChangeText={(text: any) => {
-            }}
+            value={selectedLine}
+            onChangeText={(text: any) => {}}
             onChange={(item) => {
               onSelectLine(item)
             }}
@@ -114,7 +130,7 @@ const HeaderBar = ({
           >
             <Text style={{ marginLeft: 10 }}>{dateValue?.toDateString() || "Select Date"}</Text>
 
-            <Icon name="chevron-down" size={22} color={"gray"} />
+            <Icon name="down" size={19} color={"gray"} />
           </TouchableOpacity>
 
           {/* 

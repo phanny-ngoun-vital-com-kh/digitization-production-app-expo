@@ -19,7 +19,6 @@ import IconMaterialCommunityIcons from "react-native-vector-icons/MaterialCommun
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card, Title, Paragraph } from "react-native-paper"
-import data from "../../utils/dummy/water-treatment-plant-2/index.json"
 import { WaterTreatmentModel } from "app/models/water-treatment/water-treatment-model"
 import { WaterTreatmentStoreModel } from "app/models/water-treatment/water-treatment-store"
 // import HomeCard from "app/components/v2/HomeCard"
@@ -35,6 +34,60 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
   const icon1 = <IconFontisto name="arrow-swap" size={40} color="#000" />
   const icon2 = <IconMaterialCommunityIcons name="warehouse" size={40} />
 
+  const remoteWork = () => {
+    const updatedList = [
+      {
+        id: 1,
+        name: "Inventory Transfer Request",
+        subname: "Inventory Transfer Request List",
+        navigation: "InventoryTransferRequestProduction",
+        iconname: "arrow-top-right-bottom-left",
+        icontype: "Fontisto",
+      },
+      {
+        id: 2,
+        name: "Inventory Transfer",
+        subname: "Inventory Transfer List",
+        navigation: "InventoryTransfer",
+        iconname: "warehouse",
+        icontype: "MaterialCommunityIcons",
+      },
+      {
+        id: 3,
+        name: "Water Treatment Control",
+        subname: "Water Treatment  List",
+        navigation: "WaterTreatmentControlList",
+        iconname: "water",
+        icontype: "MaterialCommunityIcons",
+      },
+
+      {
+        id: 4,
+        name: "HACCP Monitoring",
+        subname: "HACCP Monitoring List",
+        navigation: "HccpMonitor",
+        iconname: "alert-octagon",
+        icontype: "MaterialCommunityIcons",
+      },
+      // {
+      //   id: 4,
+      //   name: "HACCP Monitoring",
+      //   subname: "HACCP Monitoring List",
+      //   navigation: "HccpMonitor",
+      //   iconname: "alert-octagon",
+      //   icontype: "MaterialCommunityIcons",
+      // },
+      {
+        id: 5,
+        name: "Dashboard",
+        subname: "Overview and Analytic",
+        navigation: "Dashboard",
+        iconname: "view-dashboard-outline",
+        icontype: "MaterialCommunityIcons",
+      },
+    ]
+    setList(updatedList)
+  }
   useEffect(() => {
     const role = async () => {
       try {
@@ -80,6 +133,14 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
             },
+            {
+              id: 5,
+              name: "Dashboard",
+              subname: "Overview and Analytic",
+              navigation: "Dashboard",
+              iconname: "view-dashboard-outline",
+              icontype: "MaterialCommunityIcons",
+            },
             // Add other items as needed
           ]
           setList(updatedList)
@@ -121,8 +182,16 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
             },
+            // {
+            //   id: 4,
+            //   name: "HACCP Monitoring",
+            //   subname: "HACCP Monitoring List",
+            //   navigation: "HccpMonitor",
+            //   iconname: "alert-octagon",
+            //   icontype: "MaterialCommunityIcons",
+            // },
             {
-              id:5,
+              id: 5,
               name: "Dashboard",
               subname: "Overview and Analytic",
               navigation: "Dashboard",
@@ -138,6 +207,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     }
 
     role()
+    // remoteWork()
   }, [])
 
   // useEffect(() => {

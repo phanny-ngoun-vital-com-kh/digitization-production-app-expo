@@ -6,7 +6,7 @@ import {
 } from "app/models/water-treatment/water-treatment-model"
 import { Instance, SnapshotIn, SnapshotOut, types } from "mobx-state-tree"
 import { watertreatmentApi } from "app/services/api/water-treatment-api"
-import { AssignDailyWTP2, assignDailywtp2Api } from "app/services/api/assign-daily-wtp-api"
+import { assignDailywtp2Api } from "app/services/api/assign-daily-wtp-api"
 
 /**
  * Model description here for TypeScript hints.

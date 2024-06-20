@@ -2,52 +2,70 @@ import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/AntDesign"
 import { DataTable, PaperProvider, Portal } from "react-native-paper"
-import { FlatList, View, ViewStyle } from "react-native"
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  View,
+  ViewStyle,
+  TouchableOpacity,
+} from "react-native"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Text } from "app/components/v2"
+import { Text } from "app/components/v2"
 import styles from "./styles"
-import { TouchableOpacity } from "react-native-gesture-handler"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import { $containerHorizon } from "app/screens/wtp-control-screen/water-treatment-plan"
 import { useTheme } from "app/theme-v2"
 import StateButton from "app/components/v2/HACCP/StateButton"
 import EmptyFallback from "app/components/EmptyFallback"
-import linesDummy from "../../../utils/dummy/haccp/index.json"
 import AlertDialog from "app/components/v2/AlertDialog"
 import { useStores } from "app/models"
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
+import { HaccpListType } from "app/models/haccp-monitoring/haccp-lines-model"
+import moment from "moment"
+import ActivityModal from "app/components/v2/ActivitylogModal"
 
 interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> {}
 
 export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = observer(
-  function DailyHaccpLineDetailScreen({
-    type = "2",
-    onClick,
-  }: {
-    type: "1" | "2"
-    onClick: (item: any) => void
-  }) {
+  function DailyHaccpLineDetailScreen() {
     const navigation = useNavigation()
+    const [loading, setLoading] = useState(false)
+    const [refreshing, setRefreshing] = useState(false)
+    const { haccpLinesStore, authStore } = useStores()
     const route = useRoute().params
-    const { haccpMonitoringStore } = useStores()
     const { colors } = useTheme()
-    const [waterLines, setWaterLines] = useState<WaterTreatmentLine[] | []>([])
+    const [haccpLine, setHaccpline] = useState<HaccpListType[]>([])
+    const [filterLines, setFilterLines] = useState<HaccpListType[]>([])
     const lineStatus = ["normal", "pending", "warning"]
-    const [selectedStatus, setSelectStatus] = useState("")
+    const [roles, setRoles] = useState([""])
+    const [isAssign, setAssign] = useState(false)
+    const [selectedStatus, setSelectStatus] = useState("all")
+    const [sorting, setSorting] = useState<"desc" | "asc">("desc")
     const getRouteLine = () => route?.title.split(" ")[1]
     const [visible, setVisible] = useState(false)
-
+    const [showActivitylog, setShowActivitylog] = useState(false)
     const showModal = () => {
       setVisible(true)
     }
     const hideModal = () => setVisible(false)
+
     useLayoutEffect(() => {
+      setAssign(route?.assign)
       navigation.setOptions({
         title: route?.title,
         headerRight: () => (
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center" }}
             onPress={() => {
-              navigation.navigate("HaccpLineForm", { line: getRouteLine() })
+              navigation.navigate("HaccpLineForm", {
+                line: getRouteLine(),
+                onRefresh: handleRefresh,
+                haccp_id: route?.line?.haccp_id,
+                assign: isAssign,
+                isvalidDate: route?.isvalidDate,
+                id: route?.id,
+              })
             }}
           >
             <Icon name="plus" size={22} color={"#0081F8"} />
@@ -57,38 +75,150 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           </TouchableOpacity>
         ),
       })
-    }, [navigation])
+    }, [navigation, route, isAssign])
 
+    const fetchLinesTable = async () => {
+      try {
+        setLoading(true)
+        const result = await haccpLinesStore.getLinesById({
+          assign_date: route?.line?.assign_date,
+          haccp_id: route?.line?.haccp_id,
+          line: route?.line?.line,
+        })
+
+        const [haccp] = result?.map((line) => line?.haccplist)
+        const data = haccp.sort((a, b) => b.id - a.id)
+        setHaccpline(data)
+        setFilterLines(data)
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "បរាជ័យ",
+          button: "បិទ",
+        })
+        setHaccpline([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    const handleRefresh = async () => {
+      setSorting("desc")
+      setSelectStatus("all")
+      fetchLinesTable()
+      route?.onRefresh()
+    }
+
+    const onEnrollTask = async () => {
+      try {
+        setLoading(true)
+        const userinfo = await authStore.getUserInfo()
+        const { login } = userinfo.data
+        setVisible(false)
+        setAssign((pre) => !pre)
+        await haccpLinesStore.saveSelfEnroll(
+          route?.id ?? "",
+          route?.line?.haccp_id ?? "",
+          route?.line?.line ?? "",
+          [
+            {
+              action: login + "" + " has self assign to this line",
+            },
+          ],
+        )
+        setVisible(false)
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: "ជោគជ័យ",
+          textBody: "រក្សាទុកបានជោគជ័យ",
+          // button: 'close',
+          autoClose: 100,
+        })
+        route?.onRefresh()
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "បរាជ័យ",
+          button: "បិទ",
+        })
+        setHaccpline([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    const handleSorting = async () => {
+      sorting === "asc" ? setSorting("desc") : setSorting("asc")
+    }
     useEffect(() => {
-      const all = haccpMonitoringStore.haccpMonitoringList
-
-      const records = all.filter((line) => +line.id === +route?.id ?? 0)
-
-      console.log(records)
-
-      setWaterLines(records.map((record) => record.lines)[0])
+      fetchLinesTable()
     }, [navigation, route])
 
+    useEffect(() => {
+      if (selectedStatus.toLowerCase() === "all") {
+        setFilterLines(haccpLine)
+
+        return
+      }
+      const filtered = haccpLine.filter(
+        (line) => selectedStatus.toLowerCase() === line?.status?.toLowerCase() ?? "",
+      )
+
+      setFilterLines(filtered)
+
+      return () => {
+        setFilterLines(haccpLine)
+      }
+    }, [selectedStatus])
+    useEffect(() => {
+      if (filterLines.length) {
+        sorting === "asc"
+          ? setFilterLines((pre) => pre.sort((a, b) => a.id - b.id))
+          : setFilterLines((pre) => pre.sort((a, b) => b.id - a.id))
+      } else {
+        sorting === "asc"
+          ? setHaccpline((pre) => pre.sort((a, b) => a.id - b.id))
+          : setHaccpline((pre) => pre.sort((a, b) => b.id - a.id))
+      }
+    }, [sorting])
     const getMachineStatus = (status: any) => (status === "normal" ? "#0081F8" : "#FF0000")
 
-    const rendertableLine1 = ({ item, index }: { item: WaterTreatmentLine; index: number }) => (
-      <TouchableOpacity onPress={() => navigation.navigate("HaccpLineForm", { line: 4 })}>
+    const rendertableLine456 = ({ item, index }: { item: HaccpListType; index: number }) => (
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate("HaccpLineForm", {
+            line: route?.line?.line?.split(" ")[1],
+            haccp_id: item?.haccp_id,
+            item: item,
+            assign: isAssign,
+            isvalidDate: moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+            onRefresh: handleRefresh,
+          })
+        }
+      >
         <DataTable style={{ margin: 10, marginTop: 0 }}>
           <DataTable.Row key={1}>
             <DataTable.Cell style={{ flex: 0.4 }}>{index + 1}</DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.7 }}>{item.time}</DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text style={{ marginRight: 15 }}>{moment(item.time).format("LTS")}</Text>
+            </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.9 }}>
-              <Text style={{ marginLeft: 18 }}>{item?.side_wall}</Text>
+              <Text style={{ marginLeft: 18 }}>{item?.side_wall ?? "N/A"} % </Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 1 }}>
-              <Text style={{ marginLeft: 28 }}>{item?.air_pressure}</Text>
+              <Text style={{ marginLeft: 20 }}>{item?.air_pressure ?? "N/A"} bar </Text>
+            </DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.55 }}>
+              <Text style={{ marginRight: 10 }}>
+                {item?.treated_water_pressure ?? "N/A"} bar/flow
+              </Text>
             </DataTable.Cell>
 
             <DataTable.Cell style={{ flex: 0.9 }}>
-              <Text style={{ marginLeft: 44 }}>{item?.temp_preform}</Text>
+              <Text style={{ marginLeft: 44 }}>{item?.temperature_preform ?? "N/A"} ℃</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.55 }}>
-              <Text style={{ marginLeft: 4 }}>{item?.FG}</Text>
+              <Text style={{ marginRight: 20 }}>{item?.fg ?? "N/A"} ppm</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.9 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -100,37 +230,55 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                     borderRadius: 100,
                   }}
                 ></View>
-                <Text>normal</Text>
+                <Text semibold errorColor={item?.status === "warning"} primaryColor caption1>
+                  {item?.status === "normal"
+                    ? "Normal"
+                    : item?.status === "warning"
+                    ? item?.warning_count + " warnings"
+                    : "Pending"}
+                </Text>
               </View>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.9 }}>{item?.assign_to ?? "N / A"}</DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.9 }}>
+              <Text style={{ marginLeft: 20 }}>{item?.done_by ?? "N / A"}</Text>
+            </DataTable.Cell>
           </DataTable.Row>
         </DataTable>
       </TouchableOpacity>
     )
 
-    const rendertableLine4 = ({ item, index }: { item: WaterTreatmentLine; index: number }) => {
+    const rendertableLine23 = ({ item, index }: { item: HaccpListType; index: number }) => {
       return (
         <DataTable style={{ margin: 10, marginTop: 0 }}>
           <TouchableOpacity
-            onPress={() => navigation.navigate("HaccpLineForm", { line: 2 })}
-            activeOpacity={1} // Ensures the touchable area does not extend into the button
+            activeOpacity={0.25}
+            onPress={() =>
+              navigation.navigate("HaccpLineForm", {
+                line: route?.line?.line?.split(" ")[1],
+                haccp_id: item?.haccp_id,
+                item: item,
+                assign: isAssign,
+                isvalidDate:
+                  moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                onRefresh: handleRefresh,
+              })
+            }
           >
             <View>
               <DataTable.Row key={1}>
                 <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 15 }}>{item?.time}</Text>
+                  <Text style={{ marginLeft: 15 }}>{moment(item?.time).format("LTS")}</Text>
                 </DataTable.Cell>
 
                 <DataTable.Cell style={{ flex: 0.8 }}>
-                  <Text style={{ marginLeft: 70 }}>{item?.bottle_cap_rinsing?.water_pressure}</Text>
+                  <Text style={{ marginLeft: 70 }}>{item?.water_pressure ?? "N/A"}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 30 }}>{item?.bottle_cap_rinsing?.nozzies_rinser}</Text>
+                  <Text style={{ marginLeft: 30 }}>{item?.nozzles_rinser ?? "N/A"}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 40 }}>{item?.filling_cap?.FG}</Text>
+                  <Text style={{ marginLeft: 40 }}>{item?.fg ?? "N/A"}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -142,15 +290,27 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         borderRadius: 100,
                       }}
                     ></View>
-                    <Text style={{ marginLeft: 5 }}>{item?.status}</Text>
+                    <Text
+                      style={{ marginLeft: 5 }}
+                      errorColor={item?.status === "warning"}
+                      primaryColor
+                      semibold
+                      caption1
+                    >
+                      {item?.status === "normal"
+                        ? "Normal"
+                        : item?.status === "warning"
+                        ? item?.warning_count + " warnings"
+                        : "Pending"}
+                    </Text>
                   </View>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 8 }}>{item?.assign_to ?? "N/A"}</Text>
+                  <Text style={{ marginLeft: 8 }}>{item?.done_by ?? "N/A"}</Text>
                 </DataTable.Cell>
 
                 <DataTable.Cell style={{ flex: 0.6 }}>
-                  <Text style={{ marginRight: 0 }}> {item?.instruction} </Text>
+                  <Text style={{ marginRight: 0 }}> {item?.take_action ?? "N/A"} </Text>
                 </DataTable.Cell>
               </DataTable.Row>
             </View>
@@ -166,12 +326,18 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
             <View style={$root}>
               <View style={$outerContainer}>
                 <View style={[$containerHorizon, { marginBottom: 20 }]}>
-                  <TouchableOpacity style={{}} onPress={() => null}>
+                  <TouchableOpacity style={{}} onPress={handleSorting}>
                     <Icon name="up" size={15} color={"black"} />
                     <Icon name="down" size={15} color={"black"} />
                   </TouchableOpacity>
 
                   <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
+                    <StateButton
+                      onPress={() => setSelectStatus("all")}
+                      isSelected={selectedStatus?.toLowerCase() === "all"}
+                      placeholder={"All"}
+                      color={"green"}
+                    />
                     {lineStatus.map((item, index) => (
                       <View key={index.toString()}>
                         <StateButton
@@ -188,6 +354,32 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         />
                       </View>
                     ))}
+
+                    {!route?.isvalidDate ? (
+                      <StateButton
+                        disabled
+                        isSelected={true}
+                        placeholder={"Shift has Ended"}
+                        color={"#D32600"}
+                      />
+                    ) : (
+                      <StateButton
+                        onPress={showModal}
+                        isSelected={selectedStatus?.toLowerCase() === "all"}
+                        placeholder={isAssign ? "Unassign my task" : "Enroll this task"}
+                        color={isAssign ? "#D32600" : "#0081F8"}
+                      />
+                    )}
+                    <StateButton
+                      onPress={() => {
+                        setShowActivitylog(true)
+                        console.log('true')
+                        setRoles(route?.line?.assign_to?.split(" "))
+                      }}
+                      isSelected={true}
+                      placeholder={"View Assignment"}
+                      color={"#0081F8"}
+                    />
                   </View>
                 </View>
                 <DataTable style={{ margin: 10, marginTop: 0 }}>
@@ -219,33 +411,43 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                     </DataTable.Title>
                   </DataTable.Header>
                 </DataTable>
-
-                <FlatList
-                  data={waterLines || []}
-                  ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={rendertableLine4}
-                />
-
-                {waterLines?.length ? (
-                  <Button
-                    style={{ position: "absolute", bottom: 50, width: "100%" }}
-                    onPress={showModal}
-                  >
-                    <Text whiteColor body2 style={{ marginLeft: 12 }}>
-                      Enroll
-                    </Text>
-                  </Button>
+                {loading ? (
+                  <ActivityIndicator color={colors.primary} size={40} />
                 ) : (
-                  <></>
+                  <FlatList
+                    data={filterLines || haccpLine}
+                    refreshControl={
+                      <RefreshControl
+                        colors={["#0081F8"]}
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                      />
+                    }
+                    ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={rendertableLine23}
+                  />
                 )}
               </View>
             </View>
+            <ActivityModal
+            title="Users"
+            type="roles"
+            log={roles}
+            isVisible={showActivitylog}
+            onClose={() => {
+              setShowActivitylog(false)
+            }}
+          />
             <AlertDialog
               visible={visible}
-              content="You're about to entroll this Line , Click confirm to accept it"
+              content={
+                isAssign
+                  ? "You're about to unassign your task , Click confirm to accept it"
+                  : "You're about to entroll this Line , Click confirm to accept it"
+              }
               hideDialog={hideModal}
-              onPositive={hideModal}
+              onPositive={onEnrollTask}
               onNegative={() => setVisible(false)}
             />
           </Portal>
@@ -258,6 +460,16 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           <View style={$root}>
             <View style={$outerContainer}>
               <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
+                <TouchableOpacity style={{}} onPress={handleSorting}>
+                  <Icon name="up" size={15} color={"black"} />
+                  <Icon name="down" size={15} color={"black"} />
+                </TouchableOpacity>
+                <StateButton
+                  onPress={() => setSelectStatus("all")}
+                  isSelected={selectedStatus?.toLowerCase() === "all"}
+                  placeholder={"All"}
+                  color={"green"}
+                />
                 {lineStatus.map((item, index) => (
                   <View key={index.toString()}>
                     <StateButton
@@ -274,10 +486,35 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                     />
                   </View>
                 ))}
+                {!route?.isvalidDate ? (
+                  <StateButton
+                    disabled
+                    isSelected={true}
+                    placeholder={"Shift has Ended"}
+                    color={"#D32600"}
+                  />
+                ) : (
+                  <StateButton
+                    onPress={showModal}
+                    isSelected={selectedStatus?.toLowerCase() === "all"}
+                    placeholder={isAssign ? "Unassign my task" : "Enroll this task"}
+                    color={isAssign ? "#D32600" : "#0081F8"}
+                  />
+                )}
+
+                <StateButton
+                  onPress={() => {
+                    setShowActivitylog(true)
+                    setRoles(route?.line?.assign_to?.split(" "))
+                  }}
+                  isSelected={selectedStatus?.toLowerCase() === "all"}
+                  placeholder={"View Assignment"}
+                  color={"#0081F8"}
+                />
               </View>
               <DataTable style={{ margin: 10, marginTop: 5 }}>
                 <DataTable.Header>
-                  <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>
+                  <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                     No
                   </DataTable.Title>
                   <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
@@ -289,7 +526,9 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                   <DataTable.Title style={{ flex: 1 }} textStyle={styles.textHeader}>
                     Air Pressure
                   </DataTable.Title>
-
+                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                    Treated Water
+                  </DataTable.Title>
                   <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
                     Temperature
                   </DataTable.Title>
@@ -306,34 +545,46 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
               </DataTable>
 
               <View>
-                <FlatList
-                  data={waterLines || []}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={rendertableLine1}
-                  ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
-                />
+                {loading ? (
+                  <ActivityIndicator color={colors.primary} size={40} />
+                ) : (
+                  <FlatList
+                    data={filterLines || haccpLine}
+                    refreshControl={
+                      <RefreshControl
+                        colors={["#0081F8"]}
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                      />
+                    }
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={rendertableLine456}
+                    ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
+                  />
+                )}
               </View>
-              {waterLines?.length ? (
-                <Button
-                  style={{ position: "absolute", bottom: 50, width: "100%" }}
-                  onPress={showModal}
-                >
-                  <Text whiteColor body2 style={{ marginLeft: 12 }}>
-                    Enroll
-                  </Text>
-                </Button>
-              ) : (
-                <></>
-              )}
             </View>
             <AlertDialog
-                  content="Are you sure about that?"
-                  visible={visible}
+              visible={visible}
+              content={
+                isAssign
+                  ? "You're about to unassign your task , Click confirm to accept it"
+                  : "You're about to entroll this Line , Click confirm to accept it"
+              }
               hideDialog={hideModal}
-              onPositive={hideModal}
+              onPositive={onEnrollTask}
               onNegative={() => setVisible(false)}
             />
           </View>
+          <ActivityModal
+            title="Users"
+            type="roles"
+            log={roles}
+            isVisible={showActivitylog}
+            onClose={() => {
+              setShowActivitylog(false)
+            }}
+          />
         </Portal>
       </PaperProvider>
     )

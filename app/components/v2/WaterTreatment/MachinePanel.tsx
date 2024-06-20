@@ -7,14 +7,18 @@ import { Divider } from "react-native-paper"
 import { $containerHorizon } from "app/screens"
 import { MACHINE_STATE, MachinePanelProps } from "./type"
 import BadgeWarning from "../Badgewarn"
-import { useStores } from "app/models"
+import { cleanTimeString, cleanTimeCurrent, getCurrentTime } from "app/utils-v2/getCurrTime"
+import moment from "moment"
 
 const MachinePanel = ({
   machine_type = "Raw Water Stock",
   status = "normal",
   assign_to = "Vicheaka",
+  isAssign = false,
   time = "7:00",
   created_date,
+  validDate,
+  validShift,
   id,
   currUser,
   assign_to_user,
@@ -24,18 +28,35 @@ const MachinePanel = ({
 }: MachinePanelProps) => {
   const getStatus = (status: MACHINE_STATE) =>
     status === "normal" ? "#0081F8" : status === "pending" ? "#8CC8FF" : "red"
-  // console.log(assign_to_user?.split(" "))
+  // console.log("Assign",getCurrentTime())
+
+  // const invalidDate = () => moment(Date.now()).format("LL") === moment(created_date).format("LL")
+
+  // const isValidShift = (time: any) =>
+  //   getCurrentTime() > cleanTimeCurrent(!time.includes("(") ? time : time?.split(" ")[1]) &&
+  //   getCurrentTime().localeCompare(
+  //     cleanTimeString(!time.includes("(") ? time : time?.split(" ")[1]),
+  //   )
+
   return (
     <View
       style={{
-        backgroundColor: "white",
+        backgroundColor:validDate &&validShift === -1 ? "white" : "#EEEEEE",
         marginBottom: 10,
         elevation: 6,
         borderRadius: 0,
         overflow: "hidden",
       }}
     >
-      <TouchableOpacity style={{ paddingHorizontal: 10, paddingVertical: 5 }} onPress={onPress}>
+      <TouchableOpacity
+        // disabled={isValidShift()}
+        style={{ paddingHorizontal: 10, paddingVertical: 5 }}
+        onPress={() => {
+     
+
+          onPress(validShift)
+        }}
+      >
         <View style={{ width: 180, position: "relative" }}>
           <View style={$containerHorizon}>
             <Text semibold headline>
@@ -65,10 +86,10 @@ const MachinePanel = ({
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
           <View style={[$containerHorizon, { gap: 20 }]}>
-            {assign_to_user?.split(" ").includes(currUser ?? "") && (
+            {isAssign && (
               <View style={$containerHorizon}>
-                <Icon name="checkcircle" size={18} color="#40A578" />
-                <Text semibold caption1 style={{ marginLeft: 5, color: "#40A578" }}>
+                <Icon name="checkcircle" size={18} color="green" />
+                <Text semibold caption1 style={{ marginLeft: 5, color: "green" }}>
                   You are assigned
                 </Text>
               </View>
@@ -89,7 +110,7 @@ const MachinePanel = ({
             <View style={$containerHorizon}>
               <Icon name="calendar" size={20} color="black" />
               <Text semibold caption1 style={{ marginLeft: 5 }}>
-                {created_date?.toString()}
+                {moment(created_date).format("LL")}
               </Text>
             </View>
           </View>
@@ -100,11 +121,11 @@ const MachinePanel = ({
             </TouchableOpacity>
           </View>
         </View>
-    
+      </TouchableOpacity>
+      {/* <Text>{isValidShift(time) === -1 ? "True" : "false "}</Text> */}
 
-        {status === "pending" && 
-        
-        assign_to_user?.split(" ").includes(currUser ?? "") === false  ? (
+      {status === "pending" && assign_to_user?.split(" ").includes(currUser ?? "") === false ? (
+        validDate &&validShift === -1 ? (
           <View
             style={[
               $containerHorizon,
@@ -128,18 +149,46 @@ const MachinePanel = ({
               { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
             ]}
           >
-            <TouchableOpacity
-              onPress={() => handleAssigntask!(id, assign_to_user)}
-              style={$containerHorizon}
-            >
+            <TouchableOpacity disabled style={$containerHorizon}>
               <Icon name="closecircle" size={18} color="#D32600" />
               <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-                Unassign this task
+                Out Dated
               </Text>
             </TouchableOpacity>
           </View>
-        )}
-      </TouchableOpacity>
+        )
+      ) : validDate &&validShift === -1 ? (
+        <View
+          style={[
+            $containerHorizon,
+            { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={() => handleAssigntask!(id, assign_to_user)}
+            style={$containerHorizon}
+          >
+            <Icon name="closecircle" size={18} color="#D32600" />
+            <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
+              Unassign this task
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View
+          style={[
+            $containerHorizon,
+            { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
+          ]}
+        >
+          <TouchableOpacity disabled style={$containerHorizon}>
+            <Icon name="closecircle" size={18} color="#D32600" />
+            <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
+              Out Dated
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   )
 }

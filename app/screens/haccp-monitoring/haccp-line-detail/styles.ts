@@ -26,8 +26,10 @@ export default StyleSheet.create({
     borderColor: "gray",
   },
   textHeader: {
-    fontSize: 18,
-    color: "black",
+    fontSize: 15,
+    fontWeight:"700",
+    color:"black"
+ 
   },
   dropdown: {
     marginLeft: 10,

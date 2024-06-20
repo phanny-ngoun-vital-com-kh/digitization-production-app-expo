@@ -1,0 +1,110 @@
+[
+  {
+    "data": [
+      {
+        "value": 36,
+        "dataPointText": "36",
+        "label": "Mon",
+        "textColor": "#1B1C25",
+        "dataPointColor": "#1B1C25"
+      },
+      {
+        "value": 32,
+        "dataPointText": "32",
+        "label": "Tues",
+        "textColor": "#1B1C25",
+        "dataPointColor": "#1B1C25"
+      },
+      {
+        "value": 69,
+        "dataPointText": "69",
+        "label": "Wed",
+        "textColor": "#1B1C25",
+        "dataPointColor": "#1B1C25"
+      },
+      {
+        "value": 14,
+        "dataPointText": "14",
+        "label": "Thu",
+        "textColor": "#1B1C25",
+        "dataPointColor": "#1B1C25"
+      },
+      {
+        "value": 38,
+        "dataPointText": "38",
+        "label": "Fri",
+        "textColor": "#1B1C25",
+        "dataPointColor": "#1B1C25"
+      },
+      {
+        "value": 70,
+        "dataPointText": "70",
+        "label": "Sat",
+        "textColor": "#1B1C25",
+        "dataPointColor": "#1B1C25"
+      },
+      {
+        "value": 98,
+        "dataPointText": "98",
+        "label": "Sun",
+        "textColor": "#1B1C25",
+        "dataPointColor": "#1B1C25"
+      }
+    ],
+    "color": "#1B1C25"
+  },
+  {
+    "data": [
+      {
+        "value": 22,
+        "dataPointText": "22",
+        "label": "Mon",
+        "textColor": "#059212",
+        "dataPointColor": "#059212"
+      },
+      {
+        "value": 10,
+        "dataPointText": "10",
+        "label": "Tues",
+        "textColor": "#059212",
+        "dataPointColor": "#059212"
+      },
+      {
+        "value": 33,
+        "dataPointText": "33",
+        "label": "Wed",
+        "textColor": "#059212",
+        "dataPointColor": "#059212"
+      },
+      {
+        "value": 71,
+        "dataPointText": "71",
+        "label": "Thu",
+        "textColor": "#059212",
+        "dataPointColor": "#059212"
+      },
+      {
+        "value": 28,
+        "dataPointText": "28",
+        "label": "Fri",
+        "textColor": "#059212",
+        "dataPointColor": "#059212"
+      },
+      {
+        "value": 41,
+        "dataPointText": "41",
+        "label": "Sat",
+        "textColor": "#059212",
+        "dataPointColor": "#059212"
+      },
+      {
+        "value": 97,
+        "dataPointText": "97",
+        "label": "Sun",
+        "textColor": "#059212",
+        "dataPointColor": "#059212"
+      }
+    ],
+    "color": "#059212"
+  }
+]

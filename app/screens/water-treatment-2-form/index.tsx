@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from "@react-navigation/native"
 import { Text } from "app/components/v2"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
-import { ActivityIndicator, Checkbox } from "react-native-paper"
+import { ActivityIndicator, Checkbox, Portal, Provider } from "react-native-paper"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { useStores } from "app/models"
 import { Activities, TreatmentModel } from "app/models/water-treatment/water-treatment-model"
@@ -85,8 +85,8 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       navigation.setOptions({
         headerShown: true,
         title: route?.type || "Raw Water",
-        headerRight: () => {
-          return isEditable ? (
+        headerRight: () =>
+          route?.isvalidDate && route?.isValidShift && route?.isEdit ? (
             <TouchableOpacity
               style={{ flexDirection: "row", alignItems: "center" }}
               onPress={() => validate()}
@@ -100,14 +100,12 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
             <>
               <Text></Text>
             </>
-          )
-        },
+          ),
       })
       validateStateMachine()
-    }, [errors, navigation, route, form, isEditable])
+    }, [errors, navigation, route, form, route?.isEdit])
     useEffect(() => {
       if (route?.items) {
-        // setCurrUser(route?.items?.assign_to_user)
         checkUserRole()
         fetchUserActivities()
         setForm({
@@ -176,16 +174,19 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       for (const item of arrActions) {
         str.push("" + item.name.toUpperCase() + " from " + item.oldValue + " to " + item.value)
       }
-      return route?.items?.status ? "modified " + str.join(" , ") : "completed the check"
+      return route?.items?.status ? "modified " + str.join(" , ") : "completed the machines"
     }
 
     const onlaunchGallery = async () => {
       try {
         const result = await getResultImageGallery()
+        if (!result) {
+          return
+        }
         if (!result.canceled) {
           // Set the selected image in state
-          performOCR(result.assets[0])
-          setImage(result.assets[0].uri)
+          performOCR(result?.assets[0])
+          setImage(result?.assets[0]?.uri)
         }
       } catch (error) {
         Dialog.show({
@@ -200,10 +201,13 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
     const onlaunchCamera = async () => {
       try {
         const result = await getResultImageCamera()
+        if (!result) {
+          return
+        }
         if (!result.canceled) {
           // Set the selected image in state
-          performOCR(result.assets[0])
-          setImage(result.assets[0].uri)
+          performOCR(result?.assets[0])
+          setImage(result?.assets[0]?.uri)
         }
       } catch (error) {
         Dialog.show({
@@ -390,7 +394,17 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
       try {
         const result = await ImagetoText(file)
-        setScanToform(result["annotations"])
+        if (!result) {
+          Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: "រក​មិនឃើញ",
+            autoClose: 500,
+            textBody: "យើងមិនអាចស្រង់ចេញបានទេ។",
+          })
+          setLoading((pre) => ({ ...pre, image: false }))
+          return
+        }
+        onScanImagetoForm(result["annotations"])
       } catch (error) {
         Dialog.show({
           type: ALERT_TYPE.WARNING,
@@ -403,7 +417,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       }
     }
 
-    const setScanToform = (result: string[]) => {
+    const onScanImagetoForm = (result: string[]) => {
       const blocktext = result as string[]
       const numberic = []
       const isNumeric = (string) => /^[+-]?\d+(\.\d+)?$/.test(string)
@@ -494,365 +508,372 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       const { login } = userinfo.data
       return login
     }
+
     return (
-      <>
-        <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
-          {isLoading.image && (
-            <View style={styles.overlay}>
-              <ActivityIndicator color="#8CC8FF" size={35} />
-              <View style={{ marginVertical: 15 }}></View>
-              <Text whiteColor textAlign={"center"}>
-                Progressing Image ...
-              </Text>
-            </View>
-          )}
-          {isLoading.submitting && (
-            <View style={styles.overlay}>
-              <ActivityIndicator color="#8CC8FF" size={35} />
-              <View style={{ marginVertical: 15 }}></View>
-              <Text whiteColor textAlign={"center"}>
-                Saving record ...
-              </Text>
-            </View>
-          )}
-          <View>
-            <ScrollView>
-              <View style={$outer}>
-                <ActivityBar
-                  onScanCamera={onlaunchCamera}
-                  direction="end"
-                  onActivity={() => setShowlog(true)}
-                  onAttachment={onlaunchGallery}
-                />
+      <Provider>
+        <Portal>
+          <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
+            {isLoading.image && (
+              <View style={styles.overlay}>
+                <ActivityIndicator color="#8CC8FF" size={35} />
+                <View style={{ marginVertical: 15 }}></View>
+                <Text whiteColor textAlign={"center"}>
+                  Progressing Image ...
+                </Text>
+              </View>
+            )}
+            {isLoading.submitting && (
+              <View style={styles.overlay}>
+                <ActivityIndicator color="#8CC8FF" size={35} />
+                <View style={{ marginVertical: 15 }}></View>
+                <Text whiteColor textAlign={"center"}>
+                  Saving record ...
+                </Text>
+              </View>
+            )}
 
-                <View style={[$containerHorizon, { marginBottom: 40, marginTop: 15 }]}>
-                  <View style={$width}>
-                    <CustomInput
-                      disabled={isEditable}
-                      warning={form.tds && +form?.tds > 300}
-                      hintLimit="<=300 ppm"
-                      showIcon={false}
-                      label="TDS"
-                      value={form.tds?.toString() || ""}
-                      keyboardType="decimal-pad"
-                      onBlur={() => {
-                        form.tds !== ""
-                          ? setErrors((pre) => ({ ...pre, tds: false }))
-                          : setErrors((pre) => ({ ...pre, tds: true }))
-                      }}
-                      onChangeText={(text) => {
-                        form.tds !== ""
-                          ? setErrors((pre) => ({ ...pre, tds: false }))
-                          : setErrors((pre) => ({ ...pre, tds: true }))
-
-                        setForm((pre) => ({ ...pre, tds: text.trim() }))
-                      }}
-                      errormessage={errors?.tds ? "សូមជ្រើសរើស TDS" : ""}
+            <View>
+              <ScrollView>
+                <View style={$outer}>
+                  {route?.isvalidDate && route?.isValidShift  && route?.isEdit && (
+                    <ActivityBar
+                      onScanCamera={onlaunchCamera}
+                      direction="end"
+                      onActivity={() => setShowlog(true)}
+                      onAttachment={onlaunchGallery}
                     />
-                  </View>
-                  {route?.type?.toLowerCase()?.startsWith("reverses") ? (
-                    <View style={$width}>
-                      <CustomInput
-                        disabled={isEditable}
-                        hintLimit="6.5 - 8.5"
-                        warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
-                        keyboardType="decimal-pad"
-                        showIcon={false}
-                        value={form.ph?.toString() || ""}
-                        onBlur={() => {
-                          form.ph !== ""
-                            ? setErrors((pre) => ({ ...pre, ph: false }))
-                            : setErrors((pre) => ({ ...pre, ph: true }))
-                        }}
-                        onChangeText={(text) => {
-                          form.ph !== ""
-                            ? setErrors((pre) => ({ ...pre, ph: false }))
-                            : setErrors((pre) => ({ ...pre, ph: true }))
-
-                          setForm((pre) => ({ ...pre, ph: text.trim() }))
-                        }}
-                        label="PH"
-                        errormessage={errors?.ph ? "សូមជ្រើសរើស PH" : ""}
-                      />
-                    </View>
-                  ) : (
-                    <View style={$width}>
-                      <CustomInput
-                        disabled={isEditable}
-                        hintLimit="25 - 35 °C"
-                        disabled={isEditable}
-                        keyboardType="decimal-pad"
-                        warning={
-                          (form.temperature && +form?.temperature < 25) || +form?.temperature > 35
-                        }
-                        value={form.temperature?.toString() || ""}
-                        showIcon={false}
-                        onBlur={() => {
-                          form.temperature !== ""
-                            ? setErrors((pre) => ({ ...pre, temperature: false }))
-                            : setErrors((pre) => ({ ...pre, temperature: true }))
-                        }}
-                        onChangeText={(text) => {
-                          form.temperature !== ""
-                            ? setErrors((pre) => ({ ...pre, temperature: false }))
-                            : setErrors((pre) => ({ ...pre, temperature: true }))
-
-                          setForm((pre) => ({ ...pre, temperature: text.trim() }))
-                        }}
-                        label="Temperature"
-                        errormessage={errors.temperature ? "សូមជ្រើសរើស temperature" : ""}
-                      />
-                    </View>
                   )}
-                </View>
 
-                {!route?.type?.toLowerCase()?.startsWith("reverses") && (
-                  <View style={$containerHorizon}>
+                  <View
+                    key={"header"}
+                    style={[$containerHorizon, { marginBottom: 40, marginTop: 15 }]}
+                  >
                     <View style={$width}>
                       <CustomInput
-                        disabled={isEditable}
-                        hintLimit="6.5 - 8.5"
+                        key={1}
+                        disabled={route?.isEdit}
+                        warning={form.tds && +form?.tds > 300}
+                        hintLimit="<=300 ppm"
                         showIcon={false}
-                        warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
+                        label="TDS"
+                        value={form.tds?.toString() || ""}
                         keyboardType="decimal-pad"
-                        value={form.ph?.toString() || ""}
                         onBlur={() => {
-                          form.ph !== ""
-                            ? setErrors((pre) => ({ ...pre, ph: false }))
-                            : setErrors((pre) => ({ ...pre, ph: true }))
+                          form.tds !== ""
+                            ? setErrors((pre) => ({ ...pre, tds: false }))
+                            : setErrors((pre) => ({ ...pre, tds: true }))
                         }}
                         onChangeText={(text) => {
-                          form.ph !== ""
-                            ? setErrors((pre) => ({ ...pre, ph: false }))
-                            : setErrors((pre) => ({ ...pre, ph: true }))
+                          form.tds !== ""
+                            ? setErrors((pre) => ({ ...pre, tds: false }))
+                            : setErrors((pre) => ({ ...pre, tds: true }))
 
-                          setForm((pre) => ({ ...pre, ph: text.trim() }))
+                          setForm((pre) => ({ ...pre, tds: text.trim() }))
                         }}
-                        label="PH"
-                        errormessage={errors.ph ? "សូមជ្រើសរើស ph" : ""}
+                        errormessage={errors?.tds ? "សូមជ្រើសរើស TDS" : ""}
                       />
                     </View>
-                    <View style={$width}>
-                      <CustomInput
-                        disabled={isEditable}
-                        showIcon={false}
-                        value={form.other?.toString() || ""}
-                        onChangeText={(text) => {
-                          setForm((pre) => ({ ...pre, other: text.trim() }))
-                        }}
-                        label="Other"
-                        showAsterick={false}
-                        hintLimit="Optional"
-                        errormessage={""}
-                      />
-                    </View>
-
-                    {(route?.type?.toLowerCase() === "sand filter" ||
-                      route?.type?.toLowerCase() === "carbon filter" ||
-                      route?.type?.toLowerCase() === "resin filter") && (
+                    {route?.type?.toLowerCase()?.startsWith("reverses") ? (
                       <View style={$width}>
-                        <Text style={{ margin: 5, fontSize: 18 }} semibold>
-                          Air Released
-                        </Text>
+                        <CustomInput
+                          key={2}
+                          disabled={route?.isEdit}
+                          hintLimit="6.5 - 8.5"
+                          warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
+                          keyboardType="decimal-pad"
+                          showIcon={false}
+                          value={form.ph?.toString() || ""}
+                          onBlur={() => {
+                            form.ph !== ""
+                              ? setErrors((pre) => ({ ...pre, ph: false }))
+                              : setErrors((pre) => ({ ...pre, ph: true }))
+                          }}
+                          onChangeText={(text) => {
+                            form.ph !== ""
+                              ? setErrors((pre) => ({ ...pre, ph: false }))
+                              : setErrors((pre) => ({ ...pre, ph: true }))
 
-                        <View style={[$containerHorizon, { marginTop: 10 }]}>
-                          <TouchableOpacity
-                            disabled={!isEditable}
-                            style={$containerHorizon}
-                            onPress={() => {
-                              setErrors((pre) => ({ ...pre, air_release: false }))
-                              setForm((pre) => ({ ...pre, air_release: true }))
-                            }}
-                          >
-                            <Checkbox
-                              disabled={!isEditable}
-                              status={
-                                form.air_release == null
-                                  ? "unchecked"
-                                  : form?.air_release === "true" || form.air_release === true
-                                  ? "checked"
-                                  : "unchecked"
-                              }
+                            setForm((pre) => ({ ...pre, ph: text.trim() }))
+                          }}
+                          label="PH"
+                          errormessage={errors?.ph ? "សូមជ្រើសរើស PH" : ""}
+                        />
+                      </View>
+                    ) : (
+                      <View style={$width}>
+                        <CustomInput
+                          key={3}
+                          disabled={route?.isEdit}
+                          hintLimit="25 - 35 °C"
+                          disabled={route?.isEdit}
+                          keyboardType="decimal-pad"
+                          warning={
+                            (form.temperature && +form?.temperature < 25) || +form?.temperature > 35
+                          }
+                          value={form.temperature?.toString() || ""}
+                          showIcon={false}
+                          onBlur={() => {
+                            form.temperature !== ""
+                              ? setErrors((pre) => ({ ...pre, temperature: false }))
+                              : setErrors((pre) => ({ ...pre, temperature: true }))
+                          }}
+                          onChangeText={(text) => {
+                            form.temperature !== ""
+                              ? setErrors((pre) => ({ ...pre, temperature: false }))
+                              : setErrors((pre) => ({ ...pre, temperature: true }))
+
+                            setForm((pre) => ({ ...pre, temperature: text.trim() }))
+                          }}
+                          label="Temperature"
+                          errormessage={errors.temperature ? "សូមជ្រើសរើស temperature" : ""}
+                        />
+                      </View>
+                    )}
+                  </View>
+
+                  {!route?.type?.toLowerCase()?.startsWith("reverses") && (
+                    <View style={$containerHorizon} key={"reverses"}>
+                      <View style={$width}>
+                        <CustomInput
+                          key={4}
+                          disabled={route?.isEdit}
+                          hintLimit="6.5 - 8.5"
+                          showIcon={false}
+                          warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
+                          keyboardType="decimal-pad"
+                          value={form.ph?.toString() || ""}
+                          onBlur={() => {
+                            form.ph !== ""
+                              ? setErrors((pre) => ({ ...pre, ph: false }))
+                              : setErrors((pre) => ({ ...pre, ph: true }))
+                          }}
+                          onChangeText={(text) => {
+                            form.ph !== ""
+                              ? setErrors((pre) => ({ ...pre, ph: false }))
+                              : setErrors((pre) => ({ ...pre, ph: true }))
+
+                            setForm((pre) => ({ ...pre, ph: text.trim() }))
+                          }}
+                          label="PH"
+                          errormessage={errors.ph ? "សូមជ្រើសរើស ph" : ""}
+                        />
+                      </View>
+                      <View style={$width}>
+                        <CustomInput
+                          key={5}
+                          disabled={route?.isEdit}
+                          showIcon={false}
+                          value={form.other?.toString() || ""}
+                          onChangeText={(text) => {
+                            setForm((pre) => ({ ...pre, other: text.trim() }))
+                          }}
+                          label="Other"
+                          showAsterick={false}
+                          hintLimit="Optional"
+                          errormessage={""}
+                        />
+                      </View>
+
+                      {(route?.type?.toLowerCase() === "sand filter" ||
+                        route?.type?.toLowerCase() === "carbon filter" ||
+                        route?.type?.toLowerCase() === "resin filter") && (
+                        <View style={$width}>
+                          <Text style={{ margin: 5, fontSize: 18 }} semibold>
+                            Air Released
+                          </Text>
+
+                          <View style={[$containerHorizon, { marginTop: 10 }]}>
+                            <TouchableOpacity
+                              disabled={!route?.isEdit}
+                              style={$containerHorizon}
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
                                 setForm((pre) => ({ ...pre, air_release: true }))
                               }}
-                              color="#0081F8"
-                            />
-                            <Text>Yes </Text>
-                          </TouchableOpacity>
+                            >
+                              <Checkbox
+                                disabled={!route?.isEdit}
+                                status={
+                                  form.air_release == null
+                                    ? "unchecked"
+                                    : form?.air_release === "true" || form.air_release === true
+                                    ? "checked"
+                                    : "unchecked"
+                                }
+                                onPress={() => {
+                                  setErrors((pre) => ({ ...pre, air_release: false }))
+                                  setForm((pre) => ({ ...pre, air_release: true }))
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>Yes </Text>
+                            </TouchableOpacity>
 
-                          <TouchableOpacity
-                            disabled={!isEditable}
-                            style={$containerHorizon}
-                            onPress={() => {
-                              setErrors((pre) => ({ ...pre, air_release: false }))
-                              setForm((pre) => ({ ...pre, air_release: false }))
-                            }}
-                          >
-                            <Checkbox
-                              disabled={!isEditable}
-                              status={
-                                form.air_release == null
-                                  ? "unchecked"
-                                  : form?.air_release === "false" || form.air_release === false
-                                  ? "checked"
-                                  : "unchecked"
-                              }
+                            <TouchableOpacity
+                              disabled={!route?.isEdit}
+                              style={$containerHorizon}
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
                                 setForm((pre) => ({ ...pre, air_release: false }))
                               }}
-                              color="#0081F8"
-                            />
-                            <Text>No</Text>
-                          </TouchableOpacity>
+                            >
+                              <Checkbox
+                                disabled={!route?.isEdit}
+                                status={
+                                  form.air_release == null
+                                    ? "unchecked"
+                                    : form?.air_release === "false" || form.air_release === false
+                                    ? "checked"
+                                    : "unchecked"
+                                }
+                                onPress={() => {
+                                  setErrors((pre) => ({ ...pre, air_release: false }))
+                                  setForm((pre) => ({ ...pre, air_release: false }))
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>No</Text>
+                            </TouchableOpacity>
+                          </View>
+                          <Text caption1 errorColor>
+                            {errors?.air_release ? "*សូម​ត្រួតពិនិត្យ air release " : ""}
+                          </Text>
                         </View>
-                        <Text caption1 errorColor>
-                          {errors?.air_release ? "*សូម​ត្រួតពិនិត្យ air release " : ""}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {route?.type?.toLowerCase()?.startsWith("micro") && (
-                  <View style={[$containerHorizon, { marginTop: 30 }]}>
-                    <View style={{ flex: 0.5 }}>
-                      <CustomInput
-                        disabled={isEditable}
-                        keyboardType="decimal-pad"
-                        showIcon={false}
-                        value={form?.pressure}
-                        onBlur={() => {
-                          form.pressure !== ""
-                            ? setErrors((pre) => ({ ...pre, pressure: false }))
-                            : setErrors((pre) => ({ ...pre, pressure: true }))
-                        }}
-                        onChangeText={(text) => {
-                          form.pressure !== ""
-                            ? setErrors((pre) => ({ ...pre, pressure: false }))
-                            : setErrors((pre) => ({ ...pre, pressure: true }))
-
-                          setForm((pre) => ({ ...pre, pressure: text.trim() }))
-                        }}
-                        label="Pressure"
-                        hintLimit="<=300 ppm"
-                        errormessage={errors.pressure ? "សូមជ្រើសរើស pressure" : ""}
-                      />
+                      )}
                     </View>
-                  </View>
-                )}
-                {route?.type?.toLowerCase()?.startsWith("reverses") && (
-                  <View style={[$containerHorizon, { marginBottom: 40, marginTop: 15 }]}>
-                    <View style={$width}>
-                      <CustomInput
-                        disabled={isEditable}
-                        keyboardType="decimal-pad"
-                        value={form.press_inlet?.toString() || ""}
-                        showIcon={false}
-                        onBlur={() => {
-                          form.press_inlet !== ""
-                            ? setErrors((pre) => ({ ...pre, press_inlet: false }))
-                            : setErrors((pre) => ({ ...pre, press_inlet: true }))
-                        }}
-                        warning={
-                          (form?.press && form?.press_inlet && +form?.press_inlet < 0.01) ||
-                          +form?.press_inlet > 0.3
-                        }
-                        onChangeText={(text) => {
-                          form.press_inlet !== ""
-                            ? setErrors((pre) => ({ ...pre, press_inlet: false }))
-                            : setErrors((pre) => ({ ...pre, press_inlet: true }))
+                  )}
 
-                          setForm((pre) => ({ ...pre, press_inlet: text.trim() }))
-                        }}
-                        label="Press-inlet"
-                        hintLimit="0.01 - 0.3 Mpa"
-                        errormessage={errors.press_inlet ? "សូមជ្រើសរើស press-inlet" : ""}
-                      />
-                    </View>
-
-                    <View style={$width}>
-                      <CustomInput
-                        disabled={isEditable}
-                        warning={
-                          (form?.press_treat && form?.press_treat && +form?.press_treat < 0.01) ||
-                          +form?.press_treat > 0.3
-                        }
-                        keyboardType="decimal-pad"
-                        value={form.press_treat?.toString() || ""}
-                        hintLimit="0.01 - 0.3 Mpa"
-                        showIcon={false}
-                        onBlur={() => {
-                          form.press_treat !== ""
-                            ? setErrors((pre) => ({ ...pre, press_treat: false }))
-                            : setErrors((pre) => ({ ...pre, press_treat: true }))
-                        }}
-                        onChangeText={(text) => {
-                          form.press_treat !== ""
-                            ? setErrors((pre) => ({ ...pre, press_treat: false }))
-                            : setErrors((pre) => ({ ...pre, press_treat: true }))
-
-                          setForm((pre) => ({ ...pre, press_treat: text.trim() }))
-                        }}
-                        label="Press-Treat"
-                        errormessage={errors.press_treat ? "សូមជ្រើសរើស press-treat" : ""}
-                      />
-                    </View>
-                    <View style={$width}>
-                      <CustomInput
-                        disabled={isEditable}
-                        warning={
-                          (form?.press_drain && form?.press_drain && +form?.press_drain < 0.01) ||
-                          +form?.press_drain > 0.3
-                        }
-                        keyboardType="decimal-pad"
-                        value={form.press_drain?.toString() || ""}
-                        hintLimit="0.01 - 0.3 Mpa"
-                        showIcon={false}
-                        onBlur={() => {
-                          form.press_drain !== ""
-                            ? setErrors((pre) => ({ ...pre, press_drain: false }))
-                            : setErrors((pre) => ({ ...pre, press_drain: true }))
-                        }}
-                        onChangeText={(text) => {
-                          form.press_drain !== ""
-                            ? setErrors((pre) => ({ ...pre, press_drain: false }))
-                            : setErrors((pre) => ({ ...pre, press_drain: true }))
-
-                          setForm((pre) => ({ ...pre, press_drain: text.trim() }))
-                        }}
-                        label="Press Dain"
-                        errormessage={errors.press_drain ? "សូមជ្រើសរើស press-drain" : ""}
-                      />
-                    </View>
-                  </View>
-                )}
-                <View style={$containerHorizon}>
-                  {route?.type?.toLowerCase()?.startsWith("reverse") && (
-                    <View style={[$width, { marginTop: 20 }]}>
-                      <Text style={{ margin: 5, fontSize: 18 }} semibold>
-                        Smell Check
-                      </Text>
-
-                      <View style={[$containerHorizon, { marginTop: 10 }]}>
-                        <TouchableOpacity
-                          disabled={!isEditable}
-                          style={$containerHorizon}
-                          onPress={() => {
-                            if (!form.odor) {
-                              setForm((pre) => ({ ...pre, odor: true }))
-                            } else {
-                              setForm((pre) => ({ ...pre, odor: !pre.odor }))
-                            }
-
-                            setErrors((pre) => ({ ...pre, odor: false }))
+                  {route?.type?.toLowerCase()?.startsWith("micro") && (
+                    <View style={[$containerHorizon, { marginTop: 30 }]} key={"micro"}>
+                      <View style={{ flex: 0.5 }}>
+                        <CustomInput
+                          key={6}
+                          disabled={route?.isEdit}
+                          keyboardType="decimal-pad"
+                          showIcon={false}
+                          value={form?.pressure}
+                          onBlur={() => {
+                            form.pressure !== ""
+                              ? setErrors((pre) => ({ ...pre, pressure: false }))
+                              : setErrors((pre) => ({ ...pre, pressure: true }))
                           }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={form?.odor || false ? "checked" : "unchecked"}
+                          onChangeText={(text) => {
+                            form.pressure !== ""
+                              ? setErrors((pre) => ({ ...pre, pressure: false }))
+                              : setErrors((pre) => ({ ...pre, pressure: true }))
+
+                            setForm((pre) => ({ ...pre, pressure: text.trim() }))
+                          }}
+                          label="Pressure"
+                          hintLimit="<=300 ppm"
+                          errormessage={errors.pressure ? "សូមជ្រើសរើស pressure" : ""}
+                        />
+                      </View>
+                    </View>
+                  )}
+                  {route?.type?.toLowerCase()?.startsWith("reverses") && (
+                    <View
+                      style={[$containerHorizon, { marginBottom: 40, marginTop: 15 }]}
+                      key={"reverses"}
+                    >
+                      <View style={$width}>
+                        <CustomInput
+                          key={7}
+                          disabled={route?.isEdit}
+                          keyboardType="decimal-pad"
+                          value={form.press_inlet?.toString() || ""}
+                          showIcon={false}
+                          onBlur={() => {
+                            form.press_inlet !== ""
+                              ? setErrors((pre) => ({ ...pre, press_inlet: false }))
+                              : setErrors((pre) => ({ ...pre, press_inlet: true }))
+                          }}
+                          warning={
+                            (form?.press && form?.press_inlet && +form?.press_inlet < 0.01) ||
+                            +form?.press_inlet > 0.3
+                          }
+                          onChangeText={(text) => {
+                            form.press_inlet !== ""
+                              ? setErrors((pre) => ({ ...pre, press_inlet: false }))
+                              : setErrors((pre) => ({ ...pre, press_inlet: true }))
+
+                            setForm((pre) => ({ ...pre, press_inlet: text.trim() }))
+                          }}
+                          label="Press-inlet"
+                          hintLimit="0.01 - 0.3 Mpa"
+                          errormessage={errors.press_inlet ? "សូមជ្រើសរើស press-inlet" : ""}
+                        />
+                      </View>
+
+                      <View style={$width}>
+                        <CustomInput
+                          key={8}
+                          disabled={route?.isEdit}
+                          warning={
+                            (form?.press_treat && form?.press_treat && +form?.press_treat < 0.01) ||
+                            +form?.press_treat > 0.3
+                          }
+                          keyboardType="decimal-pad"
+                          value={form.press_treat?.toString() || ""}
+                          hintLimit="0.01 - 0.3 Mpa"
+                          showIcon={false}
+                          onBlur={() => {
+                            form.press_treat !== ""
+                              ? setErrors((pre) => ({ ...pre, press_treat: false }))
+                              : setErrors((pre) => ({ ...pre, press_treat: true }))
+                          }}
+                          onChangeText={(text) => {
+                            form.press_treat !== ""
+                              ? setErrors((pre) => ({ ...pre, press_treat: false }))
+                              : setErrors((pre) => ({ ...pre, press_treat: true }))
+
+                            setForm((pre) => ({ ...pre, press_treat: text.trim() }))
+                          }}
+                          label="Press-Treat"
+                          errormessage={errors.press_treat ? "សូមជ្រើសរើស press-treat" : ""}
+                        />
+                      </View>
+                      <View style={$width}>
+                        <CustomInput
+                          key={9}
+                          disabled={route?.isEdit}
+                          warning={
+                            (form?.press_drain && form?.press_drain && +form?.press_drain < 0.01) ||
+                            +form?.press_drain > 0.3
+                          }
+                          keyboardType="decimal-pad"
+                          value={form.press_drain?.toString() || ""}
+                          hintLimit="0.01 - 0.3 Mpa"
+                          showIcon={false}
+                          onBlur={() => {
+                            form.press_drain !== ""
+                              ? setErrors((pre) => ({ ...pre, press_drain: false }))
+                              : setErrors((pre) => ({ ...pre, press_drain: true }))
+                          }}
+                          onChangeText={(text) => {
+                            form.press_drain !== ""
+                              ? setErrors((pre) => ({ ...pre, press_drain: false }))
+                              : setErrors((pre) => ({ ...pre, press_drain: true }))
+
+                            setForm((pre) => ({ ...pre, press_drain: text.trim() }))
+                          }}
+                          label="Press Dain"
+                          errormessage={errors.press_drain ? "សូមជ្រើសរើស press-drain" : ""}
+                        />
+                      </View>
+                    </View>
+                  )}
+                  <View style={$containerHorizon} key={"bottom"}>
+                    {route?.type?.toLowerCase()?.startsWith("reverse") && (
+                      <View style={[$width, { marginTop: 20 }]}>
+                        <Text style={{ margin: 5, fontSize: 18 }} semibold>
+                          Smell Check
+                        </Text>
+
+                        <View style={[$containerHorizon, { marginTop: 10 }]}>
+                          <TouchableOpacity
+                            disabled={!route?.isEdit}
+                            style={$containerHorizon}
                             onPress={() => {
                               if (!form.odor) {
                                 setForm((pre) => ({ ...pre, odor: true }))
@@ -862,25 +883,26 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
                               setErrors((pre) => ({ ...pre, odor: false }))
                             }}
-                            color="#0081F8"
-                          />
-                          <Text>Odor</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          disabled={!isEditable}
-                          style={$containerHorizon}
-                          onPress={() => {
-                            if (!form.taste) {
-                              setForm((pre) => ({ ...pre, taste: true }))
-                            } else {
-                              setForm((pre) => ({ ...pre, taste: !pre.taste }))
-                            }
-                            setErrors((pre) => ({ ...pre, taste: false }))
-                          }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={form?.taste || false ? "checked" : "unchecked"}
+                          >
+                            <Checkbox
+                              disabled={!route?.isEdit}
+                              status={form?.odor || false ? "checked" : "unchecked"}
+                              onPress={() => {
+                                if (!form.odor) {
+                                  setForm((pre) => ({ ...pre, odor: true }))
+                                } else {
+                                  setForm((pre) => ({ ...pre, odor: !pre.odor }))
+                                }
+
+                                setErrors((pre) => ({ ...pre, odor: false }))
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>Odor</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            disabled={!route?.isEdit}
+                            style={$containerHorizon}
                             onPress={() => {
                               if (!form.taste) {
                                 setForm((pre) => ({ ...pre, taste: true }))
@@ -889,23 +911,36 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                               }
                               setErrors((pre) => ({ ...pre, taste: false }))
                             }}
-                            color="#0081F8"
-                          />
-                          <Text>Taste</Text>
-                        </TouchableOpacity>
+                          >
+                            <Checkbox
+                              disabled={!route?.isEdit}
+                              status={form?.taste || false ? "checked" : "unchecked"}
+                              onPress={() => {
+                                if (!form.taste) {
+                                  setForm((pre) => ({ ...pre, taste: true }))
+                                } else {
+                                  setForm((pre) => ({ ...pre, taste: !pre.taste }))
+                                }
+                                setErrors((pre) => ({ ...pre, taste: false }))
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>Taste</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <Text caption1 errorColor style={{ marginTop: 10 }}>
+                          {errors?.odor && errors?.taste ? "*សូម​ត្រួតពិនិត្យ smell " : ""}
+                        </Text>
                       </View>
-                      <Text caption1 errorColor style={{ marginTop: 10 }}>
-                        {errors?.odor && errors?.taste ? "*សូម​ត្រួតពិនិត្យ smell " : ""}
-                      </Text>
-                    </View>
-                  )}
+                    )}
+                  </View>
                 </View>
-              </View>
-            </ScrollView>
+              </ScrollView>
+            </View>
             <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} />
-          </View>
-        </KeyboardAvoidingView>
-      </>
+          </KeyboardAvoidingView>
+        </Portal>
+      </Provider>
     )
   },
 )

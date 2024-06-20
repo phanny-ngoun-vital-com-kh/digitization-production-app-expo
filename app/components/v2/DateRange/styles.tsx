@@ -54,42 +54,24 @@ export default StyleSheet.create({
     marginTop: "2%",
     borderRadius: 10,
   },
-  modalContainer: {
-    backgroundColor: "#fff",
-    elevation: 0,
-    padding: 0,
-    marginTop: 0,
-    marginBottom: 50,
-  },
-  modalContent: {
-    // backgroundColor: "white",
-    // borderRadius: 8,
-    padding: 0,
-    width: 600,
-    // marginVertical:50
-  },
-  header: {
-    flexDirection: "row",
-    backgroundColor: "#0081F8",
-    padding: 10,
+  container: {
+  
+   width:350
+  
 
-    justifyContent: "space-between",
+  },
+  model: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  calendarContainer: {
+    padding: 20,
     alignItems: "center",
   },
-  flatListContent: {
-    // paddingHorizontal: 25,
-  },
-  listItem: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
+  dateTextContainer: {
+    marginTop: 20,
+    gap:10,
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  $hori: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
   },
 })
