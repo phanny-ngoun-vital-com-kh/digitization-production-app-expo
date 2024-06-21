@@ -17,7 +17,7 @@ const ApiURL = {
 export class DashboardApi extends BaseApi {
   async getWTPChart(period_type: Date | string, period: string): Promise<GetDailyResult> {
     try {
-      const rs = await this.requestService.list<WaterTreatment >(ApiURL.wtpChartList, {
+      const rs = await this.requestService.list<WaterTreatment>(ApiURL.wtpChartList, {
         period_type,
         period,
       })
@@ -60,10 +60,12 @@ export class DashboardApi extends BaseApi {
   async getCustomDailyWtp(params: {
     start_date: string
     end_date: string
-  }): Promise<GetHaccpLineResult> {
+  }): Promise<GetDailyResult> {
     try {
-      const rs = await this.requestService.list<any>(ApiURL.wtpCustomChartList, {
-        ...params,
+      console.log("params", params.start_date, params.end_date)
+      const rs = await this.requestService.list<WaterTreatment>(ApiURL.wtpCustomChartList, {
+        start_date: params?.start_date,
+        end_date: params?.end_date,
       })
 
       return DataResponseList(rs)

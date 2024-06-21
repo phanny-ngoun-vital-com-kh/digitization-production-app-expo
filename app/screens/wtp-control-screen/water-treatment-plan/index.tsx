@@ -9,7 +9,6 @@ import {
   ScrollView,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
 } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import styles from "./styles"
@@ -171,9 +170,11 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                   items: subitem,
                   onReturn: sendBack,
                   isValidShift: shift === -1 ? true : false,
-                  isvalidDate:
-                    moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
-                  isEdit: subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? ""),
+                  isvalidDate: true,
+                  isEdit: true,
+                  // isvalidDate:
+                  //   moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                  // isEdit: subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? ""),
                 })
               }}
             />

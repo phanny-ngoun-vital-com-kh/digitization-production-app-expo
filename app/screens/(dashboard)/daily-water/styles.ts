@@ -14,11 +14,21 @@ export default StyleSheet.create({
       height: 1,
     },
   },
+  loadingStyle: {
+    flexDirection: "column",
+    justifyContent: "center",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 100,
+  },
   activityPieChart: {
     flex: 0.3,
     padding: 10,
     zIndex: 10,
-    height:"full",
+
     backgroundColor: "white",
     elevation: 2,
     shadowColor: "#000",

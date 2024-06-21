@@ -58,8 +58,8 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
     { value: 1, dataPointText: "1", label: "Sat" },
     { value: 0, dataPointText: "0", label: "Sun" },
   ]
-
-  const pieData2 = [
+  const [dashboard, setDashboard] = useState([])
+  const pieData = [
     { value: 54, color: "#145da0" },
 
     { value: 16, color: "#0e86d4" },
@@ -126,6 +126,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                   </Text>
                   <FlatList
                     horizontal
+                    scrollEnabled={false}
                     renderItem={({ item, index }) => {
                       return (
                         <TouchableOpacity
@@ -255,7 +256,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                     </View>
                   </View>
                   {/* <MultiSelectComponent /> */}
-                  <Divider />
+    
 
                   <View
                     style={[
@@ -388,11 +389,11 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                           }}
                         >
                           <PieChart
-                            data={pieData2}
-                            showText
+                            data={pieData}
+                            showText={dashboard?.length > 0 ? true : false}
                             textColor="black"
-                            radius={100}
-                            textSize={20}
+                            radius={130}
+                            textSize={14}
                             focusOnPress
                             showValuesAsLabels
                             showTextBackground
@@ -401,9 +402,9 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                         </View>
 
                         <View style={[$horiContainer, { justifyContent: "center" }]}>
-                          <BadgeChart title="Normal" bgColor="#177AD5" />
-                          <BadgeChart title="Pending" bgColor="#79D2DE" />
-                          <BadgeChart title="Warning" bgColor="#ED6665" />
+                          <BadgeChart title="Normal" bgColor="#145da0" />
+                          <BadgeChart title="Pending" bgColor="#0e86d4" />
+                          <BadgeChart title="Warning" bgColor="#BF3131" />
                         </View>
                       </View>
                     </View>

@@ -7,7 +7,6 @@ import { AppStackScreenProps } from "app/navigators"
 import { Button, Text } from "app/components/v2"
 import styles from "./styles"
 import BadgeChart from "app/components/v2/Chart/BadgeChart"
-import MultiSelectComponent from "app/components/v2/DropMulti"
 import DateRangePicker from "app/components/v2/DateRange"
 import { ScrollView } from "react-native-gesture-handler"
 import { Dropdown } from "react-native-element-dropdown"
@@ -15,6 +14,7 @@ import { FlatList } from "react-native"
 import { TouchableOpacity } from "react-native"
 import { DataSetProps } from "../daily-water/type"
 import EmptyLineChart from "app/components/v2/Dashboard/EmptyLineChart"
+import moment from "moment"
 
 interface PreWaterDsScreenProps extends AppStackScreenProps<"PreWaterDs"> {}
 
@@ -46,19 +46,19 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
       value: 3,
     },
   ]
+  const [dashboard, setDashboard] = useState([])
   const [selectSecondaryMachine, setSelectSecondaryMachine] = useState<string[]>([])
   const [selectedControl, setSelectedControl] = useState<any>([])
   const [selectedMachine, setSelectedMachine] = useState<string[]>([])
   const [selectColors, setSelectColors] = useState<{ label: string; color: string }[]>([])
   const [dataSet, setDataSet] = useState<DataSetProps[]>([])
+  const [pieData, setPieData] = useState([
+    { value: 10, color: "#EEEEEE", text: "0%" },
 
-  const pieData = [
-    { value: 54, color: "#177AD5" },
+    { value: 30, color: "#EEEEEE", text: "0%" },
 
-    { value: 40, color: "#79D2DE" },
-
-    { value: 20, color: "#ED6665" },
-  ]
+    { value: 10, color: "#EEEEEE", text: "0%" },
+  ])
   const [selectDate, setSelectDate] = useState<{
     value: Date | null
     range: number
@@ -78,9 +78,16 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
     setSelectedControl(item)
   }
   const onComfirmDate = (startDate: string, endDate: string) => {
+    const [day, month, year] = startDate.split("/")
+    const [eday, emonth, eyear] = endDate.split("/")
+
+    // Create a Date object
+    const startdate = new Date(year, month - 1, day)
+    const enddate = new Date(eyear, emonth - 1, eday)
+
     setSelectionDate({
-      start: startDate,
-      end: endDate,
+      start: moment(startdate).format("YYYY-MM-DD") ?? "",
+      end: moment(enddate).format("YYYY-MM-DD") ?? "",
     })
     setModalVisible(false)
   }
@@ -91,8 +98,8 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
         <ScrollView showsVerticalScrollIndicator persistentScrollbar>
           <View style={styles.row1}>
             <View style={[styles.activityLineChart]}>
-              <View style={{ flex: 1, marginBottom: 20 }}>
-                <Text semibold body1 style={{ marginBottom: 10 }}>
+              <View style={{ flex: 1, marginBottom: 10 }}>
+                <Text semibold body1 style={{ marginBottom: 25 }}>
                   <Text errorColor>* </Text> Select Machine
                 </Text>
                 <Dropdown
@@ -100,6 +107,7 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                     styles.dropdown,
                     {
                       width: "100%",
+                      marginBottom: 0,
                       marginLeft: 0,
                       marginRight: 0,
                     },
@@ -185,12 +193,9 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                 keyExtractor={(item, index) => index.toString()}
               />
 
-              <Text semibold body1 style={{ marginTop: 20 }}>
-                Machine Activity
-              </Text>
-
+       
               <View
-                style={[$horiContainer, { marginVertical: 20, justifyContent: "space-between" }]}
+                style={[$horiContainer, { marginTop:10, justifyContent: "space-between" }]}
               >
                 <View style={$horiContainer}>
                   <Button
@@ -254,8 +259,6 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                   </Button>
                 </View>
               </View>
-
-              <Divider style={{ marginVertical: 20 }} />
 
               <View
                 style={[
@@ -369,38 +372,38 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                   {selectedMachine?.length === 0 && <EmptyLineChart />}
                 </View>
                 <View style={[styles.activityPieChart]}>
-                  <Text semibold body1>
-                    Warning Statistic
-                  </Text>
+                      <Text semibold body1>
+                        Warning Statistic
+                      </Text>
 
-                  <View style={{ paddingHorizontal: 20, paddingVertical: 35, zIndex: 0 }}>
-                    <View
-                      style={{
-                        marginVertical: 20,
-                        justifyContent: "center",
-                        flexDirection: "row",
-                      }}
-                    >
-                      <PieChart
-                        data={pieData}
-                        showText
-                        textColor="black"
-                        radius={100}
-                        textSize={20}
-                        focusOnPress
-                        showValuesAsLabels
-                        showTextBackground
-                        textBackgroundRadius={26}
-                      />
-                    </View>
+                      <View style={{ paddingHorizontal: 20, paddingVertical: 35, zIndex: 0 }}>
+                        <View
+                          style={{
+                            marginVertical: 20,
+                            justifyContent: "center",
+                            flexDirection: "row",
+                          }}
+                        >
+                          <PieChart
+                            data={pieData}
+                            showText={dashboard?.length > 0 ? true : false}
+                            textColor="black"
+                            radius={130}
+                            textSize={14}
+                            focusOnPress
+                            showValuesAsLabels
+                            showTextBackground
+                            textBackgroundRadius={26}
+                          />
+                        </View>
 
-                    <View style={[$horiContainer, { justifyContent: "center" }]}>
-                      <BadgeChart title="Normal" bgColor="#177AD5" />
-                      <BadgeChart title="Pending" bgColor="#79D2DE" />
-                      <BadgeChart title="Warning" bgColor="#ED6665" />
+                        <View style={[$horiContainer, { justifyContent: "center" }]}>
+                          <BadgeChart title="Normal" bgColor="#145da0" />
+                          <BadgeChart title="Pending" bgColor="#0e86d4" />
+                          <BadgeChart title="Warning" bgColor="#BF3131" />
+                        </View>
+                      </View>
                     </View>
-                  </View>
-                </View>
               </View>
             </View>
 

@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from "react"
-import Icon from "react-native-vector-icons/AntDesign"
-import { Modal } from "react-native-paper"
-import { Button, Text } from "app/components/v2"
-import { View, ViewStyle, TouchableOpacity } from "react-native"
-import CalendarPicker from "react-native-calendar-picker"
-import moment from "moment"
-import styles from "./styles"
+import React, { useEffect, useState } from "react";
+import Icon from "react-native-vector-icons/AntDesign";
+import { Modal } from "react-native-paper";
+import { Button, Text } from "app/components/v2";
+import { View, ViewStyle, TouchableOpacity } from "react-native";
+import CalendarPicker from "react-native-calendar-picker";
+import moment from "moment";
+import styles from "./styles";
 
 interface DateRangeProps {
-  defaultStartDate: string | null
-  defaultEndDate: string | null
-  isVisible: boolean
-  onComfirm: (startDate: string, endDate: string) => void
-  onClose: () => void
+  defaultStartDate: string | null;
+  defaultEndDate: string | null;
+  isVisible: boolean;
+  onComfirm: (startDate: string, endDate: string) => void;
+  onClose: () => void;
 }
 
 const DateRangePicker = ({
@@ -22,11 +22,12 @@ const DateRangePicker = ({
   defaultStartDate,
   defaultEndDate,
 }: DateRangeProps) => {
-  const minDate = new Date() // Today
-  const maxDate = new Date(2026, 6, 3)
-  const [error, setError] = useState(false)
-  const [selectedStartDate, setSelectedStartDate] = useState<string | null>(defaultStartDate)
-  const [selectedEndDate, setSelectedEndDate] = useState<string | null>(defaultEndDate)
+  const today = new Date(); // Today's date
+  const minDate = moment(today).subtract(1, "year").toDate(); // One year ago from today
+  const maxDate = new Date(2026, 6, 3);
+  const [error, setError] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState<string | null>(defaultStartDate);
+  const [selectedEndDate, setSelectedEndDate] = useState<string | null>(defaultEndDate);
   const months = [
     "January",
     "February",
@@ -40,27 +41,26 @@ const DateRangePicker = ({
     "October",
     "November",
     "December",
-  ]
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-  const onDateChange = (date: string, type: string) => {
-    const formattedDate = moment(date).format("DD/MM/YYYY")
+  ];
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const onDateChange = (date: Date, type: string) => {
+    const formattedDate = moment(date).format("DD/MM/YYYY");
 
     if (type === "END_DATE") {
-      setSelectedEndDate(formattedDate)
+      setSelectedEndDate(formattedDate);
     } else {
-      setSelectedStartDate(formattedDate)
+      setSelectedStartDate(formattedDate);
     }
-  }
+  };
 
   useEffect(() => {
     return () => {
-      setSelectedStartDate(null)
-      setSelectedEndDate(null)
-      setError(false)
-    }
-  }, [isVisible])
-
-  console.log(selectedStartDate, defaultEndDate)
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+      setError(false);
+    };
+  }, [isVisible]);
 
   return (
     <Modal
@@ -69,7 +69,7 @@ const DateRangePicker = ({
       style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       contentContainerStyle={styles.container}
     >
-      <View style={styles.model}>
+      <View style={[styles.model]}>
         <View style={{ backgroundColor: "#0081F8", padding: 10 }}>
           <View style={$hori}>
             <Text title3 whiteColor regular>
@@ -122,10 +122,10 @@ const DateRangePicker = ({
             <Button
               onPress={() => {
                 if (selectedStartDate && selectedEndDate) {
-                  onComfirm(selectedStartDate!, selectedEndDate!)
-                  return
+                  onComfirm(selectedStartDate, selectedEndDate);
+                  return;
                 }
-                setError(true)
+                setError(true);
               }}
               styleText={{
                 fontSize: 15.5,
@@ -144,14 +144,14 @@ const DateRangePicker = ({
         </View>
       </View>
     </Modal>
-  )
-}
+  );
+};
 
 const $hori: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
   gap: 10,
-}
+};
 
-export default DateRangePicker
+export default DateRangePicker;
