@@ -30,8 +30,8 @@ import {
   convertToMinutes,
   getCurrentTime,
 } from "app/utils-v2/getCurrTime"
-import { Text } from "app/components/v2"
-import { isLoading } from "expo-font"
+import { translate } from "../../../i18n"
+
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 

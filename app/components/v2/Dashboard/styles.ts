@@ -1,10 +1,9 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
-  activityLineChart: {
+  activityBarCharts: {
     padding: 25,
     flex: 1,
-    gap: 10,
     backgroundColor: "white",
     elevation: 2,
     shadowColor: "#000",
@@ -14,19 +13,22 @@ export default StyleSheet.create({
       height: 1,
     },
   },
+  horicontainer:{
+    flexDirection:"row",
+    justifyContent:'center',
+    alignItems:'center',
+    gap:5
+  },
   loadingStyle: {
     flexDirection: "column",
-    backgroundColor: "rgba(200, 200, 200, 0.15)", // Lighter gray color with 50% opacity // Gray color with 50% opacity
     justifyContent: "center",
     position: "absolute",
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
-    padding:10,
     zIndex: 100,
   },
-  
   activityPieChart: {
     flex: 0.3,
     padding: 10,
@@ -51,6 +53,7 @@ export default StyleSheet.create({
   dropdown: {
     marginLeft: 10,
     marginRight: 10,
+    borderBlockColor: "white",
     height: 40,
     fontSize: 12,
     backgroundColor: "white",
@@ -61,7 +64,7 @@ export default StyleSheet.create({
       width: 0,
       height: 1,
     },
-    width: 200,
+    width: 180,
 
     shadowOpacity: 0.2,
     shadowRadius: 1.41,

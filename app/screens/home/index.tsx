@@ -89,125 +89,125 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     setList(updatedList)
   }
   useEffect(() => {
-    const role = async () => {
-      try {
-        const rs = await getUserInfo()
-        // console.log(rs.data.authorities)
-        // Modify the list based on the user's role
-        if (
-          rs.data.authorities.includes("ROLE_PROD_WARE_ADMIN") ||
-          rs.data.authorities.includes("ROLE_PROD_WARE_USER")
-        ) {
-          // If user is a warehouse admin
-          const updatedList = [
-            {
-              id: 1,
-              name: "Inventory Transfer Request",
-              subname: "Inventory Transfer Request List",
-              navigation: "InventoryTransferRequestWarehouse",
-              iconname: "arrow-top-right-bottom-left",
-              icontype: "Fontisto",
-            },
-            {
-              id: 2,
-              name: "Inventory Transfer",
-              subname: "Inventory Transfer List",
-              navigation: "InventoryTransfer",
-              iconname: "warehouse",
-              icontype: "MaterialCommunityIcons",
-            },
-            {
-              id: 3,
-              name: "Water Treatment Control",
-              subname: "Water Treatment  List",
-              navigation: "WaterTreatmentControlList",
-              iconname: "water",
-              icontype: "MaterialCommunityIcons",
-            },
+    // const role = async () => {
+    //   try {
+    //     const rs = await getUserInfo()
+    //     // console.log(rs.data.authorities)
+    //     // Modify the list based on the user's role
+    //     if (
+    //       rs.data.authorities.includes("ROLE_PROD_WARE_ADMIN") ||
+    //       rs.data.authorities.includes("ROLE_PROD_WARE_USER")
+    //     ) {
+    //       // If user is a warehouse admin
+    //       const updatedList = [
+    //         {
+    //           id: 1,
+    //           name: "Inventory Transfer Request",
+    //           subname: "Inventory Transfer Request List",
+    //           navigation: "InventoryTransferRequestWarehouse",
+    //           iconname: "arrow-top-right-bottom-left",
+    //           icontype: "Fontisto",
+    //         },
+    //         {
+    //           id: 2,
+    //           name: "Inventory Transfer",
+    //           subname: "Inventory Transfer List",
+    //           navigation: "InventoryTransfer",
+    //           iconname: "warehouse",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
+    //         {
+    //           id: 3,
+    //           name: "Water Treatment Control",
+    //           subname: "Water Treatment  List",
+    //           navigation: "WaterTreatmentControlList",
+    //           iconname: "water",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
 
-            {
-              id: 4,
-              name: "HACCP Monitoring",
-              subname: "HACCP Monitoring List",
-              navigation: "HccpMonitor",
-              iconname: "alert-octagon",
-              icontype: "MaterialCommunityIcons",
-            },
-            {
-              id: 5,
-              name: "Dashboard",
-              subname: "Overview and Analytic",
-              navigation: "Dashboard",
-              iconname: "view-dashboard-outline",
-              icontype: "MaterialCommunityIcons",
-            },
-            // Add other items as needed
-          ]
-          setList(updatedList)
-        } else if (
-          rs.data.authorities.includes("ROLE_PROD_PRO_ADMIN") ||
-          rs.data.authorities.includes("ROLE_PROD_PRO_USER")
-        ) {
-          const updatedList = [
-            {
-              id: 1,
-              name: "Inventory Transfer Request",
-              subname: "Inventory Transfer Request List",
-              navigation: "InventoryTransferRequestProduction",
-              iconname: "arrow-top-right-bottom-left",
-              icontype: "Fontisto",
-            },
-            {
-              id: 2,
-              name: "Inventory Transfer",
-              subname: "Inventory Transfer List",
-              navigation: "InventoryTransfer",
-              iconname: "warehouse",
-              icontype: "MaterialCommunityIcons",
-            },
-            {
-              id: 3,
-              name: "Water Treatment Control",
-              subname: "Water Treatment  List",
-              navigation: "WaterTreatmentControlList",
-              iconname: "water",
-              icontype: "MaterialCommunityIcons",
-            },
+    //         {
+    //           id: 4,
+    //           name: "HACCP Monitoring",
+    //           subname: "HACCP Monitoring List",
+    //           navigation: "HccpMonitor",
+    //           iconname: "alert-octagon",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
+    //         {
+    //           id: 5,
+    //           name: "Dashboard",
+    //           subname: "Overview and Analytic",
+    //           navigation: "Dashboard",
+    //           iconname: "view-dashboard-outline",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
+    //         // Add other items as needed
+    //       ]
+    //       setList(updatedList)
+    //     } else if (
+    //       rs.data.authorities.includes("ROLE_PROD_PRO_ADMIN") ||
+    //       rs.data.authorities.includes("ROLE_PROD_PRO_USER")
+    //     ) {
+    //       const updatedList = [
+    //         {
+    //           id: 1,
+    //           name: "Inventory Transfer Request",
+    //           subname: "Inventory Transfer Request List",
+    //           navigation: "InventoryTransferRequestProduction",
+    //           iconname: "arrow-top-right-bottom-left",
+    //           icontype: "Fontisto",
+    //         },
+    //         {
+    //           id: 2,
+    //           name: "Inventory Transfer",
+    //           subname: "Inventory Transfer List",
+    //           navigation: "InventoryTransfer",
+    //           iconname: "warehouse",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
+    //         {
+    //           id: 3,
+    //           name: "Water Treatment Control",
+    //           subname: "Water Treatment  List",
+    //           navigation: "WaterTreatmentControlList",
+    //           iconname: "water",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
 
-            {
-              id: 4,
-              name: "HACCP Monitoring",
-              subname: "HACCP Monitoring List",
-              navigation: "HccpMonitor",
-              iconname: "alert-octagon",
-              icontype: "MaterialCommunityIcons",
-            },
-            // {
-            //   id: 4,
-            //   name: "HACCP Monitoring",
-            //   subname: "HACCP Monitoring List",
-            //   navigation: "HccpMonitor",
-            //   iconname: "alert-octagon",
-            //   icontype: "MaterialCommunityIcons",
-            // },
-            {
-              id: 5,
-              name: "Dashboard",
-              subname: "Overview and Analytic",
-              navigation: "Dashboard",
-              iconname: "view-dashboard-outline",
-              icontype: "MaterialCommunityIcons",
-            },
-          ]
-          setList(updatedList)
-        }
-      } catch (e) {
-        console.log(e)
-      }
-    }
+    //         {
+    //           id: 4,
+    //           name: "HACCP Monitoring",
+    //           subname: "HACCP Monitoring List",
+    //           navigation: "HccpMonitor",
+    //           iconname: "alert-octagon",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
+    //         // {
+    //         //   id: 4,
+    //         //   name: "HACCP Monitoring",
+    //         //   subname: "HACCP Monitoring List",
+    //         //   navigation: "HccpMonitor",
+    //         //   iconname: "alert-octagon",
+    //         //   icontype: "MaterialCommunityIcons",
+    //         // },
+    //         {
+    //           id: 5,
+    //           name: "Dashboard",
+    //           subname: "Overview and Analytic",
+    //           navigation: "Dashboard",
+    //           iconname: "view-dashboard-outline",
+    //           icontype: "MaterialCommunityIcons",
+    //         },
+    //       ]
+    //       setList(updatedList)
+    //     }
+    //   } catch (e) {
+    //     console.log(e)
+    //   }
+    // }
 
-    role()
-    // remoteWork()
+    // role()
+    remoteWork()
   }, [])
 
   // useEffect(() => {

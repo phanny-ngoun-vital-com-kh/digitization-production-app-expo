@@ -6,6 +6,7 @@ import { View, Platform, TextStyle, TouchableOpacity } from "react-native"
 import styles from "../../../screens/wtp-control-screen/water-treatment-plan/styles"
 import { Dropdown } from "react-native-element-dropdown"
 import moment from "moment"
+import { translate } from "../../../i18n"
 type HeaderProps = {
   currDate: Date
   showDate: boolean
@@ -66,7 +67,9 @@ const HeaderBar = ({
     <>
       <View style={{ marginLeft: 50, alignItems: "center" }}>
         <Text semibold headline>
-          Today Task
+          {/* Today Task */}
+
+          {translate("wtpcommon.todayTask")}
         </Text>
         <Text body1 body2>
           {moment(currDate).format("LL")}
@@ -87,7 +90,9 @@ const HeaderBar = ({
             data={lines}
             labelField="name"
             valueField="value"
-            placeholder="Select Line"
+            // placeholder="Select Line"
+
+            placeholder={translate("wtpcommon.pleaseSelect")}
             placeholderStyle={{ fontSize: 14.5 }}
             // onSelect={onSelectLine}
             search

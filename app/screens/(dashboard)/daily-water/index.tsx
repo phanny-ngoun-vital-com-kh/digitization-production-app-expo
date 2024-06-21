@@ -21,7 +21,7 @@ import { TouchableOpacity } from "react-native"
 import { useStores } from "app/models"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import moment from "moment"
-import PieChartAlert from "app/components/v2/Dashboard/PieChartAlert"
+import PerformanceChart from "app/components/v2/Dashboard/PerformanceChart"
 interface DailyDsScreenProps extends AppStackScreenProps<"DailyDs"> {}
 
 export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function DailyDsScreen() {
@@ -67,7 +67,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
   const [popupData, setPopupdata] = useState({
     percentages: "",
     label: "",
-    total:""
+    total: "",
   })
   const [dashboard, setDashboard] = useState<
     {
@@ -119,19 +119,23 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       start: moment(startdate).format("YYYY-MM-DD") ?? "",
       end: moment(enddate).format("YYYY-MM-DD") ?? "",
     })
+    setSelectDate({
+      range: null,
+      value: null,
+    })
     setModalVisible(false)
   }
   const onSelectRangeDate = (inDay: number) => {
+    setSelectionDate({
+      end: null,
+      start: null,
+    })
     setSelectDate(() => {
       const today = new Date(Date.now())
       return {
         range: inDay,
         value: new Date(today.getFullYear(), today.getMonth(), today.getDate() - inDay),
       }
-    })
-    setSelectionDate({
-      end: null,
-      start: null,
     })
   }
 
@@ -170,24 +174,18 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       })),
     }))
   }
+  const clearMachineEmpty = () => {
+    setDataSet([])
+    setDashboard([])
+    setPieData([
+      { value: 10, color: "#EEEEEE", text: "0%" },
 
-  const getStatusPerformance = (percentages: number): { color: string; label: string } => {
-    if (percentages === -1) {
-      return { color: "#145da0", label: "" }
-    }
-    if (percentages < 30) {
-      return { color: "#BF3131", label: "Danger" }
-    } else if (percentages < 50) {
-      return { color: "#BF3131", label: "Warning" }
-    } else if (percentages < 70) {
-      return { color: "orange", label: "Normal" }
-    } else if (percentages < 90) {
-      return { color: "#0e86d4", label: "Excellent" }
-    } else if (percentages <= 100) {
-      return { color: "#145da0", label: "Perfect" }
-    }
+      { value: 30, color: "#EEEEEE", text: "0%" },
+
+      { value: 10, color: "#EEEEEE", text: "0%" },
+    ])
+    setPercentages(-1)
   }
-
   const fetchChart = async (type: "range" | "period" = "period") => {
     try {
       setLoading(true)
@@ -293,19 +291,19 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
 
       const totalMachines = total_warning_count + total_normal_count + total_pending_count
 
-      setPercentages(100 - Math.floor((total_warning_count / totalMachines) * 100))
-      const normal_percentage = 100 - Math.floor((total_normal_count / totalMachines) * 100)
-      const warning_percentages = 100 - normal_percentage
-      const pending_percentages = 100 - Math.floor((total_pending_count / totalMachines) * 100)
+      const warning_percentages = Math.floor((total_warning_count / totalMachines) * 100)
+      const normal_percentage = Math.floor((total_normal_count / totalMachines) * 100)
+      const pending_percentages = 100 - (warning_percentages + normal_percentage)
+      setPercentages(normal_percentage)
+
 
       setPieData([
         { value: total_normal_count, color: "#145da0", text: normal_percentage + "" },
 
-        { value: total_pending_count, color: "#0e86d4", text: warning_percentages + "" },
+        { value: total_pending_count, color: "#0e86d4", text: pending_percentages + "" },
 
-        { value: total_warning_count, color: "#BF3131", text: pending_percentages + "" },
+        { value: total_warning_count, color: "#BF3131", text: warning_percentages + "" },
       ])
-
       const allColors = newDatasets.map((item) => item.color)
       const resultColor = machineColors.filter((item) => allColors.includes(item.color))
       setSelectColors(resultColor)
@@ -313,33 +311,37 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       setDataSet([])
       setPercentages(-1)
       setPieData([
-        { value: 10, color: "#EEEEEE", text: "0%" },
+        { value: 10, color: "#EEEEEE", text: "0" },
 
-        { value: 30, color: "#EEEEEE", text: "0%" },
+        { value: 30, color: "#EEEEEE", text: "0" },
 
-        { value: 10, color: "#EEEEEE", text: "0%" },
+        { value: 10, color: "#EEEEEE", text: "0" },
       ])
-      // setPieData([
-      //   { value: 0, color: "#EEEEEE", text: "0" },
 
-      //   { value: 0, color: "#EEEEEE", text: "0" },
-
-      //   { value: 0, color: "#EEEEEE", text: "0" },
-      // ])
       setSelectColors([])
     }
   }
   useEffect(() => {
-    onLineChartData()
-  }, [dashboard, selectedMachine])
+    if( selectedMachine?.length > 0) {
+      onLineChartData()
+    }
+
+   
+  }, [dashboard])
 
   useEffect(() => {
+    if (selectedMachine?.length == 0) {
+      clearMachineEmpty()
+
+      return
+    }
     selectionDate?.end && selectionDate?.start
       ? fetchChart("range")
       : selectedMachine?.length > 0 && selectDate.value != null && fetchChart("period")
+
+
   }, [selectedMachine, selectDate, selectionDate])
 
-  console.log("Data set is ", dataSet.length)
   return (
     <Provider>
       <Portal>
@@ -515,7 +517,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                       <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
                         {isLoading && (
                           <View style={styles.loadingStyle}>
-                            <Text textAlign={"center"}> Loading...</Text>
+                            <Text textAlign={"center"}> Loading data ...</Text>
                           </View>
                         )}
                         {dataSet && dataSet.length > 0 && (
@@ -630,76 +632,16 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
 
                         {dataSet.length === 0 && <EmptyLineChart />}
                       </View>
-                      <View style={[styles.activityPieChart]}>
-                        <Text semibold body1 textAlign={"center"}>
-                          Performance Statistic
-                        </Text>
-
-                        <View style={{ paddingHorizontal: 20, paddingVertical: 35, zIndex: 0 }}>
-                          <View
-                            style={{
-                              marginVertical: 20,
-                              justifyContent: "center",
-                              flexDirection: "row",
-                            }}
-                          >
-                            <PieChart
-                              data={pieData}
-                              innerRadius={70}
-                              showText={selectedMachine?.length > 0 ? true : false}
-                              textBackgroundColor="#EEEEEE"
-                              textColor="black"
-                              centerLabelComponent={() => {
-                                const { color, label } = getStatusPerformance(percentages)
-                                return (
-                                  <View style={{ alignItems: "center" }}>
-                                    <Text style={{ color: color, fontSize: 22 }} semibold>
-                                      {percentages < 0 ? 0 : percentages} %
-                                    </Text>
-
-                                    <Text style={{ color: color, fontSize: 18 }}>{label}</Text>
-                                  </View>
-                                )
-                              }}
-                              onLabelPress={(item, index) => {
-                                console.log("press label")
-                                setShowPopup(true)
-                                setPopupdata({
-                                  total:selectedMachine?.length + "",
-                                  
-                                  percentages: item?.text,
-                                  label: item?.value,
-                                })
-
-
-                              }}
-                              onPress={(item, index) => {
-                                // console.log("press panel")
-
-                                // setShowPopup(true)
-                                // setPopupdata({
-                                //   percentages: item?.text,
-                                //   label: item?.value,
-                                // })
-                              }}
-                              radius={130}
-                              textSize={16}
-                              // focusOnPress
-
-                              showValuesAsLabels
-                              showTextBackground
-                              textBackgroundRadius={20}
-                            />
-                          </View>
-
-                          <View style={[$horiContainer, { justifyContent: "center" }]}>
-                            <BadgeChart title="Normal" bgColor="#145da0" />
-                            <BadgeChart title="Pending" bgColor="#0e86d4" />
-                            <BadgeChart title="Warning" bgColor="#BF3131" />
-                          </View>
-                          <PieChartAlert visible={showPopup}  onClose={() => setShowPopup(false)} data={popupData} />
-                        </View>
-                      </View>
+                      <PerformanceChart
+                        pieData={pieData}
+                        isloading={!isLoading}
+                        popupData={popupData}
+                        percentages={percentages}
+                        setPopupdata={setPopupdata}
+                        setShowPopup={setShowPopup}
+                        showPopup={showPopup}
+                        machineLength={selectedMachine?.length}
+                      />
                     </View>
                   </View>
                 </View>

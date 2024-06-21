@@ -13,11 +13,23 @@ export default StyleSheet.create({
       height: 1,
     },
   },
+  loadingStyle: {
+    flexDirection: "column",
+    backgroundColor: "rgba(200, 200, 200, 0.15)", // Lighter gray color with 50% opacity // Gray color with 50% opacity
+    justifyContent: "center",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    padding:10,
+    zIndex: 100,
+  },
   activityPieChart: {
     flex: 0.3,
     padding: 10,
     zIndex: 10,
-   
+
     backgroundColor: "white",
     elevation: 2,
     shadowColor: "#000",

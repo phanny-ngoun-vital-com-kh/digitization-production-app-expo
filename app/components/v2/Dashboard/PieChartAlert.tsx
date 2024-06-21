@@ -6,31 +6,59 @@ const PieChartAlert = ({
   visible,
   onClose,
   data,
+  label = "Warning",
 }: {
   visible: boolean
   onClose: () => void
-  data: { label: string; percentages: string;total:string  }
+  label?: string
+  data: { label: string; percentages: string; total: string; index: number }
 }) => {
+  console.log(data)
+
+  const getTag = () => {
+    switch (data.index) {
+      case 0:
+        return "Normal"
+      case 1:
+        return "Pending"
+      case 2:
+        return "Warning"
+      default:
+        return "N/A"
+    }
+  }
   return (
     <View style={[styles.outerContainer, { display: visible ? "flex" : "none" }]}>
       <View style={{ paddingHorizontal: 15, paddingBottom: 10 }}>
         <Text body2 semibold>
-          Total Warning Machine
+          Machine Statistic Range
         </Text>
         <Divider style={{ marginVertical: 15 }} />
         <View>
-        <View style={styles.horizontal}>
-            <Text regular errorColor>Total Machine</Text>
-            <Text semibold errorColor>{data?.total || 0}</Text>
+          <View style={styles.horizontal}>
+            <Text regular  errorColor={data.index === 2} primaryColor={data.index === 0}>
+              Total Machine
+            </Text>
+            <Text semibold  errorColor={data.index === 2} primaryColor={data.index === 0}>
+              {data?.total || 0}
+            </Text>
           </View>
           <View style={styles.horizontal}>
-            <Text regular errorColor>Warning Count </Text>
-            <Text semibold errorColor>{data?.label}</Text>
+            <Text regular errorColor={data.index === 2} primaryColor={data.index === 0}>
+              {getTag()} Count{" "}
+            </Text>
+            <Text semibold  errorColor={data.index === 2} primaryColor={data.index === 0}>
+              {data?.label}
+            </Text>
           </View>
 
           <View style={styles.horizontal}>
-            <Text regular errorColor>Percentages</Text>
-            <Text semibold errorColor>{data?.percentages}% </Text>
+            <Text regular errorColor={data.index === 2} primaryColor={data.index === 0}>
+              Percentages
+            </Text>
+            <Text semibold errorColor={data.index === 2} primaryColor={data.index === 0}>
+              {data?.percentages}%
+            </Text>
           </View>
         </View>
       </View>
@@ -42,7 +70,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical:4
+    marginVertical: 4,
   },
   outerContainer: {
     position: "absolute",
