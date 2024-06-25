@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native"
 import { Dialog, Portal } from "react-native-paper"
 import { Button, Text } from "app/components/v2"
 import Icon from "react-native-vector-icons/FontAwesome6"
-
+import {translate} from "../../../i18n/translate"
 const AlertDialog = ({
   hideDialog,
   visible,
@@ -22,7 +22,13 @@ const AlertDialog = ({
       <Dialog visible={visible} onDismiss={hideDialog} style={styles.dialog}>
         <View style={styles.dialogContent}>
           <Icon name="circle-info" size={40} color={"#0081F8"} style={styles.icon} />
-          <Dialog.Title style={styles.title}>Confirmation</Dialog.Title>
+          <Dialog.Title style={styles.title}>
+
+          <Text semibold>
+          {translate("haccpMonitoring.comfirmation")}
+          </Text>
+
+          </Dialog.Title>
           <Dialog.Content style={styles.dialogContentNoElevation}>
             <Text style={styles.text} textAlign={"center"}>
               {content}
@@ -31,12 +37,13 @@ const AlertDialog = ({
           <Dialog.Actions style={styles.actions}>
             <Button style={styles.positiveButton} onPress={onPositive}>
               <Text whiteColor body2>
-                Confirm
+                {translate("haccpMonitoring.ok")}
               </Text>
             </Button>
             <Button style={styles.negativeButton} onPress={onNegative}>
               <Text whiteColor body2>
-                Cancel
+              {translate("haccpMonitoring.cancel")}
+
               </Text>
             </Button>
           </Dialog.Actions>

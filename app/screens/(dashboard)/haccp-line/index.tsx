@@ -2,6 +2,7 @@ import { Divider, Portal, Provider } from "react-native-paper"
 import { LineChart } from "react-native-gifted-charts"
 import React, { FC, useEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
+import Icon from "react-native-vector-icons/AntDesign"
 import { ScrollView, View, ViewStyle, useWindowDimensions } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { Text, Button } from "app/components/v2"
@@ -12,12 +13,12 @@ import { FlatList } from "react-native"
 import { TouchableOpacity } from "react-native"
 import EmptyLineChart from "app/components/v2/Dashboard/EmptyLineChart"
 import { DataSetProps } from "../daily-water/type"
-
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import { useStores } from "app/models"
 import moment from "moment"
 import { TouchableWithoutFeedback } from "react-native"
 import PerformanceChart from "app/components/v2/Dashboard/PerformanceChart"
+import { translate } from "../../../i18n/translate"
 
 // import { useNavigation } from "@react-navigation/native"
 // import { useStores } from "app/models"
@@ -33,10 +34,10 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
     { label: "Water Line 6", value: "Line 6" },
   ]
   const machineColors = [
-    { label: data[0].value, color: "#40A2E3" },
+    { label: data[0].value, color: "#071952" },
     { label: data[1].value, color: "#059212" },
     { label: data[2].value, color: "#D10363" },
-    { label: data[3].value, color: "#FF9800" },
+    { label: data[3].value, color: "#DC5F00" },
     { label: data[4].value, color: "#604CC3" },
   ]
   const { width: maxWidth } = useWindowDimensions()
@@ -44,6 +45,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
   const [percentages, setPercentages] = useState(-1)
   const [isLoading, setLoading] = useState(false)
   const { dashboardStore } = useStores()
+  const [fakeScrollIndicator, setFakeScrollIndicator] = useState(true)
 
   const [selectionDate, setSelectionDate] = useState({
     start: null,
@@ -57,11 +59,11 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
   })
   const [dashboard, setDashboard] = useState<AggregatedData[]>([])
   const [pieData, setPieData] = useState([
-    { value: 10, color: "#EEEEEE", text: "0%" },
+    { value: 10, color: "#EEEEEE", text: "0" },
 
-    { value: 30, color: "#EEEEEE", text: "0%" },
+    { value: 30, color: "#EEEEEE", text: "0" },
 
-    { value: 10, color: "#EEEEEE", text: "0%" },
+    { value: 10, color: "#EEEEEE", text: "0" },
   ])
   const [selectDate, setSelectDate] = useState<{
     value: Date | null
@@ -129,10 +131,12 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
       let total_warning_count = 0
       let total_normal_count = 0
       let total_pending_count = 0
+      let total_warn = 0 
 
       const newDatasets = selectedMachine.map((machine) => {
         const temporary = dashboard.map((item) => {
           const machineData = item?.machines.find((m) => m.machine === machine)
+      
 
           const warningCount = machineData ? machineData.warning_count : 0
           const pendingCount = machineData ? machineData.pending_count : 0
@@ -144,10 +148,12 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
           const machineColor =
             machineColors.find((color) => color.label === machine)?.color || "#ccc"
 
+    
+      
           return {
             value: warningCount,
             label: moment(item?.date).format("LL"), // Extract date only (YYYY-MM-DD)
-            dataPointText: warningCount.toString(),
+            dataPointText: warningCount,
             customDataPoint: () => customDataPoint(machineColor),
             textColor: machineColor,
             dataPointColor: machineColor,
@@ -174,7 +180,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
       setPieData([
         { value: total_normal_count, color: "#145da0", text: normal_percentage + "" },
 
-        { value: total_pending_count, color: "#0e86d4", text: pending_percentages + "" },
+        { value: total_pending_count, color: "#AED8FF", text: pending_percentages + "" },
 
         { value: total_warning_count, color: "#BF3131", text: warning_percentages + "" },
       ])
@@ -186,11 +192,11 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
       setDataSet([])
       setPercentages(-1)
       setPieData([
-        { value: 10, color: "#EEEEEE", text: "0%" },
+        { value: 10, color: "#EEEEEE", text: "0" },
 
-        { value: 30, color: "#EEEEEE", text: "0%" },
+        { value: 30, color: "#EEEEEE", text: "0" },
 
-        { value: 10, color: "#EEEEEE", text: "0%" },
+        { value: 10, color: "#EEEEEE", text: "0" },
       ])
 
       setSelectColors([])
@@ -289,27 +295,33 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
   }
   const clearMachineEmpty = () => {
     setDataSet([])
-    setDashboard([])
-    setPieData([
-      { value: 10, color: "#EEEEEE", text: "0%" },
-
-      { value: 30, color: "#EEEEEE", text: "0%" },
-
-      { value: 10, color: "#EEEEEE", text: "0%" },
-    ])
     setPercentages(-1)
+    setDashboard([])
+    setSelectColors([])
+    setPieData([
+      { value: 10, color: "#EEEEEE", text: "0" },
+
+      { value: 30, color: "#EEEEEE", text: "0" },
+
+      { value: 10, color: "#EEEEEE", text: "0" },
+    ])
   }
 
   useEffect(() => {
-    onLineChartData()
+    if (selectedMachine?.length > 0) {
+      onLineChartData()
+    }
   }, [dashboard])
 
   useEffect(() => {
-    if (selectedMachine?.length == 0) {
+    if (selectedMachine?.length === 0 && selectDate.value) {
       clearMachineEmpty()
 
       return
     }
+  }, [selectedMachine])
+
+  useEffect(() => {
     selectionDate?.end && selectionDate?.start
       ? fetchChart("range")
       : selectedMachine?.length > 0 && selectDate.value != null && fetchChart("period")
@@ -329,45 +341,48 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
         >
           <View style={$root}>
             <View style={$innerContainer}>
-              <ScrollView
-                scrollEnabled
-                showsVerticalScrollIndicator={true}
-                persistentScrollbar={true}
-              >
-                <View style={styles.row1}>
-                  <View style={[styles.activityBarCharts]}>
-                    <Text semibold body1>
-                      <Text errorColor>* </Text> Select Lines
+              <ScrollView showsVerticalScrollIndicator persistentScrollbar>
+                <View style={{ marginVertical: 20, gap: 0 }}>
+                  <View style={[$horiContainer, { justifyContent: "start", alignItems: "center" }]}>
+                    <Text semibold errorColor body1>
+                      *
                     </Text>
-                    <FlatList
-                      horizontal
-                      scrollEnabled={false}
-                      renderItem={({ item, index }) => {
-                        return (
-                          <TouchableOpacity
-                            disabled={isLoading}
-                            onPress={() => {
-                              if (selectedMachine?.length >= 5) {
-                                if (selectedMachine.includes(item.value)) {
-                                  setSelectedMachine((pre) =>
-                                    pre.filter((machine) => machine !== item.value),
-                                  )
-                                  return
-                                }
-                              } else {
-                                if (selectedMachine.includes(item.value)) {
-                                  setSelectedMachine((pre) =>
-                                    pre.filter((machine) => machine !== item.value),
-                                  )
-                                  return
-                                } else {
-                                  setSelectedMachine((pre) => pre.concat(item.value))
-                                }
+                    <Text semibold body1>
+                  
+                      {translate("haccpMonitoring.selectLine")}
+                    </Text>
+                  </View>
+
+                  <FlatList
+                    horizontal
+                    scrollEnabled={false}
+                    renderItem={({ item, index }) => {
+                      return (
+                        <TouchableOpacity
+                          // disabled={selectedMachine?.length >= 4}
+                          onPress={() => {
+                            if (selectedMachine?.length >= 5) {
+                              if (selectedMachine.includes(item.value)) {
+                                setSelectedMachine((pre) =>
+                                  pre.filter((machine) => machine !== item.value),
+                                )
+                                return
                               }
-                            }}
-                          >
-                            <View
-                              style={{
+                            } else {
+                              if (selectedMachine.includes(item.value)) {
+                                setSelectedMachine((pre) =>
+                                  pre.filter((machine) => machine !== item.value),
+                                )
+                                return
+                              } else {
+                                setSelectedMachine((pre) => pre.concat(item.value))
+                              }
+                            }
+                          }}
+                        >
+                          <View
+                            style={[
+                              {
                                 flexDirection: "row",
                                 justifyContent: "center",
                                 alignItems: "center",
@@ -375,251 +390,323 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
 
                                 backgroundColor: selectedMachine.includes(item.value)
                                   ? "#0081F8"
-                                  : "#EEEEEE",
-                                // shadowColor: '#000',
+                                  : "white",
+
                                 gap: 10,
                                 marginTop: 8,
                                 marginRight: 12,
                                 paddingHorizontal: 12,
                                 paddingVertical: 10,
+                              },
+                            ]}
+                          >
+                            {selectedMachine.includes(item.value) ? (
+                              <Icon name="close" size={15} color="white" />
+                            ) : (
+                              <></>
+                            )}
+                            <Text
+                              style={{
+                                fontSize: 13,
+                                color: selectedMachine.includes(item.value) ? "white" : "gray",
                               }}
                             >
-                              <Text
-                                style={{
-                                  fontSize: 13,
-                                  color: selectedMachine.includes(item.value) ? "white" : "gray",
-                                }}
-                              >
-                                {item.label}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-                        )
-                      }}
-                      data={data}
-                      keyExtractor={(item, index) => index.toString()}
-                    />
-
-                    <View
-                      style={[$horiContainer, { marginTop: 15, justifyContent: "space-between" }]}
-                    >
-                      <View style={$horiContainer}>
-                        <Button
-                          style={[
-                            styles.dateAgo,
-                            selectDate.range === 7 && { backgroundColor: "#0081F8" },
-                          ]}
-                          outline
-                          onPress={() => onSelectRangeDate(7)}
-                          styleText={{
-                            fontWeight: "bold",
-                          }}
-                        >
-                          <Text caption1 primaryColor whiteColor={selectDate.range === 7}>
-                            7 days
-                          </Text>
-                        </Button>
-                        <Button
-                          style={[
-                            styles.dateAgo,
-                            selectDate.range === 14 && { backgroundColor: "#0081F8" },
-                          ]}
-                          outline
-                          onPress={() => onSelectRangeDate(14)}
-                          styleText={{
-                            fontWeight: "bold",
-                          }}
-                        >
-                          <Text caption1 primaryColor whiteColor={selectDate.range === 14}>
-                            14 days
-                          </Text>
-                        </Button>
-                        <Button
-                          style={[
-                            styles.dateAgo,
-                            selectDate.range === 21 && { backgroundColor: "#0081F8" },
-                          ]}
-                          outline
-                          styleText={{
-                            fontWeight: "bold",
-                          }}
-                          onPress={() => onSelectRangeDate(21)}
-                        >
-                          <Text caption1 primaryColor whiteColor={selectDate.range === 21}>
-                            21 days
-                          </Text>
-                        </Button>
-                        <Button
-                          style={[
-                            styles.dateAgo,
-                            selectionDate?.end && { backgroundColor: "#0081F8" },
-                          ]}
-                          outline
-                          onPress={() => setModalVisible(true)}
-                          styleText={{
-                            fontWeight: "bold",
-                          }}
-                        >
-                          <Text caption1 primaryColor whiteColor={!!selectionDate?.end}>
-                            {!selectionDate.start
-                              ? "Date Range"
-                              : selectionDate.start + "-" + selectionDate.end}
-                          </Text>
-                        </Button>
-                      </View>
-                    </View>
-                    <View style={{ marginTop: 10 }}>
-                      <FlatList
-                        horizontal
-                        data={selectColors}
-                        contentContainerStyle={{ gap: 25 }}
-                        keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item }) => (
-                          <View style={$horiContainer}>
-                            <BadgeChart bgColor={item.color} title=" " />
-                            <Text>{item.label}</Text>
+                              {item.label}
+                            </Text>
                           </View>
-                        )}
-                      />
-                    </View>
-                    <View
-                      style={[
-                        { paddingHorizontal: 0, paddingVertical: 25, overflow: "hidden" },
-                        $horiContainer,
-                      ]}
-                    >
-                      <View style={{ marginVertical: 0, flex: 1, zIndex: 0 }}>
+                        </TouchableOpacity>
+                      )
+                    }}
+                    data={data}
+                    keyExtractor={(item, index) => index.toString()}
+                  />
+                </View>
+
+                <View style={styles.row1}>
+                  <View style={[styles.activityLineChart, { marginTop: 0 }, styles.shadowbox]}>
+                    <View>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Text body1 semibold>
+                         {translate("dashboard.machineActivity")}
+                        </Text>
+                        <View
+                          style={[
+                            $horiContainer,
+                            { justifyContent: "space-between", marginBottom: 10 },
+                          ]}
+                        >
+                          <View style={$horiContainer}>
+                            <Button
+                              style={[
+                                styles.dateAgo,
+                                selectDate.range === 7 && { backgroundColor: "#0081F8" },
+                              ]}
+                              outline
+                              onPress={() => onSelectRangeDate(7)}
+                              styleText={{
+                                fontWeight: "bold",
+                              }}
+                            >
+                              <Text caption1 primaryColor whiteColor={selectDate.range === 7}>
+                                7 days
+                              </Text>
+                            </Button>
+                            <Button
+                              style={[
+                                styles.dateAgo,
+                                selectDate.range === 14 && { backgroundColor: "#0081F8" },
+                              ]}
+                              outline
+                              onPress={() => onSelectRangeDate(14)}
+                              styleText={{
+                                fontWeight: "bold",
+                              }}
+                            >
+                              <Text caption1 primaryColor whiteColor={selectDate.range === 14}>
+                                14 days
+                              </Text>
+                            </Button>
+                            <Button
+                              style={[
+                                styles.dateAgo,
+                                selectDate.range === 21 && { backgroundColor: "#0081F8" },
+                              ]}
+                              outline
+                              styleText={{
+                                fontWeight: "bold",
+                              }}
+                              onPress={() => onSelectRangeDate(21)}
+                            >
+                              <Text caption1 primaryColor whiteColor={selectDate.range === 21}>
+                                21 days
+                              </Text>
+                            </Button>
+                            <Button
+                              style={[
+                                styles.dateAgo,
+                                selectionDate?.end && { backgroundColor: "#0081F8" },
+                              ]}
+                              outline
+                              onPress={() => setModalVisible(true)}
+                              styleText={{
+                                fontWeight: "bold",
+                              }}
+                            >
+                              <Text caption1 primaryColor whiteColor={!!selectionDate?.end}>
+                                {!selectionDate.start
+                                  ? "Date Range"
+                                  : selectionDate.start + "-" + selectionDate.end}
+                              </Text>
+                            </Button>
+                          </View>
+                        </View>
+                      </View>
+
+                      <View style={{ marginVertical: 15 }}>
+                        <FlatList
+                          horizontal
+                          data={selectColors}
+                          contentContainerStyle={{ gap: 25 }}
+                          keyExtractor={(item, index) => index.toString()}
+                          renderItem={({ item }) => (
+                            <View style={$horiContainer}>
+                              <BadgeChart bgColor={item.color} title=" " value={null} />
+                              <Text caption1>{item.label}</Text>
+                            </View>
+                          )}
+                        />
+                      </View>
+
+                      <View
+                        style={[
+                          { paddingHorizontal: 0, paddingBottom: 0, overflow: "visible" },
+                          $horiContainer,
+                        ]}
+                      >
                         {isLoading && (
                           <View style={styles.loadingStyle}>
-                            <Text textAlign={"center"}> Loading...</Text>
+                            <Text textAlign={"center"}> {translate("wtpcommon.savingRecord")}...</Text>
                           </View>
                         )}
+                        <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
+                          {dataSet && dataSet.length > 0 && (
+                            <>
+                              <LineChart
+                                overflowTop={50}
+                                overflowBottom={50}
+                                disableScroll={false}
+                                dataSet={dataSet}
+                                data={dataSet[0]?.data}
+                                data2={dataSet[1]?.data}
+                                data3={dataSet[2]?.data}
+                                data4={dataSet[3]?.data}
+                                data5={dataSet[4]?.data}
+                                color1={selectColors[0]?.color}
+                                color2={selectColors[1]?.color}
+                                color3={selectColors[2]?.color}
+                                color4={selectColors[3]?.color}
+                                color5={selectColors[4]?.color}
+                                thickness={2}
+                                width={maxWidth * 0.52}
+                                height={320}
+                                yAxisColor={"transparent"}
+                                // maxValue={100}
+                                noOfSections={4}
+                                onStartReached={() => setFakeScrollIndicator(true)}
+                                isAnimated={true}
+                                rulesType="dashed"
+                                endOpacity={0.1}
+                                spacing={maxWidth / 6}
+                                endSpacing={25}
+                                indicatorColor="white"
+                                showScrollIndicator={true}
+                                initialSpacing={40}
+                                dataPointsHeight={5}
+                                dataPointsWidth={10}
+                                textShiftY={-3}
+                                adjustToWidth
+                                animateTogether
+                                textShiftX={-3}
+                                yAxisTextStyle={{
+                                  fontSize: 13,
+                                  fontWeight: "bold",
+                                }}
+                                xAxisLabelTextStyle={{
+                                  fontSize: 10.5,
+                                  fontWeight: "bold",
+                                }}
+                                textFontSize={12}
+                                onScroll={() => setFakeScrollIndicator(false)}
+                                curved={false}
+                                // yAxisLabelSuffix="%"
+                                xAxisColor={"gray"}
+                                xAxisThickness={1}
+                                hideDataPoints={false}
+                                xAxisType={"dashed"}
+                                pointerConfig={{
+                                  pointerStripUptoDataPoint: false,
+                                  pointerStripColor: "gray",
+                                  pointerStripWidth: 2,
+                                  strokeDashArray: [2, 5],
+                                  activatePointersDelay: 0,
 
-                        {dataSet && dataSet.length > 0 && (
-                          <LineChart
-                            overflowTop={15}
-                            overflowBottom={30}
-                            dataSet={dataSet}
-                            data={dataSet[0]?.data}
-                            data2={dataSet[1]?.data}
-                            data3={dataSet[2]?.data}
-                            data4={dataSet[3]?.data}
-                            data5={dataSet[4]?.data}
-                            color1={selectColors[0]?.color}
-                            color2={selectColors[1]?.color}
-                            color3={selectColors[2]?.color}
-                            color4={selectColors[3]?.color}
-                            color5={selectColors[4]?.color}
-                            thickness={2}
-                            height={400}
-                            width={maxWidth * 0.65}
-                            maxValue={10}
-                            noOfSections={4}
-                            isAnimated={true}
-                            rulesType="solid"
-                            endOpacity={0.1}
-                            spacing={maxWidth / 5}
-                            endSpacing={55}
-                            indicatorColor="black"
-                            showScrollIndicator={true}
-                            initialSpacing={40}
-                            dataPointsHeight={10}
-                            dataPointsWidth={10}
-                            color="blue"
-                            textShiftY={-3}
-                            adjustToWidth
-                            animateTogether
-                            textShiftX={-3}
-                            yAxisTextStyle={{
-                              fontSize: 13,
-                              // fontWeight:"600"
-                            }}
-                            textFontSize={12}
-                            curved
-                            pointerConfig={{
-                              pointerStripUptoDataPoint: false,
-                              pointerStripColor: "gray",
-                              pointerStripWidth: 2,
-                              strokeDashArray: [2, 5],
-                              pointerColor: "transparent",
-                              radius: 4,
-                              activatePointersOnLongPress: true,
-                              pointerLabelComponent: (items: any[]) => {
-                                const datatoshow = dataSet?.map((item) => item.data)[0]
-                                const indexFound = datatoshow?.findIndex(
-                                  (item) => item.value === items[0]?.value,
-                                )
+                                  persistPointer: false,
+                                  // barTouchable: true,
+                                  resetPointerOnDataChange: true,
 
-                                const warning_count = items?.reduce((pre, sum) => {
-                                  return pre + sum?.value
-                                }, 0)
+                                  pointerColor: "transparent",
 
-                                return (
-                                  <View
-                                    style={[
-                                      {
-                                        zIndex: 1000,
-                                        backgroundColor: "#EEF5FF",
-                                        width: 300,
-                                        position: "absolute",
-                                        borderRadius: 15,
-                                        // alignItems: "start",
-                                        paddingHorizontal: 10,
-                                        paddingVertical: 10,
-                                      },
+                                  radius: 4,
 
-                                      indexFound <= 2 ? { left: 0 } : { right: 0 },
-                                    ]}
-                                  >
-                                    <Text body1 semibold style={{ marginVertical: 10 }}>
-                                      Week of {items[0]?.label}
-                                    </Text>
-                                    <Text errorColor bold body2 style={{ marginVertical: 10 }}>
-                                      Warning State Percentages
-                                    </Text>
-                                    {items?.map((data, index) => (
-                                      <View key={index?.toString()}>
-                                        <View key={index}>
-                                          <Text body2 errorColor>
-                                            {selectColors[index]?.label} warning count :{" "}
-                                            <Text semibold errorColor>
-                                              {data?.value}
-                                            </Text>
-                                          </Text>
-                                        </View>
+                                  activatePointersOnLongPress: true,
+
+                                  pointerLabelComponent: (items: any[]) => {
+                                    const datatoshow = dataSet?.map((item) => item.data)[0]
+
+                                    const labels = items.map((item) => item.label)[0]
+                                    const indexFound = datatoshow
+                                      ?.map((item) => item.label)
+                                      .findIndex((data) => labels.includes(data))
+
+                                    const warning_count = items?.reduce((pre, sum) => {
+                                      return pre + sum?.dataPointText
+                                    }, 0)
+                                    return (
+                                      <View
+                                        style={[
+                                          {
+                                            backgroundColor: "#EEF5FF",
+                                            width: 250,
+                                            position: "absolute",
+                                            borderRadius: 15,
+                                            zIndex: 0,
+                                            // alignItems: "start",
+                                            paddingHorizontal: 10,
+                                            paddingVertical: 10,
+                                          },
+                                          dashboard?.length === 1
+                                            ? { left: 20 }
+                                            : indexFound >= dashboard.length - 1
+                                            ? { right: 0 }
+                                            : { left: 0 },
+                                        ]}
+                                      >
+                                        <Text body1 semibold style={{ marginVertical: 10 }}>
+                                          Week of {items[0]?.label}
+                                        </Text>
+                                        <Text errorColor bold body2 style={{ marginVertical: 10 }}>
+                                          Warning State Percentages
+                                        </Text>
+                                        {items?.map((data, index) => {
+                                          const lines = selectColors.find(
+                                            (colors) => colors.color === data.textColor,
+                                          )
+                                          return (
+                                            <View key={index?.toString()}>
+                                              <View key={index}>
+                                                <Text body2>
+                                                  <Text errorColor>
+                                                    {lines?.label} count {data?.dataPointText}
+                                                  </Text>
+                                                </Text>
+                                              </View>
+                                            </View>
+                                          )
+                                        })}
+
+                                        <Divider style={{ marginVertical: 15 }} />
+
+                                        <Text
+                                          body2
+                                          regular
+                                          semibold
+                                          style={{ marginVertical: 10 }}
+                                          errorColor
+                                        >
+                                          Total Warning Count : {warning_count}
+                                        </Text>
                                       </View>
-                                    ))}
+                                    )
+                                  },
+                                }}
+                              ></LineChart>
+                              {fakeScrollIndicator && (
+                                <View
+                                  style={{
+                                    height: 3.8,
+                                    marginLeft: 40,
+                                    width: 465,
+                                    backgroundColor: "#B4B4B8",
+                                    marginTop: 31.5,
+                                  }}
+                                ></View>
+                              )}
+                            </>
+                          )}
 
-                                    <Divider style={{ marginVertical: 15 }} />
-
-                                    <Text
-                                      body2
-                                      regular
-                                      semibold
-                                      style={{ marginVertical: 10 }}
-                                      errorColor
-                                    >
-                                      Total Warning Count : {warning_count}
-                                    </Text>
-                                  </View>
-                                )
-                              },
-                            }}
-                          ></LineChart>
-                        )}
-                        {dataSet.length === 0 && <EmptyLineChart />}
+                          {dataSet.length === 0 && <EmptyLineChart />}
+                        </View>
                       </View>
-                      <PerformanceChart
-                         pieData={pieData}
-                         isloading={!isLoading}
-                        popupData={popupData}
-                        percentages={percentages}
-                        setPopupdata={setPopupdata}
-                        setShowPopup={setShowPopup}
-                        showPopup={showPopup}
-                        machineLength={selectedMachine?.length}
-                      />
                     </View>
+                  </View>
+
+                  <View style={styles.activityPieChart}>
+                    <PerformanceChart
+                      pieData={pieData}
+                      isloading={isLoading}
+                      popupData={popupData}
+                      percentages={percentages}
+                      setPopupdata={setPopupdata}
+                      setShowPopup={setShowPopup}
+                      showPopup={showPopup}
+                      machineLength={dataSet?.length}
+                    />
                   </View>
                 </View>
               </ScrollView>
@@ -638,10 +725,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
   )
 })
 
-const $root: ViewStyle = {
-  flex: 1,
-  backgroundColor: "white",
-}
+const $root: ViewStyle = { backgroundColor: "#F5F7F8", flex: 1 }
 
 const $innerContainer: ViewStyle = {
   paddingVertical: 0,

@@ -8,7 +8,7 @@ import moment from "moment"
 import EmptyFallback from "app/components/EmptyFallback"
 import { Modal } from "react-native-paper"
 import { HaccpActionType } from "app/models/haccp-monitoring/haccp-lines-model"
-
+import {translate} from "../../../i18n/translate"
 interface ActivityModalProps {
   isVisible: boolean
   title?: string
@@ -56,7 +56,10 @@ const ActivityModal = ({
               />
 
               <Text title3 whiteColor regular>
-                {title}
+            
+                {
+                  translate("dailyWaterTreatment.activityLog")
+                }
               </Text>
               <TouchableOpacity onPress={onClose}>
                 <Icon size={22.5} name="close" color={"white"} />
@@ -66,7 +69,7 @@ const ActivityModal = ({
           data={log || []}
           keyExtractor={(item, index) => index.toString()}
           contentContainerStyle={styles.flatListContent}
-          ListEmptyComponent={<EmptyFallback placeholder="No Activity found for this Machine" />}
+          ListEmptyComponent={<EmptyFallback placeholder={translate("wtpcommon.noactivityFound")} />}
           renderItem={({ item, index }) => {
             return type === "default" ? (
               <View style={styles.listItem} key={index.toString()}>

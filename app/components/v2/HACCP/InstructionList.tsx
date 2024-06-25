@@ -1,8 +1,8 @@
-import { View, Text } from "react-native"
+import { View } from "react-native"
 import React from "react"
 import { List } from "react-native-paper"
 import { useTheme } from "app/theme-v2"
-
+import {translate} from "../../../i18n/translate"
 const InstructionList = ({
   showinstruction,
   handleToggle,
@@ -12,10 +12,10 @@ const InstructionList = ({
 }) => {
   const { colors } = useTheme()
   const tasks = [
-    "Check the treated water pressure for bottle rinsing from pressure gauge every 2 hours by Line Leader",
-    "Check 32/40 nozzles to verify they are not clog if there is no clogged tick ✔ ",
-    "Smell test of ozone after capping with bottling every 2 hours and Verify ozone concenstration with QC every 4 hours",
-    "In case, ozone concentration or pressure is smaller than critical limit or there is one of them clogged, Line Leader must stop to find root cause and take action",
+     translate("haccpMonitoring.instructionDetail.first"),
+     translate("haccpMonitoring.instructionDetail.second"),
+     translate("haccpMonitoring.instructionDetail.third"),
+     translate("haccpMonitoring.instructionDetail.fourth")
   ]
   return (
     <View style={{ marginVertical: 25 }}>
@@ -23,7 +23,7 @@ const InstructionList = ({
         <List.Accordion
           id={1}
           titleStyle={{ color: "white", fontSize: 16 }}
-          title="Instruction"
+          title={translate("haccpMonitoring.instruction")}
           style={{ backgroundColor: colors.primary }}
           left={(props) => <List.Icon {...props} icon="folder" color="white" />}
           expanded={showinstruction}

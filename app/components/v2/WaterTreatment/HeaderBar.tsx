@@ -71,14 +71,14 @@ const HeaderBar = ({
 
           {translate("wtpcommon.todayTask")}
         </Text>
-        <Text body1 body2>
-          {moment(currDate).format("LL")}
-        </Text>
+        <Text body2>{moment(currDate).format("LL")}</Text>
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         {/* <Icon name="clockcircle" size={22} color={"black"} />
-        <View style={{marginRight:10}}>
+        <View style={{marginRight:10}}
+        
+        >
 
         </View>
         <Text semibold style={{
@@ -90,9 +90,7 @@ const HeaderBar = ({
             data={lines}
             labelField="name"
             valueField="value"
-            // placeholder="Select Line"
-
-            placeholder={translate("wtpcommon.pleaseSelect")}
+            placeholder="Select Line"
             placeholderStyle={{ fontSize: 14.5 }}
             // onSelect={onSelectLine}
             search
@@ -110,7 +108,7 @@ const HeaderBar = ({
             data={wtps}
             labelField="name"
             valueField="value"
-            placeholder="Select Treatment"
+            placeholder={translate("preWaterTreatment.selectTreatment")}
             itemTextStyle={$fontSelected}
             // closeModalWhenSelectedItem
             selectedTextStyle={$fontSelected}

@@ -21,6 +21,7 @@ import { PreTreatmentListItemModel } from "app/models/pre-water-treatment/pre-wa
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
+import {translate} from "../../../i18n/translate"
 
 interface PreWaterForm2ScreenProps extends AppStackScreenProps<"PreWaterForm2"> {}
 
@@ -289,7 +290,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
 
         if (route?.type?.toLowerCase().startsWith("tds")) {
           shouldIgnoreSequence = (sequence) => {
-            const ignorePattern = ["Level", "TDS", "<", "300", "mg/l"]
+            const ignorePattern = [translate("wtpcommon.level"), "TDS", "<", "300", "mg/l"]
             for (let i = 0; i < ignorePattern.length; i++) {
               if (sequence[i] !== ignorePattern[i]) {
                 return false
@@ -300,7 +301,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         }
         if (route?.type?.toLowerCase().startsWith("ph")) {
           shouldIgnoreSequence = (sequence) => {
-            const ignorePattern = ["Level", "PH", "6.5", "-", "8.5"]
+            const ignorePattern = [translate("wtpcommon.level"), "PH", "6.5", "-", "8.5"]
             for (let i = 0; i < ignorePattern.length; i++) {
               if (sequence[i] !== ignorePattern[i]) {
                 return false
@@ -452,7 +453,9 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-                Save
+                 {
+                  translate("wtpcommon.save")
+                 }
               </Text>
             </TouchableOpacity>
           ) : (
@@ -516,11 +519,11 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                 </>
               ) : route?.type?.toLowerCase().includes("ph") ? (
                 <Text errorColor semibold body1>
-                  {"Level PH 6.5 - 8.5"}
+                  {`${translate("wtpcommon.level")} PH 6.5 - 8.5`}
                 </Text>
               ) : (
                 <Text errorColor semibold body1>
-                  {"Level TDS < 300 mg/l"}
+                  {`${translate("wtpcommon.level")} TDS < 300 mg/l`}
                 </Text>
               )}
               {route?.isvalidDate && route?.item?.assign_to_user && (
@@ -737,8 +740,9 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               </View>
             )}
           </View>
-          <ActivityModal log={[]} onClose={() => setShowlog(false)} isVisible={showLog} />
         </ScrollView>
+        <ActivityModal log={[]} onClose={() => setShowlog(false)} isVisible={showLog} />
+
       </KeyboardAvoidingView>
     )
   },

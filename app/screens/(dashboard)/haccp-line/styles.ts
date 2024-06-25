@@ -1,9 +1,26 @@
 import { StyleSheet } from "react-native"
 
 export default StyleSheet.create({
-  activityBarCharts: {
+  activityLineChart: {
     padding: 25,
-    flex: 1,
+    flex: 0.65,
+    gap: 10,
+
+    backgroundColor: "white",
+  },
+  loadingStyle: {
+    flexDirection: "column",
+    backgroundColor: "rgba(200, 200, 200, 0.15)", // Lighter gray color with 50% opacity // Gray color with 50% opacity
+    justifyContent: "center",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 10,
+    bottom: 0,
+    padding: 10,
+    zIndex: 100,
+  },
+  shadowbox:{
     backgroundColor: "white",
     elevation: 2,
     shadowColor: "#000",
@@ -13,25 +30,12 @@ export default StyleSheet.create({
       height: 1,
     },
   },
-  loadingStyle: {
-    flexDirection: "column",
-    backgroundColor: "rgba(200, 200, 200, 0.15)", // Lighter gray color with 50% opacity // Gray color with 50% opacity
-    justifyContent: "center",
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    padding:10,
-    zIndex: 100,
-  },
   activityPieChart: {
-    flex: 0.3,
-    padding: 10,
-    zIndex: 10,
+    flex: 0.35,
 
-    backgroundColor: "white",
+    zIndex: 10,
     elevation: 2,
+
     shadowColor: "#000",
     shadowOpacity: 0.8,
     shadowOffset: {
@@ -42,14 +46,13 @@ export default StyleSheet.create({
   },
   row1: {
     flexDirection: "row",
-    gap: 5,
+    gap: 15,
   },
 
   dateAgo: { height: 40, backgroundColor: "white" },
   dropdown: {
     marginLeft: 10,
     marginRight: 10,
-    borderBlockColor: "white",
     height: 40,
     fontSize: 12,
     backgroundColor: "white",
@@ -60,7 +63,7 @@ export default StyleSheet.create({
       width: 0,
       height: 1,
     },
-    width: 180,
+    width: 200,
 
     shadowOpacity: 0.2,
     shadowRadius: 1.41,

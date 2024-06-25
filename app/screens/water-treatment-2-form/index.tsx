@@ -15,6 +15,7 @@ import { Activities, TreatmentModel } from "app/models/water-treatment/water-tre
 import { KeyboardAvoidingView, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { styles } from "./styles"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
+import { translate } from "../../i18n/translate"
 interface WaterTreatmentPlant2FormScreenProps
   extends AppStackScreenProps<"WaterTreatmentPlant2Form"> {}
 
@@ -93,7 +94,10 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-                Save
+             
+                {
+                  translate("wtpcommon.save")
+                }
               </Text>
             </TouchableOpacity>
           ) : (
@@ -518,7 +522,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                 <ActivityIndicator color="#8CC8FF" size={35} />
                 <View style={{ marginVertical: 15 }}></View>
                 <Text whiteColor textAlign={"center"}>
-                  Progressing Image ...
+                 {translate('wtpcommon.processImage')} ...
                 </Text>
               </View>
             )}
@@ -527,7 +531,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                 <ActivityIndicator color="#8CC8FF" size={35} />
                 <View style={{ marginVertical: 15 }}></View>
                 <Text whiteColor textAlign={"center"}>
-                  Saving record ...
+                {translate('wtpcommon.savingRecord')} ...
                 </Text>
               </View>
             )}
@@ -669,7 +673,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                           }}
                           label="Other"
                           showAsterick={false}
-                          hintLimit="Optional"
+                          hintLimit={translate("preWaterTreatment.optional")}
                           errormessage={""}
                         />
                       </View>

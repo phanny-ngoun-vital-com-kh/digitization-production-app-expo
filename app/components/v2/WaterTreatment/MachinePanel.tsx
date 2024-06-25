@@ -1,14 +1,17 @@
 import React from "react"
 import Icon from "react-native-vector-icons/AntDesign"
 import { Text } from "app/components/v2"
+import BadgeTriangle from "../BadgeV2"
 import styles from "./styles"
 import { TouchableOpacity, View } from "react-native"
 import { Divider } from "react-native-paper"
 import { $containerHorizon } from "app/screens"
 import { MACHINE_STATE, MachinePanelProps } from "./type"
 import BadgeWarning from "../Badgewarn"
-import { cleanTimeString, cleanTimeCurrent, getCurrentTime } from "app/utils-v2/getCurrTime"
+import { translate } from "../../../i18n/translate"
 import moment from "moment"
+import BadgePanelWarning from "../BadgePanel"
+import BadgeOutofdate from "../BadgePanel"
 
 const MachinePanel = ({
   machine_type = "Raw Water Stock",
@@ -28,37 +31,27 @@ const MachinePanel = ({
 }: MachinePanelProps) => {
   const getStatus = (status: MACHINE_STATE) =>
     status === "normal" ? "#0081F8" : status === "pending" ? "#8CC8FF" : "red"
-  // console.log("Assign",getCurrentTime())
-
-  // const invalidDate = () => moment(Date.now()).format("LL") === moment(created_date).format("LL")
-
-  // const isValidShift = (time: any) =>
-  //   getCurrentTime() > cleanTimeCurrent(!time.includes("(") ? time : time?.split(" ")[1]) &&
-  //   getCurrentTime().localeCompare(
-  //     cleanTimeString(!time.includes("(") ? time : time?.split(" ")[1]),
-  //   )
 
   return (
     <View
       style={{
-        backgroundColor:validDate &&validShift === -1 ? "white" : "#EEEEEE",
+        backgroundColor: validDate && validShift === -1 ? "white" : "#EEEEEE",
         marginBottom: 10,
         elevation: 6,
         borderRadius: 0,
         overflow: "hidden",
+        position: "relative",
       }}
     >
       <TouchableOpacity
         // disabled={isValidShift()}
         style={{ paddingHorizontal: 10, paddingVertical: 5 }}
         onPress={() => {
-     
-
           onPress(validShift)
         }}
       >
         <View style={{ width: 180, position: "relative" }}>
-          <View style={$containerHorizon}>
+          <View style={[$containerHorizon, { justifyContent: "space-between" }]}>
             <Text semibold headline>
               {machine_type}
             </Text>
@@ -90,7 +83,8 @@ const MachinePanel = ({
               <View style={$containerHorizon}>
                 <Icon name="checkcircle" size={18} color="green" />
                 <Text semibold caption1 style={{ marginLeft: 5, color: "green" }}>
-                  You are assigned
+                  {/* You are assigned */}
+                  {translate("wtpcommon.viewAssignment")}
                 </Text>
               </View>
             )}
@@ -125,7 +119,7 @@ const MachinePanel = ({
       {/* <Text>{isValidShift(time) === -1 ? "True" : "false "}</Text> */}
 
       {status === "pending" && assign_to_user?.split(" ").includes(currUser ?? "") === false ? (
-        validDate &&validShift === -1 ? (
+        validDate && validShift === -1 ? (
           <View
             style={[
               $containerHorizon,
@@ -138,26 +132,16 @@ const MachinePanel = ({
             >
               <Icon name="edit" size={18} color="#0081F8" />
               <Text semibold caption1 style={{ marginLeft: 5, color: "#0081F8" }}>
-                Enroll this task
+                {/* Enroll this task */}
+
+                {translate("wtpcommon.enrollMyTask")}
               </Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <View
-            style={[
-              $containerHorizon,
-              { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
-            ]}
-          >
-            <TouchableOpacity disabled style={$containerHorizon}>
-              <Icon name="closecircle" size={18} color="#D32600" />
-              <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-                Out Dated
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )
-      ) : validDate &&validShift === -1 ? (
+          <BadgeOutofdate  placeholder={translate("wtpcommon.outDate")}/>
+          )
+      ) : validDate && validShift === -1 ? (
         <View
           style={[
             $containerHorizon,
@@ -171,23 +155,12 @@ const MachinePanel = ({
             <Icon name="closecircle" size={18} color="#D32600" />
             <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
               Unassign this task
+              {translate("wtpcommon.unassignMyTask")}
             </Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <View
-          style={[
-            $containerHorizon,
-            { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
-          ]}
-        >
-          <TouchableOpacity disabled style={$containerHorizon}>
-            <Icon name="closecircle" size={18} color="#D32600" />
-            <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-              Out Dated
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <BadgeOutofdate  placeholder={translate("wtpcommon.outDate")}/>
       )}
     </View>
   )

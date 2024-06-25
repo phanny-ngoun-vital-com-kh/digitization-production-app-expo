@@ -1,7 +1,8 @@
 import React from "react"
 import Icon from "react-native-vector-icons/Ionicons"
-import { TouchableOpacity, View } from "react-native"
+import { TouchableOpacity, View, ViewStyle } from "react-native"
 import styles from "./styles"
+import { translate } from "../../../i18n/translate"
 
 import { Button, Text } from "app/components/v2"
 const ActivityBar = ({
@@ -26,13 +27,7 @@ const ActivityBar = ({
         { justifyContent: direction === "end" ? "flex-end" : "flex-start" },
       ]}
     >
-      {/* {showInfo && (
-        <TouchableOpacity onPress={onClickinfo}>
-          <View style={styles.iconBorder}>
-            <Icon name="help-circle-sharp" size={30} />
-          </View>
-        </TouchableOpacity>
-      )} */}
+ 
 
       <TouchableOpacity onPress={onScanCamera}>
         <View style={styles.iconBorder}>
@@ -47,7 +42,7 @@ const ActivityBar = ({
 
       <Button onPress={onActivity}>
 
-        <Text whiteColor body2 >View Activity</Text>
+        <Text whiteColor body2 >{translate("wtpcommon.viewActivity")}</Text>
       </Button>
     </View>
   )

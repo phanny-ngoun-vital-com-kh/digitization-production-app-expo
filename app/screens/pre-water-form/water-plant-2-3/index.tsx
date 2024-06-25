@@ -23,8 +23,7 @@ import ActivityModal from "app/components/v2/ActivitylogModal"
 import { styles } from "../styles"
 import BadgeWarning from "app/components/v2/Badgewarn"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
-// import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "app/models"
+import {translate} from "../../../i18n/translate"
 
 interface PreWaterForm1ScreenProps extends AppStackScreenProps<"PreWaterForm1"> {}
 
@@ -519,7 +518,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-                Save
+                {translate('wtpcommon.save')}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -609,15 +608,15 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                 <></>
               ) : route?.type?.toLowerCase().includes("tds") ? (
                 <Text errorColor semibold body1>
-                  {"* Warning Level ( > 300 ppm ) "}
+                  {`* ${translate('preWaterTreatment.warningLevel')} ( > 300 ppm ) `}
                 </Text>
               ) : route?.type?.toLowerCase().includes("ph") ? (
                 <Text errorColor semibold body1>
-                  {"* Warning Level ( 6.5 - 8.5  ) "}
+                  {`* ${translate('preWaterTreatment.warningLevel')}( 6.5 - 8.5  ) `}
                 </Text>
               ) : (
                 <Text errorColor semibold body1>
-                  {"* Warning Level ( 0.1 - 0.3 Mpa ) "}
+                  {`* ${translate('preWaterTreatment.warningLevel')}( 0.1 - 0.3 Mpa ) `}
                 </Text>
               )}
 

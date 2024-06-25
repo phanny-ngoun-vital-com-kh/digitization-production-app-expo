@@ -1,7 +1,8 @@
 import React from "react"
 import { TouchableOpacity, View, ViewStyle } from "react-native"
-import { ProgressBar, Badge } from "react-native-paper"
+import { ProgressBar } from "react-native-paper"
 import { Text } from "app/components/v2"
+import {translate} from "../../../i18n/translate"
 import { TimePanelProps } from "./type"
 import BadgeTriangle from "../BadgeV2"
 const TimePanel = ({
@@ -33,7 +34,7 @@ const TimePanel = ({
         <View>
           {isWarning && (
           
-            <BadgeTriangle label="Warning"/>
+            <BadgeTriangle label={translate("wtpcommon.warning")}/>
           )}
         </View>
 

@@ -32,7 +32,6 @@ import {
 } from "app/utils-v2/getCurrTime"
 import { translate } from "../../../i18n"
 
-
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 
 export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
@@ -164,17 +163,14 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               warning_count={subitem?.warning_count ?? 0}
               time={item?.shift ?? "S1 (7:00)"}
               onPress={(shift: any) => {
-                console.log("Shift is valid", isValidShift(item?.shift))
                 navigation.navigate("WaterTreatmentPlant2Form", {
                   type: subitem?.machine ?? "",
                   items: subitem,
                   onReturn: sendBack,
                   isValidShift: shift === -1 ? true : false,
-                  isvalidDate: true,
-                  isEdit: true,
-                  // isvalidDate:
-                  //   moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
-                  // isEdit: subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? ""),
+                  isvalidDate:
+                    moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                  isEdit: subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? ""),
                 })
               }}
             />
@@ -440,7 +436,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                     <CustomInput
                       type="search"
                       value={query ?? ""}
-                      placeholder="Search"
+                      placeholder={translate("dailyWaterTreatment.search")}
                       onChangeText={(text: string) => {
                         setQuery(text)
                       }}
@@ -470,7 +466,11 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                     style={$useflex}
                     data={wtp2}
                     ListEmptyComponent={
-                      !refreshing ? <EmptyFallback placeholder="No Schedule yet" /> : <></>
+                      !refreshing ? (
+                        <EmptyFallback placeholder={translate("wtpcommon.noScheduleYet")} />
+                      ) : (
+                        <></>
+                      )
                     }
                     keyExtractor={(_, index) => index.toString()}
                     renderItem={renderItem}

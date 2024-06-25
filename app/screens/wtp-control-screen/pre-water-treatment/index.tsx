@@ -28,11 +28,11 @@ import { useStores } from "app/models"
 import {
   cleanTimeCurrent,
   cleanTimePreWtp,
-  cleanTimeString,
   getCurrentTime,
 } from "app/utils-v2/getCurrTime"
 import AlertDialog from "app/components/v2/AlertDialog"
 import { prewaterTreatmentApi } from "app/services/api/pre-water-treatment-api"
+import { translate } from "../../../i18n"
 
 interface PrewaterTreatmentScreenProps extends AppStackScreenProps<"PrewaterTreatment"> {}
 
@@ -636,7 +636,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                 >
                   <View style={{ width: 550, marginBottom: 10 }}>
                     <CustomInput
-                      placeholder="Search"
+                      placeholder={translate('preWaterTreatment.search')}
                       onChangeText={(text) => setQuery(text)}
                       label=""
                       errormessage={""}
@@ -655,7 +655,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                   <FlatList
                     // contentContainerStyle={{flex:1}}
                     ListEmptyComponent={
-                      !isRefreshing && <EmptyFallback placeholder="No Task for this schedule!!!" />
+                      !isRefreshing && <EmptyFallback placeholder={translate('wtpcommon.noScheduleYet')}/>
                     }
                     showsVerticalScrollIndicator
                     persistentScrollbar

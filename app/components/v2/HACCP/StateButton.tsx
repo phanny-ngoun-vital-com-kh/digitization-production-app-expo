@@ -6,9 +6,10 @@ type StateButtonProps = {
   color: string
   placeholder: string
   isSelected?: boolean
+  children?: React.ReactNode
   onPress?: () => void
 } & TouchableOpacityProps
-const StateButton = ({ color, placeholder, isSelected, onPress, ...props  }: StateButtonProps) => {
+const StateButton = ({ color, placeholder, isSelected, onPress, ...props }: StateButtonProps) => {
   return (
     <TouchableOpacity onPress={onPress} {...props}>
       <View
@@ -17,10 +18,13 @@ const StateButton = ({ color, placeholder, isSelected, onPress, ...props  }: Sta
           borderWidth: 1,
           borderRadius: 7,
           paddingHorizontal: 25,
+          flexDirection:"row",
+          gap:7,
           paddingVertical: 8,
           backgroundColor: isSelected ? color : "transparent",
         }}
       >
+        {props.children}
         <Text primaryColor body2 style={{ color: !isSelected ? color : "white" }}>
           {placeholder}
         </Text>

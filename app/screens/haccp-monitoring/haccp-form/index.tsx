@@ -23,6 +23,7 @@ import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 import { HaccpActionType, LinesItemModel } from "app/models/haccp-monitoring/haccp-lines-model"
 import { styles } from "./styles"
+import {translate} from "../../../i18n/translate"
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
@@ -639,7 +640,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-                Save
+               {translate("wtpcommon.save")}
               </Text>
             </TouchableOpacity>
           ) : (

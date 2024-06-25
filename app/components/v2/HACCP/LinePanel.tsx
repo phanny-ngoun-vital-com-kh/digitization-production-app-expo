@@ -4,8 +4,10 @@ import { View, ViewStyle } from "react-native"
 import { Text } from "app/components/v2"
 import { ProgressBar } from "react-native-paper"
 import styles from "./styles"
+import { translate } from "../../../i18n/translate"
 import { TouchableOpacity } from "react-native-gesture-handler"
 import { HaccpLines } from "app/models/haccp-monitoring/haccp-lines-store"
+import BadgeOutofdate from "../BadgePanel"
 interface LinePanelProps {
   onClickPanel: () => void
   item: HaccpLines
@@ -29,17 +31,19 @@ const LinePanel = ({ onClickPanel, item, currUser, dateValid }: LinePanelProps) 
 
   const total = item?.haccplist?.length
   // const assignTo = "Prod1"
-  console.log("date", dateValid)
   return (
     <TouchableOpacity onPress={() => onClickPanel()} style={{ padding: 10, width: "100%" }}>
       <View
         style={[
           styles.linePanel,
+          { position: "relative",overflow:"hidden" },
           !dateValid && {
             backgroundColor: "#EEEEEE",
           },
         ]}
       >
+        {!dateValid && <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} top={-2} height={50} textMarginRight={13}/>}
+
         <View style={[$containerHorizon, { justifyContent: "space-between", marginBottom: 0 }]}>
           <Text semibold body1>
             {item.line}
@@ -57,25 +61,16 @@ const LinePanel = ({ onClickPanel, item, currUser, dateValid }: LinePanelProps) 
               <View style={[$containerHorizon, { gap: 0 }]}>
                 <Icon name="checkmark-circle" size={18} color="green" />
                 <Text semibold caption1 style={{ marginLeft: 5, color: "green" }}>
-                  You are assigned
+                  {translate("wtpcommon.youAreAssigned")}
                 </Text>
               </View>
-
-              {!dateValid && (
-                <View style={[$containerHorizon, { gap: 0 }]}>
-                  <Icon name="close-circle" size={18} color="#D32600" />
-                  <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-                    Shift has ended.
-                  </Text>
-                </View>
-              )}
             </View>
           ) : (
             <View style={[$containerHorizon, { gap: 10 }]}>
               <View style={[$containerHorizon, { gap: 0 }]}>
                 <Icon name="close-circle" size={18} color="#D32600" />
                 <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-                  You are not assigned
+                  {translate("wtpcommon.youArenotAssigned")}
                 </Text>
               </View>
               {!dateValid && (
@@ -132,7 +127,7 @@ const LinePanel = ({ onClickPanel, item, currUser, dateValid }: LinePanelProps) 
           <View style={$containerHorizon}>
             <View style={styles.badge}></View>
             <Text caption2 semibold>
-              Warning : {totalWarningPerline()}
+              Warning : {totalWarningPerline() || 0}
             </Text>
           </View>
         </View>

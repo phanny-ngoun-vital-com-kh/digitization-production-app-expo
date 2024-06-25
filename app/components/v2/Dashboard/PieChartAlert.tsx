@@ -13,8 +13,6 @@ const PieChartAlert = ({
   label?: string
   data: { label: string; percentages: string; total: string; index: number }
 }) => {
-  console.log(data)
-
   const getTag = () => {
     switch (data.index) {
       case 0:
@@ -27,6 +25,9 @@ const PieChartAlert = ({
         return "N/A"
     }
   }
+
+
+
   return (
     <View style={[styles.outerContainer, { display: visible ? "flex" : "none" }]}>
       <View style={{ paddingHorizontal: 15, paddingBottom: 10 }}>
@@ -36,10 +37,10 @@ const PieChartAlert = ({
         <Divider style={{ marginVertical: 15 }} />
         <View>
           <View style={styles.horizontal}>
-            <Text regular  errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text regular errorColor={data.index === 2} primaryColor={data.index === 0}>
               Total Machine
             </Text>
-            <Text semibold  errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text semibold errorColor={data.index === 2} primaryColor={data.index === 0}>
               {data?.total || 0}
             </Text>
           </View>
@@ -47,7 +48,7 @@ const PieChartAlert = ({
             <Text regular errorColor={data.index === 2} primaryColor={data.index === 0}>
               {getTag()} Count{" "}
             </Text>
-            <Text semibold  errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text semibold errorColor={data.index === 2} primaryColor={data.index === 0}>
               {data?.label}
             </Text>
           </View>

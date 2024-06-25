@@ -44,9 +44,19 @@ export default StyleSheet.create({
     },
     // marginLeft:110
   },
+  shadowbox:{
+    backgroundColor: "white",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.9,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+  },
   row1: {
     flexDirection: "row",
-    gap: 5,
+    gap: 15,
   },
 
   dateAgo: { height: 40, backgroundColor: "white" },

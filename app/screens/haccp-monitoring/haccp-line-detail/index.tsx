@@ -24,6 +24,8 @@ import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import { HaccpListType } from "app/models/haccp-monitoring/haccp-lines-model"
 import moment from "moment"
 import ActivityModal from "app/components/v2/ActivitylogModal"
+import { translate } from "../../../i18n"
+import BadgeWarning from "app/components/v2/Badgewarn"
 
 interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> {}
 
@@ -51,29 +53,37 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     const hideModal = () => setVisible(false)
 
     useLayoutEffect(() => {
-      setAssign(route?.assign)
       navigation.setOptions({
         title: route?.title,
-        headerRight: () => (
-          <TouchableOpacity
-            style={{ flexDirection: "row", alignItems: "center" }}
-            onPress={() => {
-              navigation.navigate("HaccpLineForm", {
-                line: getRouteLine(),
-                onRefresh: handleRefresh,
-                haccp_id: route?.line?.haccp_id,
-                assign: isAssign,
-                isvalidDate: route?.isvalidDate,
-                id: route?.id,
-              })
-            }}
-          >
-            <Icon name="plus" size={22} color={"#0081F8"} />
-            <Text style={{ fontSize: 14 }} primaryColor semibold>
-              Add New
-            </Text>
-          </TouchableOpacity>
-        ),
+        headerRight: () =>
+          !route?.isvalidDate ? (
+            <View style={[$containerHorizon, { gap: 5 }]}>
+              <Icon name="close" size={20} color={"#FF0000"} />
+
+              <Text errorColor semibold>
+                {translate("haccpMonitoring.shiftEnded")}
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center" }}
+              onPress={() => {
+                navigation.navigate("HaccpLineForm", {
+                  line: getRouteLine(),
+                  onRefresh: handleRefresh,
+                  haccp_id: route?.line?.haccp_id,
+                  assign: isAssign,
+                  isvalidDate: route?.isvalidDate,
+                  id: route?.id,
+                })
+              }}
+            >
+              <Icon name="plus" size={22} color={"#0081F8"} />
+              <Text style={{ fontSize: 14 }} primaryColor semibold>
+                {translate("haccpMonitoring.addNew")}
+              </Text>
+            </TouchableOpacity>
+          ),
       })
     }, [navigation, route, isAssign])
 
@@ -112,10 +122,12 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     const onEnrollTask = async () => {
       try {
         setLoading(true)
+        setAssign(!isAssign)
+
         const userinfo = await authStore.getUserInfo()
         const { login } = userinfo.data
         setVisible(false)
-        setAssign((pre) => !pre)
+        console.log("Updating")
         await haccpLinesStore.saveSelfEnroll(
           route?.id ?? "",
           route?.line?.haccp_id ?? "",
@@ -150,6 +162,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     const handleSorting = async () => {
       sorting === "asc" ? setSorting("desc") : setSorting("asc")
     }
+
+    console.log("Assign role", isAssign)
     useEffect(() => {
       fetchLinesTable()
     }, [navigation, route])
@@ -181,8 +195,22 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           : setHaccpline((pre) => pre.sort((a, b) => b.id - a.id))
       }
     }, [sorting])
+    useEffect(() => {
+      setAssign(route?.assign)
+    }, [route])
     const getMachineStatus = (status: any) => (status === "normal" ? "#0081F8" : "#FF0000")
-
+    const getStatusInKhmer = (status: string) => {
+      switch (status) {
+        case "Normal":
+          return translate("haccpMonitoring.normal")
+        case "Pending":
+          return translate("haccpMonitoring.pending")
+        case "Warning":
+          return translate("haccpMonitoring.warning")
+        default:
+          return translate("haccpMonitoring.normal")
+      }
+    }
     const rendertableLine456 = ({ item, index }: { item: HaccpListType; index: number }) => (
       <TouchableOpacity
         onPress={() =>
@@ -303,6 +331,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         ? item?.warning_count + " warnings"
                         : "Pending"}
                     </Text>
+                    isAssign
                   </View>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
@@ -325,17 +354,18 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           <Portal>
             <View style={$root}>
               <View style={$outerContainer}>
-                <View style={[$containerHorizon, { marginBottom: 20 }]}>
-                  <TouchableOpacity style={{}} onPress={handleSorting}>
-                    <Icon name="up" size={15} color={"black"} />
-                    <Icon name="down" size={15} color={"black"} />
-                  </TouchableOpacity>
-
-                  <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
+                <View
+                  style={[$containerHorizon, { marginBottom: 20, justifyContent: "space-between" }]}
+                >
+                  <View style={[$containerHorizon, { gap: 25, marginLeft: 20 }]}>
+                    <TouchableOpacity style={{}} onPress={handleSorting}>
+                      <Icon name="up" size={15} color={"black"} />
+                      <Icon name="down" size={15} color={"black"} />
+                    </TouchableOpacity>
                     <StateButton
                       onPress={() => setSelectStatus("all")}
                       isSelected={selectedStatus?.toLowerCase() === "all"}
-                      placeholder={"All"}
+                      placeholder={translate("wtpcommon.all")}
                       color={"green"}
                     />
                     {lineStatus.map((item, index) => (
@@ -343,7 +373,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         <StateButton
                           onPress={() => setSelectStatus(item)}
                           isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
-                          placeholder={item[0].toUpperCase() + item.slice(1)}
+                          // placeholder={item[0].toUpperCase() + item.slice(1)}
+                          placeholder={getStatusInKhmer(item[0].toUpperCase() + item.slice(1))}
                           color={
                             item === "pending"
                               ? "#777777"
@@ -354,32 +385,36 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         />
                       </View>
                     ))}
-
+                  </View>
+                  <View style={{ gap: 10 }}>
                     {!route?.isvalidDate ? (
-                      <StateButton
-                        disabled
-                        isSelected={true}
-                        placeholder={"Shift has Ended"}
-                        color={"#D32600"}
-                      />
+                      <></>
                     ) : (
                       <StateButton
                         onPress={showModal}
                         isSelected={selectedStatus?.toLowerCase() === "all"}
-                        placeholder={isAssign ? "Unassign my task" : "Enroll this task"}
+                        placeholder={
+                          isAssign
+                            ? translate("wtpcommon.unassignMyTask")
+                            : translate("wtpcommon.enrollMyTask")
+                        }
                         color={isAssign ? "#D32600" : "#0081F8"}
-                      />
+                      >
+                        <Icon color={"white"} size={20} name="close" />
+                      </StateButton>
                     )}
                     <StateButton
                       onPress={() => {
                         setShowActivitylog(true)
-                        console.log('true')
+
                         setRoles(route?.line?.assign_to?.split(" "))
                       }}
                       isSelected={true}
-                      placeholder={"View Assignment"}
+                      placeholder={translate("wtpcommon.viewAssignment")}
                       color={"#0081F8"}
-                    />
+                    >
+                      <Icon color={"white"} size={20} name="search1" />
+                    </StateButton>
                   </View>
                 </View>
                 <DataTable style={{ margin: 10, marginTop: 0 }}>
@@ -423,7 +458,9 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         onRefresh={handleRefresh}
                       />
                     }
-                    ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
+                    ListEmptyComponent={
+                      <EmptyFallback placeholder={translate("wtpcommon.noRecordFound")} />
+                    }
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={rendertableLine23}
                   />
@@ -431,20 +468,20 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
               </View>
             </View>
             <ActivityModal
-            title="Users"
-            type="roles"
-            log={roles}
-            isVisible={showActivitylog}
-            onClose={() => {
-              setShowActivitylog(false)
-            }}
-          />
+              title="Users"
+              type="roles"
+              log={roles}
+              isVisible={showActivitylog}
+              onClose={() => {
+                setShowActivitylog(false)
+              }}
+            />
             <AlertDialog
               visible={visible}
               content={
                 isAssign
-                  ? "You're about to unassign your task , Click confirm to accept it"
-                  : "You're about to entroll this Line , Click confirm to accept it"
+                  ? translate("haccpMonitoring.positive")
+                  : translate("haccpMonitoring.negative")
               }
               hideDialog={hideModal}
               onPositive={onEnrollTask}
@@ -458,60 +495,71 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       <PaperProvider>
         <Portal>
           <View style={$root}>
-            <View style={$outerContainer}>
-              <View style={[$containerHorizon, { gap: 15, marginLeft: 20 }]}>
-                <TouchableOpacity style={{}} onPress={handleSorting}>
-                  <Icon name="up" size={15} color={"black"} />
-                  <Icon name="down" size={15} color={"black"} />
-                </TouchableOpacity>
-                <StateButton
-                  onPress={() => setSelectStatus("all")}
-                  isSelected={selectedStatus?.toLowerCase() === "all"}
-                  placeholder={"All"}
-                  color={"green"}
-                />
-                {lineStatus.map((item, index) => (
-                  <View key={index.toString()}>
-                    <StateButton
-                      onPress={() => setSelectStatus(item)}
-                      isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
-                      placeholder={item[0].toUpperCase() + item.slice(1)}
-                      color={
-                        item === "pending"
-                          ? "#777777"
-                          : item === "warning"
-                          ? "#FF0000"
-                          : colors.primary
-                      }
-                    />
-                  </View>
-                ))}
-                {!route?.isvalidDate ? (
+            <View style={[$outerContainer]}>
+              <View
+                style={[$containerHorizon, { marginBottom: 20, justifyContent: "space-between" }]}
+              >
+                <View style={[$containerHorizon, { marginBottom: 20, gap: 25 }]}>
+                  <TouchableOpacity style={{}} onPress={handleSorting}>
+                    <Icon name="up" size={15} color={"black"} />
+                    <Icon name="down" size={15} color={"black"} />
+                  </TouchableOpacity>
                   <StateButton
-                    disabled
-                    isSelected={true}
-                    placeholder={"Shift has Ended"}
-                    color={"#D32600"}
-                  />
-                ) : (
-                  <StateButton
-                    onPress={showModal}
+                    onPress={() => setSelectStatus("all")}
                     isSelected={selectedStatus?.toLowerCase() === "all"}
-                    placeholder={isAssign ? "Unassign my task" : "Enroll this task"}
-                    color={isAssign ? "#D32600" : "#0081F8"}
+                    placeholder={translate("wtpcommon.all")}
+                    color={"green"}
                   />
-                )}
+                  {lineStatus.map((item, index) => (
+                    <View key={index.toString()}>
+                      <StateButton
+                        onPress={() => setSelectStatus(item)}
+                        isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
+                        // placeholder={item[0].toUpperCase() + item.slice(1)}
+                        placeholder={getStatusInKhmer(item[0].toUpperCase() + item.slice(1))}
+                        color={
+                          item === "pending"
+                            ? "#777777"
+                            : item === "warning"
+                            ? "#FF0000"
+                            : colors.primary
+                        }
+                      />
+                    </View>
+                  ))}
+                </View>
+                <View style={{ gap: 10 }}>
+                  {!route?.isvalidDate ? (
+                    <></>
+                  ) : (
+                    <StateButton
+                      onPress={showModal}
+                      isSelected={selectedStatus?.toLowerCase() === "all"}
+                      placeholder={
+                        isAssign
+                          ? translate("wtpcommon.unassignMyTask")
+                          : translate("wtpcommon.enrollMyTask")
+                      }
+                      color={isAssign ? "#D32600" : "#0081F8"}
+                    >
+                      <Icon color={"white"} size={20} name="close" />
+                    </StateButton>
+                  )}
+                  <StateButton
+                    onPress={() => {
+                      setShowActivitylog(true)
 
-                <StateButton
-                  onPress={() => {
-                    setShowActivitylog(true)
-                    setRoles(route?.line?.assign_to?.split(" "))
-                  }}
-                  isSelected={selectedStatus?.toLowerCase() === "all"}
-                  placeholder={"View Assignment"}
-                  color={"#0081F8"}
-                />
+                      setRoles(route?.line?.assign_to?.split(" "))
+                    }}
+                    isSelected={true}
+                    placeholder={translate("wtpcommon.viewAssignment")}
+                    color={"#0081F8"}
+                  >
+                    <Icon color={"white"} size={20} name="search1" />
+                  </StateButton>
+                </View>
               </View>
+
               <DataTable style={{ margin: 10, marginTop: 5 }}>
                 <DataTable.Header>
                   <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
@@ -559,7 +607,9 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                     }
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={rendertableLine456}
-                    ListEmptyComponent={<EmptyFallback placeholder="No record found !!!" />}
+                    ListEmptyComponent={
+                      <EmptyFallback placeholder={translate("wtpcommon.noRecordFound")} />
+                    }
                   />
                 )}
               </View>
@@ -568,8 +618,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
               visible={visible}
               content={
                 isAssign
-                  ? "You're about to unassign your task , Click confirm to accept it"
-                  : "You're about to entroll this Line , Click confirm to accept it"
+                  ? translate("haccpMonitoring.positive")
+                  : translate("haccpMonitoring.negative")
               }
               hideDialog={hideModal}
               onPositive={onEnrollTask}

@@ -1,4 +1,4 @@
-import { Alert, View } from "react-native"
+import { View } from "react-native"
 import React from "react"
 import PieChartAlert from "./PieChartAlert"
 import BadgeChart from "../Chart/BadgeChart"
@@ -6,7 +6,7 @@ import { Text } from "app/components/v2"
 import styles from "./styles"
 import { PieChart } from "react-native-gifted-charts"
 import { getStatusPerformance } from "app/utils-v2/dashboard/getPerformance"
-
+import { translate } from "../../../i18n/translate"
 export default function PerformanceChart({
   pieData,
   showPopup,
@@ -17,14 +17,21 @@ export default function PerformanceChart({
   isloading,
   machineLength,
 }: PerformanceChartProps) {
-  console.log("Popuip", popupData?.total)
   return (
-    <View style={[styles.activityPieChart]}>
+    <View
+      style={[
+        styles.shadowbox,
+        {
+          paddingVertical: 72,
+          backgroundColor: "white",
+        },
+      ]}
+    >
       <Text semibold body1 textAlign={"center"}>
-        Performance Statistic
+        {translate("dashboard.PerformanceStatistic")}
       </Text>
 
-      <View style={{ paddingHorizontal: 20, paddingVertical: 35, zIndex: 0 }}>
+      <View style={{ paddingHorizontal: 20, paddingVertical: 15, zIndex: 0 }}>
         <View
           style={{
             marginVertical: 20,
@@ -34,8 +41,8 @@ export default function PerformanceChart({
         >
           <PieChart
             data={pieData}
-            innerRadius={70}
-            showText={isloading && machineLength > 0 ? true : false}
+            innerRadius={64}
+            showText={!isloading && machineLength > 0 ? true : false}
             textBackgroundColor="#EEEEEE"
             textColor="black"
             centerLabelComponent={() => {
@@ -65,27 +72,51 @@ export default function PerformanceChart({
             onPress={(item, index) => {
               setShowPopup(false)
             }}
-            radius={130}
-            textSize={16}
+            radius={120}
+            textSize={14}
+            fontStyle="oblique"
             // focusOnPress
 
             showValuesAsLabels
             showTextBackground
-            textBackgroundRadius={20}
+            textBackgroundRadius={15}
           />
         </View>
 
-        <View style={[styles.horicontainer, { justifyContent: "center" }]}>
-          <BadgeChart title="Normal" bgColor="#145da0" />
-          <BadgeChart title="Pending" bgColor="#0e86d4" />
-          <BadgeChart title="Warning" bgColor="#BF3131" />
-        </View>
         <PieChartAlert
           visible={showPopup}
           onClose={() => setShowPopup(false)}
           data={popupData}
           label=""
         />
+      </View>
+
+      <View style={[styles.horicontainer, { justifyContent: "center", marginTop: 20, gap: 40 }]}>
+        {percentages !== -1 ? (
+          pieData?.map((data, index) => {
+            const label =
+              data?.color === "#145da0"
+                ? "Normal"
+                : data?.color === "#AED8FF"
+                ? "Pending"
+                : "Warning"
+            return (
+              <BadgeChart
+                title={label}
+                bgColor={data.color}
+                key={index.toString()}
+                value={data?.text + ""}
+              />
+            )
+          })
+        ) : (
+          <>
+            <BadgeChart title={"Normal"} bgColor={"#AED8FF"} value={0 + ""} />
+            <BadgeChart title={"Pending"} bgColor={"#145da0"} value={0 + ""} />
+
+            <BadgeChart title={"Warning"} bgColor={"#BF3131"} value={0 + ""} />
+          </>
+        )}
       </View>
     </View>
   )
