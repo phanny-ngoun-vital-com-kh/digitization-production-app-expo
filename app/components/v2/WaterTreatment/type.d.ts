@@ -13,10 +13,11 @@ export type MachinePanelProps = {
   status?: MACHINE_STATE
   isAssign?: boolean | null
   assign_to: string | undefined
-  validDate : boolean ,
-  validShift : number ,
+  validDate: boolean
+  validShift: number
+  handleShowdialog?: (users: string[]) => void
   time: string | undefined
-  onPress: (isValidShift:any) => void
+  onPress: (isValidShift: any) => void
   currUser?: string | null
   handleAssigntask?: (id: number, assign_to_user: string) => void
   id: number

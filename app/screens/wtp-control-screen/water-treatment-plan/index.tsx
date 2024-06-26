@@ -31,6 +31,7 @@ import {
   getCurrentTime,
 } from "app/utils-v2/getCurrTime"
 import { translate } from "../../../i18n"
+import ActivityModal from "app/components/v2/ActivitylogModal"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 
@@ -45,6 +46,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     const [schedules, setSchedules] = useState<Treatment[]>()
     const [scheduleSnapshot, setScheduleSnapshot] = useState<Treatment[]>()
     const [isloading, setLoading] = useState(false)
+    const [roles, setRoles] = useState<string[]>([])
     const [datePicker, setDatePicker] = useState({
       show: false,
       value: new Date(Date.now()),
@@ -63,6 +65,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     const [taskAssignto, setTaskAssignTo] = useState("")
     const [sort, setSort] = useState("asc")
     const [query, setQuery] = useState("")
+    const [showActivitylog, setShowActivitylog] = useState(false)
 
     const navigation = useNavigation()
 
@@ -148,6 +151,13 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                 setVisible(true)
                 setTaskAssignTo(assign_to_user)
                 setAssignUser((pre) => ({ ...pre, id, treatment_id: item?.treatment_id ?? "" }))
+              }}
+              handleShowdialog={(users) => {
+                setShowActivitylog(true)
+                if (users.includes("")) {
+                  return
+                }
+                setRoles(users)
               }}
               currUser={assignUser?.currUser}
               key={index.toString()}
@@ -487,6 +497,15 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             </View>
           </View>
         </View>
+        <ActivityModal
+          title="Users"
+          type="roles"
+          log={roles}
+          isVisible={showActivitylog}
+          onClose={() => {
+            setShowActivitylog(false)
+          }}
+        />
       </Provider>
     )
   },

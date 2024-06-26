@@ -1,21 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import {
-  Modal,
-  View,
-  FlatList,
-  TouchableOpacity,
-  useWindowDimensions,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native"
+import React, { useEffect, useRef, useState } from "react"
+import { Modal, View, useWindowDimensions, KeyboardAvoidingView, Platform } from "react-native"
 import Icon from "../Icon"
-import { BaseStyle, useTheme } from "app/theme-v2"
+import { useTheme } from "app/theme-v2"
 import styles from "./styles"
-import { TextInput as TextInputRef } from "react-native"
-import { Text, TextInput, Button } from ".."
+import { Text, Button } from ".."
 import { TabView, SceneMap, TabBar } from "react-native-tab-view"
 import SelectDropdown from "react-native-select-dropdown"
-import { useStores } from "app/models"
 import CustomInput from "../DailyPreWater/CustomInput"
 import SelectionDropDown from "app/components/SelectionDropDown"
 
@@ -41,7 +31,6 @@ const ModalDailyPreWater: React.FC<ModalProps> = ({
   const [temlist, settemlist] = useState<ItemInventory[]>([])
   const [newItem, setNewItem] = useState<ItemInventory[]>([])
   const [searchquery, setSearchQuery] = useState("")
-  const { inspectorItemStore } = useStores()
   const dropmenu_one = useRef<SelectDropdown>(null)
   const [index, setIndex] = useState(0)
 
@@ -130,7 +119,6 @@ const ModalDailyPreWater: React.FC<ModalProps> = ({
         <View style={{ backgroundColor: "#fff", width: "100%", flexDirection: "row" }}>
           <View style={{ marginTop: 5, marginBottom: 20, width: "25%", marginRight: "2.5%" }}>
             <CustomInput
-               
               onChangeText={(text) => setForm((pre) => ({ ...pre, item_code: text }))}
               label="Item Code"
               errormessage={

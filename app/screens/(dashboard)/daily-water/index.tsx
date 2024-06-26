@@ -30,7 +30,7 @@ interface DailyDsScreenProps extends AppStackScreenProps<"DailyDs"> {}
 export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function DailyDsScreen() {
   const { width: maxWidth } = useWindowDimensions()
   const machineColors = [
-    { label: "Raw Water Stock", color: "#11009E" },
+    { label: "Raw Water Stock", color: "#088395" },
     { label: "Sand Filter", color: "#059212" },
     { label: "Carbon Filter", color: "#D10363" },
     { label: "Resin Filter", color: "#DC5F00" },
@@ -268,17 +268,48 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       })
       setDataSet(newDatasets)
       const totalMachines = total_warning_count + total_normal_count + total_pending_count
-      const warning_percentages = Math.floor((total_warning_count / totalMachines) * 100)
-      const normal_percentage = Math.floor((total_normal_count / totalMachines) * 100)
-      const pending_percentages = 100 - (warning_percentages + normal_percentage)
-      setPercentages(normal_percentage)
+
+      const warning_percentages = ((total_warning_count / totalMachines) * 100).toFixed(2)
+      const normal_percentage = ((total_normal_count / totalMachines) * 100).toFixed(2)
+      const pending_percentages = 100 - (+warning_percentages + +normal_percentage)
+
+      setPercentages(+normal_percentage)
 
       setPieData([
-        { value: total_normal_count, color: "#145da0", text: normal_percentage + "" },
-
-        { value: total_pending_count, color: "#AED8FF", text: pending_percentages + "" },
-
-        { value: total_warning_count, color: "#BF3131", text: warning_percentages + "" },
+        {
+          value: total_normal_count,
+          color: "#145da0",
+          text: normal_percentage + "%",
+          shiftTextX: -13,
+          shiftTextY: 2,
+          textBackgroundRadius: 35,
+          shiftTextBackgroundY: 0,
+          shiftTextBackgroundX: 0,
+          textBackgroundRadius: 29,
+          textBackgroundColor: "#EEE",
+          textColor: "#145da0",
+        },
+        {
+          value: total_pending_count,
+          color: "#0e86d4",
+          text: pending_percentages?.toFixed(2) + "%",
+          shiftTextX: 7,
+          shiftTextBackgroundX: 20,
+          textBackgroundColor: "#EEE",
+          textBackgroundRadius: 29,
+          textColor: "#0e86d4",
+        },
+        {
+          value: total_warning_count,
+          color: "#BF3131",
+          text: warning_percentages + "%",
+          shiftTextX: -10,
+          shiftTextBackgroundX: 2,
+          textBackgroundColor: "#EEE",
+          textBackgroundRadius: 29,
+          textColor: "#BF3131",
+          shiftTextY: 1,
+        },
       ])
       const allColors = newDatasets.map((item) => item.color)
       const resultColor = machineColors.filter((item) => allColors.includes(item.color))
@@ -386,7 +417,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
 
                                 backgroundColor: selectedMachine.includes(item.value)
                                   ? "#0081F8"
-                                  : "white",
+                                  : "#DFDFDE",
 
                                 gap: 10,
                                 marginTop: 8,
@@ -435,9 +466,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                         }}
                       >
                         <Text body1 semibold>
-                        {
-                          translate("dashboard.machineActivity")
-                        }
+                          {translate("dashboard.machineActivity")}
                         </Text>
                         <View
                           style={[
@@ -535,7 +564,9 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                       >
                         {isLoading && (
                           <View style={styles.loadingStyle}>
-                            <Text textAlign={"center"}> {translate("wtpcommon.savingRecord")} ...</Text>
+                            <Text textAlign={"center"}>
+                              {translate("wtpcommon.loadingData")}...{" "}
+                            </Text>
                           </View>
                         )}
                         <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
@@ -681,17 +712,6 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                   },
                                 }}
                               ></LineChart>
-                              {fakeScrollIndicator && (
-                                <View
-                                  style={{
-                                    height: 3.8,
-                                    marginLeft: 40,
-                                    width: 465,
-                                    backgroundColor: "#B4B4B8",
-                                    marginTop: 31.5,
-                                  }}
-                                ></View>
-                              )}
                             </>
                           )}
 

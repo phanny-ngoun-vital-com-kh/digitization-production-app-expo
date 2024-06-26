@@ -25,14 +25,11 @@ import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import EmptyFallback from "app/components/EmptyFallback"
 import { PreWaterTreatment } from "app/models/pre-water-treatment/pre-water-treatment-model"
 import { useStores } from "app/models"
-import {
-  cleanTimeCurrent,
-  cleanTimePreWtp,
-  getCurrentTime,
-} from "app/utils-v2/getCurrTime"
+import { cleanTimeCurrent, cleanTimePreWtp, getCurrentTime } from "app/utils-v2/getCurrTime"
 import AlertDialog from "app/components/v2/AlertDialog"
 import { prewaterTreatmentApi } from "app/services/api/pre-water-treatment-api"
 import { translate } from "../../../i18n"
+import ActivityModal from "app/components/v2/ActivitylogModal"
 
 interface PrewaterTreatmentScreenProps extends AppStackScreenProps<"PrewaterTreatment"> {}
 
@@ -49,8 +46,9 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
       { time: "3:00", isWarning: false, pre_treatment_id: "" },
     ])
     const [isloading, setLoading] = useState(false)
+    const [roles, setRoles] = useState<string[]>([])
     const [isRefreshing, setRefreshing] = useState(false)
-
+    const [showActivitylog, setShowActivitylog] = useState(false)
     const [wtp, setWtp] = useState<PreWaterTreatment[] | null>([])
     const [datePicker, setDatePicker] = useState({
       show: false,
@@ -196,11 +194,15 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
           data={item?.pretreatmentlist || []}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item: subitem }) => {
-            console.log("Date is ", invalidDate(item.createdDate))
-            console.log("Time is ", isValidShift(item.time))
-
             return (
               <MachinePanel
+                handleShowdialog={(users: string[]) => {
+                  setShowActivitylog(true)
+                  if (users.includes("")) {
+                    return
+                  }
+                  setRoles(users)
+                }}
                 warning_count={subitem.warning_count}
                 status={subitem?.status}
                 handleAssigntask={(id: number, assign_to_user: string) => {
@@ -636,7 +638,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                 >
                   <View style={{ width: 550, marginBottom: 10 }}>
                     <CustomInput
-                      placeholder={translate('preWaterTreatment.search')}
+                      placeholder={translate("preWaterTreatment.search")}
                       onChangeText={(text) => setQuery(text)}
                       label=""
                       errormessage={""}
@@ -655,7 +657,9 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                   <FlatList
                     // contentContainerStyle={{flex:1}}
                     ListEmptyComponent={
-                      !isRefreshing && <EmptyFallback placeholder={translate('wtpcommon.noScheduleYet')}/>
+                      !isRefreshing && (
+                        <EmptyFallback placeholder={translate("wtpcommon.noScheduleYet")} />
+                      )
                     }
                     showsVerticalScrollIndicator
                     persistentScrollbar
@@ -683,6 +687,15 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
             </View>
           </View>
         </View>
+        <ActivityModal
+          title="Users"
+          type="roles"
+          log={roles}
+          isVisible={showActivitylog}
+          onClose={() => {
+            setShowActivitylog(false)
+          }}
+        />
       </Provider>
     )
   },

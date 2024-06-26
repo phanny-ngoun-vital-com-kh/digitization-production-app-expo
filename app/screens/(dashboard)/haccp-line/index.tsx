@@ -131,12 +131,10 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
       let total_warning_count = 0
       let total_normal_count = 0
       let total_pending_count = 0
-      let total_warn = 0 
 
       const newDatasets = selectedMachine.map((machine) => {
         const temporary = dashboard.map((item) => {
           const machineData = item?.machines.find((m) => m.machine === machine)
-      
 
           const warningCount = machineData ? machineData.warning_count : 0
           const pendingCount = machineData ? machineData.pending_count : 0
@@ -148,8 +146,6 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
           const machineColor =
             machineColors.find((color) => color.label === machine)?.color || "#ccc"
 
-    
-      
           return {
             value: warningCount,
             label: moment(item?.date).format("LL"), // Extract date only (YYYY-MM-DD)
@@ -172,17 +168,49 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
 
       const totalMachines = total_warning_count + total_normal_count + total_pending_count
 
-      const warning_percentages = Math.floor((total_warning_count / totalMachines) * 100)
-      const normal_percentage = Math.floor((total_normal_count / totalMachines) * 100)
-      const pending_percentages = 100 - (warning_percentages + normal_percentage)
-      setPercentages(normal_percentage)
+      const warning_percentages = ((total_warning_count / totalMachines) * 100).toFixed(2)
+      const normal_percentage = ((total_normal_count / totalMachines) * 100).toFixed(2)
+      const pending_percentages = 100 - (+warning_percentages + +normal_percentage)
+
+      // console.log("pending count: ", pending_percentages)
+
+      setPercentages(+normal_percentage)
 
       setPieData([
-        { value: total_normal_count, color: "#145da0", text: normal_percentage + "" },
+        {
+          value: total_normal_count,
+          color: "#145da0",
+          text: normal_percentage + "%",
+          shiftTextX: -16,
+          shiftTextY: 2,
+          textBackgroundRadius: 35,
+          shiftTextBackgroundY: 0,
+          shiftTextBackgroundX: 0,
+          textBackgroundRadius: 29,
+          textBackgroundColor: "#EEE",
+          textColor: "#145da0",
+        },
+        {
+          value: total_pending_count,
+          color: "#0e86d4",
+          text: pending_percentages?.toFixed(2) + "%",
+          shiftTextX: 7,
+          textBackgroundColor: "#EEE",
+          shiftTextBackgroundX: 23,
 
-        { value: total_pending_count, color: "#AED8FF", text: pending_percentages + "" },
+          textColor: "#0e86d4",
+        },
+        {
+          value: total_warning_count,
+          color: "#BF3131",
+          text: warning_percentages + "%",
+          shiftTextX: -10,
+          shiftTextBackgroundX: 2,
+          textBackgroundColor: "#EEE",
 
-        { value: total_warning_count, color: "#BF3131", text: warning_percentages + "" },
+          textColor: "#BF3131",
+          shiftTextY: 1,
+        },
       ])
 
       const allColors = newDatasets.map((item) => item.color)
@@ -223,7 +251,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
           }
         }
         warningCountsByDateAndMachine[date][item?.line].warning_count += item.warning_count || 0
-        if (item.status === "pending") {
+        if (item.status?.toLowerCase() === "pending" || item.status === undefined) {
           warningCountsByDateAndMachine[date][item?.line].pending_count += 1 // Increment pending count if status is pending
         }
         warningCountsByDateAndMachine[date][item?.line].status = item.status // Add status
@@ -348,7 +376,6 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                       *
                     </Text>
                     <Text semibold body1>
-                  
                       {translate("haccpMonitoring.selectLine")}
                     </Text>
                   </View>
@@ -390,7 +417,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
 
                                 backgroundColor: selectedMachine.includes(item.value)
                                   ? "#0081F8"
-                                  : "white",
+                                  : "#DFDFDE",
 
                                 gap: 10,
                                 marginTop: 8,
@@ -433,7 +460,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                         }}
                       >
                         <Text body1 semibold>
-                         {translate("dashboard.machineActivity")}
+                          {translate("dashboard.machineActivity")}
                         </Text>
                         <View
                           style={[
@@ -531,7 +558,10 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                       >
                         {isLoading && (
                           <View style={styles.loadingStyle}>
-                            <Text textAlign={"center"}> {translate("wtpcommon.savingRecord")}...</Text>
+                            <Text textAlign={"center"}>
+                              {" "}
+                              {translate("wtpcommon.loadingData")}...{" "}
+                            </Text>
                           </View>
                         )}
                         <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
@@ -676,17 +706,6 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                                   },
                                 }}
                               ></LineChart>
-                              {fakeScrollIndicator && (
-                                <View
-                                  style={{
-                                    height: 3.8,
-                                    marginLeft: 40,
-                                    width: 465,
-                                    backgroundColor: "#B4B4B8",
-                                    marginTop: 31.5,
-                                  }}
-                                ></View>
-                              )}
                             </>
                           )}
 

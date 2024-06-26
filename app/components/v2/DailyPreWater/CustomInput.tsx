@@ -41,11 +41,11 @@ const CustomInput = forwardRef(
     return (
       <>
         {label && (
-          <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: "row",alignItems:"center" }}>
             <Text style={{ margin: 0, fontSize: 18 }} semibold>
               {showAsterick && <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>}
 
-              <Text> {label}</Text>
+              <Text body2 semibold> {label}</Text>
             </Text>
             <View>{warning && <BadgeWarning value={"!"} status="warning" />}</View>
           </View>

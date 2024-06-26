@@ -36,13 +36,20 @@ const LinePanel = ({ onClickPanel, item, currUser, dateValid }: LinePanelProps) 
       <View
         style={[
           styles.linePanel,
-          { position: "relative",overflow:"hidden" },
+          { position: "relative", overflow: "hidden" },
           !dateValid && {
             backgroundColor: "#EEEEEE",
           },
         ]}
       >
-        {!dateValid && <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} top={-2} height={50} textMarginRight={13}/>}
+        {!dateValid && (
+          <BadgeOutofdate
+            placeholder={translate("wtpcommon.outDate")}
+            top={-2}
+            height={50}
+            textMarginRight={13}
+          />
+        )}
 
         <View style={[$containerHorizon, { justifyContent: "space-between", marginBottom: 0 }]}>
           <Text semibold body1>
@@ -73,14 +80,6 @@ const LinePanel = ({ onClickPanel, item, currUser, dateValid }: LinePanelProps) 
                   {translate("wtpcommon.youArenotAssigned")}
                 </Text>
               </View>
-              {!dateValid && (
-                <View style={[$containerHorizon, { gap: 0 }]}>
-                  <Icon name="close-circle" size={18} color="#D32600" />
-                  <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-                    Shift has ended.
-                  </Text>
-                </View>
-              )}
             </View>
           )}
         </View>

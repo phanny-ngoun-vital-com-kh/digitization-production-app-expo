@@ -31,7 +31,7 @@ export default function PerformanceChart({
         {translate("dashboard.PerformanceStatistic")}
       </Text>
 
-      <View style={{ paddingHorizontal: 20, paddingVertical: 15, zIndex: 0 }}>
+      <View style={{ paddingHorizontal: 20, paddingVertical: 0, zIndex: 0 }}>
         <View
           style={{
             marginVertical: 20,
@@ -43,8 +43,11 @@ export default function PerformanceChart({
             data={pieData}
             innerRadius={64}
             showText={!isloading && machineLength > 0 ? true : false}
-            textBackgroundColor="#EEEEEE"
-            textColor="black"
+            // textBackgroundColor="#EEEEEE"
+            // textColor="#"
+
+            curvedEndEdges
+            isAnimated
             centerLabelComponent={() => {
               const { color, label } = getStatusPerformance(percentages)
               return (
@@ -72,14 +75,15 @@ export default function PerformanceChart({
             onPress={(item, index) => {
               setShowPopup(false)
             }}
-            radius={120}
-            textSize={14}
-            fontStyle="oblique"
+            radius={115}
+            textSize={12.5}
+            fontWeight="bold"
+            labelsPosition="onBorder"
             // focusOnPress
 
             showValuesAsLabels
             showTextBackground
-            textBackgroundRadius={15}
+            textBackgroundRadius={30}
           />
         </View>
 
@@ -91,13 +95,13 @@ export default function PerformanceChart({
         />
       </View>
 
-      <View style={[styles.horicontainer, { justifyContent: "center", marginTop: 20, gap: 40 }]}>
+      <View style={[styles.horicontainer, { justifyContent: "center", marginTop: 20, gap: 20 }]}>
         {percentages !== -1 ? (
           pieData?.map((data, index) => {
             const label =
               data?.color === "#145da0"
                 ? "Normal"
-                : data?.color === "#AED8FF"
+                : data?.color === "#0e86d4"
                 ? "Pending"
                 : "Warning"
             return (

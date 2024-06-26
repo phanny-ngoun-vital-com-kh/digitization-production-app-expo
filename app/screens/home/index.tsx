@@ -1,28 +1,16 @@
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import {
-  Button,
-  Text,
   Dimensions,
   FlatList,
-  Image,
-  ImageStyle,
-  Platform,
-  TextStyle,
-  TouchableOpacity,
   View,
-  ViewStyle,
 } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import IconFontisto from "react-native-vector-icons/Fontisto"
 import IconMaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import style from "./style"
 import { useStores } from "app/models"
-import { Avatar, Card, Title, Paragraph } from "react-native-paper"
-import { WaterTreatmentModel } from "app/models/water-treatment/water-treatment-model"
-import { WaterTreatmentStoreModel } from "app/models/water-treatment/water-treatment-store"
-// import HomeCard from "app/components/v2/HomeCard"
-
+import { Avatar, Card } from "react-native-paper"
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
@@ -132,15 +120,8 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               navigation: "HccpMonitor",
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
-            },
-            {
-              id: 5,
-              name: "Dashboard",
-              subname: "Overview and Analytic",
-              navigation: "Dashboard",
-              iconname: "view-dashboard-outline",
-              icontype: "MaterialCommunityIcons",
-            },
+            }
+   
             // Add other items as needed
           ]
           setList(updatedList)
@@ -182,14 +163,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
             },
-            // {
-            //   id: 4,
-            //   name: "HACCP Monitoring",
-            //   subname: "HACCP Monitoring List",
-            //   navigation: "HccpMonitor",
-            //   iconname: "alert-octagon",
-            //   icontype: "MaterialCommunityIcons",
-            // },
             {
               id: 5,
               name: "Dashboard",
@@ -198,16 +171,72 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               iconname: "view-dashboard-outline",
               icontype: "MaterialCommunityIcons",
             },
+      
+            // {
+            //   id: 4,
+            //   name: "HACCP Monitoring",
+            //   subname: "HACCP Monitoring List",
+            //   navigation: "HccpMonitor",
+            //   iconname: "alert-octagon",
+            //   icontype: "MaterialCommunityIcons",
+            // },
           ]
           setList(updatedList)
-        }
+        } 
+        
+        // else {
+        //   const updatedList = [
+        //     {
+        //       id: 1,
+        //       name: "Inventory Transfer Request",
+        //       subname: "Inventory Transfer Request List",
+        //       navigation: "InventoryTransferRequestProduction",
+        //       iconname: "arrow-top-right-bottom-left",
+        //       icontype: "Fontisto",
+        //     },
+        //     {
+        //       id: 2,
+        //       name: "Inventory Transfer",
+        //       subname: "Inventory Transfer List",
+        //       navigation: "InventoryTransfer",
+        //       iconname: "warehouse",
+        //       icontype: "MaterialCommunityIcons",
+        //     },
+        //     {
+        //       id: 3,
+        //       name: "Water Treatment Control",
+        //       subname: "Water Treatment  List",
+        //       navigation: "WaterTreatmentControlList",
+        //       iconname: "water",
+        //       icontype: "MaterialCommunityIcons",
+        //     },
+
+        //     {
+        //       id: 4,
+        //       name: "HACCP Monitoring",
+        //       subname: "HACCP Monitoring List",
+        //       navigation: "HccpMonitor",
+        //       iconname: "alert-octagon",
+        //       icontype: "MaterialCommunityIcons",
+        //     },
+
+        //     // {
+        //     //   id: 4,
+        //     //   name: "HACCP Monitoring",
+        //     //   subname: "HACCP Monitoring List",
+        //     //   navigation: "HccpMonitor",
+        //     //   iconname: "alert-octagon",
+        //     //   icontype: "MaterialCommunityIcons",
+        //     // },
+        //   ]
+        //   setList(updatedList)
+        // }
       } catch (e) {
         console.log(e)
       }
     }
 
     role()
-
   }, [])
 
   // useEffect(() => {

@@ -84,6 +84,7 @@ export type AppStackParamList = {
   PreWaterDs: undefined
   LineDs: undefined
   DailyDs: undefined
+  ScanMachine: undefined
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -113,7 +114,7 @@ const DrawerScreen = observer(function DrawerScreen() {
       <Drawer.Screen
         name="AppStack"
         options={{
-          swipeEnabled: false, //disable drawer when swipe accidentally at empty screen that do not have drawer 
+          swipeEnabled: false, //disable drawer when swipe accidentally at empty screen that do not have drawer
         }}
       >
         {(props) => <AppStack {...props} setUsername={setUsername} />}
@@ -294,7 +295,7 @@ const AppStack = observer(function AppStack(props: {
               title: "Form 2",
             }}
           />
-     
+
           <Stack.Screen
             name="Dashboard"
             component={Screens.DashboardScreen}
@@ -327,6 +328,15 @@ const AppStack = observer(function AppStack(props: {
               title: "Daily Water",
             }}
           />
+          <Stack.Screen
+            name="ScanMachine"
+            component={Screens.ScanMachineScreen}
+            options={{
+              headerShown: true,
+              title: "Current Count",
+            }}
+          />
+
           {/* <Stack.Screen name="Demo" component={DemoNavigator} /> */}
         </>
       ) : (

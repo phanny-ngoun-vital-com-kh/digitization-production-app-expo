@@ -168,7 +168,6 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       if (route?.type?.toLowerCase().startsWith("pressure")) {
         const [sf1, sf2, mM102, acf1, acf2, _mM102, mM101] = numeric
 
-        console.log(numeric)
 
         setForm({
           acf1: acf1 ?? "",
@@ -406,8 +405,6 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         return
       }
       const currUser = await getCurrentUserName()
-
-      console.log(currUser, route?.item?.assign_to_user)
       const arrUsers = route?.item?.assign_to_user?.split(" ") as string[]
       if (arrUsers.includes(currUser)) {
         setEditable(true)

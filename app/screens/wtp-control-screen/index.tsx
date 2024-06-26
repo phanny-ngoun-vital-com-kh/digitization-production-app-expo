@@ -38,6 +38,14 @@ export const WaterTreatmentControlListScreen: FC<WaterTreatmentControlListScreen
           iconname: "water-check",
           icontype: "MaterialCommunityIcons",
         },
+        {
+          id: 3,
+          name: "Scan Machine",
+          subname: "Quick and Simple Scan Machine",
+          navigation: "ScanMachine",
+          iconname: "keyboard",
+          icontype: "MaterialCommunityIcons",
+        },
       ]
 
       setList(updatedList)

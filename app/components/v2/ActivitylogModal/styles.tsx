@@ -72,9 +72,9 @@ export default StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "#0081F8",
     padding: 10,
-
     justifyContent: "space-between",
     alignItems: "center",
+    alignContent:"center",
   },
   flatListContent: {
     // paddingHorizontal: 25,

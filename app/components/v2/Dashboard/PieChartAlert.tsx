@@ -26,8 +26,6 @@ const PieChartAlert = ({
     }
   }
 
-
-
   return (
     <View style={[styles.outerContainer, { display: visible ? "flex" : "none" }]}>
       <View style={{ paddingHorizontal: 15, paddingBottom: 10 }}>
@@ -37,28 +35,99 @@ const PieChartAlert = ({
         <Divider style={{ marginVertical: 15 }} />
         <View>
           <View style={styles.horizontal}>
-            <Text regular errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text
+              regular
+              errorColor={data.index === 2}
+              primaryColor={data.index === 0}
+              style={
+                data.index === 1
+                  ? {
+                      color: "#686D76",
+                    }
+                  : {}
+              }
+            >
               Total Machine
             </Text>
-            <Text semibold errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text
+              semibold
+              errorColor={data.index === 2}
+              primaryColor={data.index === 0}
+              grayColor={data.index === 1}
+              style={
+                data.index === 1
+                  ? {
+                      color: "#686D76",
+                    }
+                  : {}
+              }
+            >
               {data?.total || 0}
             </Text>
           </View>
           <View style={styles.horizontal}>
-            <Text regular errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text
+              regular
+              errorColor={data.index === 2}
+              primaryColor={data.index === 0}
+              grayColor={data.index === 1}
+              style={
+                data.index === 1
+                  ? {
+                      color: "#686D76",
+                    }
+                  : {}
+              }
+            >
               {getTag()} Count{" "}
             </Text>
-            <Text semibold errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text
+              semibold
+              errorColor={data.index === 2}
+              primaryColor={data.index === 0}
+              grayColor={data.index === 1}
+              style={
+                data.index === 1
+                  ? {
+                      color: "#686D76",
+                    }
+                  : {}
+              }
+            >
               {data?.label}
             </Text>
           </View>
 
           <View style={styles.horizontal}>
-            <Text regular errorColor={data.index === 2} primaryColor={data.index === 0}>
+            <Text
+              regular
+              errorColor={data.index === 2}
+              primaryColor={data.index === 0}
+              grayColor={data.index === 1}
+              style={
+                data.index === 1
+                  ? {
+                      color: "#686D76",
+                    }
+                  : {}
+              }
+            >
               Percentages
             </Text>
-            <Text semibold errorColor={data.index === 2} primaryColor={data.index === 0}>
-              {data?.percentages}%
+            <Text
+              semibold
+              errorColor={data.index === 2}
+              primaryColor={data.index === 0}
+              grayColor={data.index === 1}
+              style={
+                data.index === 1
+                  ? {
+                      color: "#686D76",
+                    }
+                  : {}
+              }
+            >
+              {data?.percentages}
             </Text>
           </View>
         </View>

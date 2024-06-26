@@ -118,7 +118,7 @@ const HeaderBar = ({
             search
             value={selectedWtp}
             onChangeText={(text: any) => {
-              console.log(text)
+    
             }}
             onChange={(item) => {
               onSelectWtp(item)

@@ -1,7 +1,6 @@
 import React from "react"
 import Icon from "react-native-vector-icons/AntDesign"
 import { Text } from "app/components/v2"
-import BadgeTriangle from "../BadgeV2"
 import styles from "./styles"
 import { TouchableOpacity, View } from "react-native"
 import { Divider } from "react-native-paper"
@@ -10,7 +9,6 @@ import { MACHINE_STATE, MachinePanelProps } from "./type"
 import BadgeWarning from "../Badgewarn"
 import { translate } from "../../../i18n/translate"
 import moment from "moment"
-import BadgePanelWarning from "../BadgePanel"
 import BadgeOutofdate from "../BadgePanel"
 
 const MachinePanel = ({
@@ -21,6 +19,7 @@ const MachinePanel = ({
   time = "7:00",
   created_date,
   validDate,
+  handleShowdialog,
   validShift,
   id,
   currUser,
@@ -44,7 +43,6 @@ const MachinePanel = ({
       }}
     >
       <TouchableOpacity
-        // disabled={isValidShift()}
         style={{ paddingHorizontal: 10, paddingVertical: 5 }}
         onPress={() => {
           onPress(validShift)
@@ -84,7 +82,7 @@ const MachinePanel = ({
                 <Icon name="checkcircle" size={18} color="green" />
                 <Text semibold caption1 style={{ marginLeft: 5, color: "green" }}>
                   {/* You are assigned */}
-                  {translate("wtpcommon.viewAssignment")}
+                  {translate("wtpcommon.youareApproved")}
                 </Text>
               </View>
             )}
@@ -95,6 +93,7 @@ const MachinePanel = ({
                 Assign to : {assign_to}
               </Text>
             </View> */}
+
             <View style={$containerHorizon}>
               <Icon name="clockcircleo" style={{ marginRight: 5 }} size={18} color="black" />
               <Text semibold caption1>
@@ -107,6 +106,21 @@ const MachinePanel = ({
                 {moment(created_date).format("LL")}
               </Text>
             </View>
+            {assign_to_user ? (
+              <View style={$containerHorizon}>
+                <Icon name="clockcircleo" style={{ marginRight: 5 }} size={18} color="black" />
+                <Text semibold caption1>
+                  Assignment count {assign_to_user?.split(" ")?.length}
+                </Text>
+              </View>
+            ) : (
+              <View style={$containerHorizon}>
+                <Icon name="clockcircleo" style={{ marginRight: 5 }} size={18} color="black" />
+                <Text semibold caption1>
+                  Assignment count 0
+                </Text>
+              </View>
+            )}
           </View>
 
           <View>
@@ -116,7 +130,6 @@ const MachinePanel = ({
           </View>
         </View>
       </TouchableOpacity>
-      {/* <Text>{isValidShift(time) === -1 ? "True" : "false "}</Text> */}
 
       {status === "pending" && assign_to_user?.split(" ").includes(currUser ?? "") === false ? (
         validDate && validShift === -1 ? (
@@ -139,8 +152,8 @@ const MachinePanel = ({
             </TouchableOpacity>
           </View>
         ) : (
-          <BadgeOutofdate  placeholder={translate("wtpcommon.outDate")}/>
-          )
+          <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} />
+        )
       ) : validDate && validShift === -1 ? (
         <View
           style={[
@@ -160,8 +173,26 @@ const MachinePanel = ({
           </TouchableOpacity>
         </View>
       ) : (
-        <BadgeOutofdate  placeholder={translate("wtpcommon.outDate")}/>
+        <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} />
       )}
+      <View
+        style={[
+          $containerHorizon,
+          { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
+          style={$containerHorizon}
+        >
+          <Icon name="eye" size={18} color="#0081F8" />
+          <Text semibold caption1 style={{ marginLeft: 5 }} primaryColor>
+           {
+            translate("wtpcommon.viewAssignment")
+           }
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }

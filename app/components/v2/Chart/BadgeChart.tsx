@@ -18,7 +18,7 @@ const BadgeChart = ({ title, bgColor, value = null }: BadgeChartProps) => {
         }}
       ></View>
       <Text  semibold caption2>
-        {title} {value !== null && value.toString() + "%"}
+        {title} {value !== null && value.toString() }
       </Text>
     </View>
   )

@@ -469,7 +469,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       }
 
       if ([4, 5, 6]?.includes(+route?.line)) {
-        console.log("456")
+  
         const [side_wall] = numberic.filter(
           (item) =>
             (parseInt(item) >= 100 && parseInt(item) <= 110) ||
@@ -498,10 +498,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             (parseInt(item) <= 0.4 && parseInt(item) >= 0.05) ||
             (parseInt(item) <= 0.05 && parseInt(item) >= 0),
         )
-        console.log("tem_preform", tem_preform)
-
-        console.log("fg", fg)
-        console.log("treat_water_pressure", treat_water_pressure)
 
         setFormLineA({
           side_wall: side_wall,
@@ -527,13 +523,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
         })
 
         const water_pressure = Math.max(...filterWaterPressure?.map((item) => parseFloat(item)))
-
-        console.log(
-          numberic?.filter((item) => {
-            const value = parseFloat(item)
-            return (value > 0 && value <= 1) || (value >= 1 && value <= 20)
-          }),
-        )
 
         const [nozzie_rinser] = numberic.filter(
           (item) => parseInt(item) >= 32 && parseInt(item) <= 40,

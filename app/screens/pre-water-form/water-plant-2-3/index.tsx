@@ -342,7 +342,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
       }
       const [sf1, resin, acf1, mM5] = numeric
 
-      console.log(numeric)
 
       setForm({
         sf1: sf1,
@@ -425,7 +424,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         // Function to check if a sequence of words matches the pattern to ignore
         let shouldIgnoreSequence: any
         if (route?.type?.toLowerCase().includes("ph")) {
-          console.log("true ph ")
+
           shouldIgnoreSequence = (sequence) => {
             const ignorePattern = ["*", "Warning", "Level", "(", "6.5", "-", "8.5", ")"]
             for (let i = 0; i < ignorePattern.length; i++) {
@@ -490,8 +489,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         return
       }
       const currUser = await getCurrentUserName()
-
-      console.log(currUser, route?.item?.assign_to_user)
       const arrUsers = route?.item?.assign_to_user?.split(" ") as string[]
       if (arrUsers.includes(currUser)) {
         setEditable(true)

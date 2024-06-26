@@ -1,5 +1,5 @@
 import React from "react"
-import Icon from "react-native-vector-icons/FontAwesome"
+import Icon from "react-native-vector-icons/AntDesign"
 import styles from "./styles"
 import { Text } from "app/components/v2"
 import { View, TouchableOpacity, FlatList } from "react-native"
@@ -8,7 +8,7 @@ import moment from "moment"
 import EmptyFallback from "app/components/EmptyFallback"
 import { Modal } from "react-native-paper"
 import { HaccpActionType } from "app/models/haccp-monitoring/haccp-lines-model"
-import {translate} from "../../../i18n/translate"
+import { translate } from "../../../i18n/translate"
 interface ActivityModalProps {
   isVisible: boolean
   title?: string
@@ -22,7 +22,7 @@ const ActivityModal = ({
   isVisible = true,
   onClose,
   log = [],
-  type ="default",
+  type = "default",
 }: ActivityModalProps) => {
   return (
     <Modal
@@ -32,48 +32,37 @@ const ActivityModal = ({
       contentContainerStyle={styles.modalContainer}
     >
       <View style={styles.modalContent}>
-        {/* <View style={styles.header}>
-          <Text title3 whiteColor regular>
-            Activity Log
-          </Text>
-          <TouchableOpacity onPress={onClose}>
-            <Icon size={22.5} name="close" color={"white"} />
-          </TouchableOpacity>
-        </View> */}
-
         <FlatList
           showsVerticalScrollIndicator
           persistentScrollbar
-          // stickyHeaderIndices={[0]}
           stickyHeaderIndices={[0]}
           ListHeaderComponent={() => (
             <View style={styles.header}>
               <Icon
-                name={"user"}
-                size={25}
+                name={"setting"}
+                size={22.5}
                 color="white"
-                style={{ marginBottom: 10, marginLeft: 10 }}
+                style={{ marginBottom: 0, marginLeft: 10 }}
               />
 
-              <Text title3 whiteColor regular>
-            
-                {
-                  translate("dailyWaterTreatment.activityLog")
-                }
+              <Text title3 whiteColor semibold>
+                {translate("dailyWaterTreatment.activityLog")}
               </Text>
               <TouchableOpacity onPress={onClose}>
                 <Icon size={22.5} name="close" color={"white"} />
               </TouchableOpacity>
             </View>
           )}
-          data={log || []}
+          data={log}
           keyExtractor={(item, index) => index.toString()}
           contentContainerStyle={styles.flatListContent}
-          ListEmptyComponent={<EmptyFallback placeholder={translate("wtpcommon.noactivityFound")} />}
+          ListEmptyComponent={
+            <EmptyFallback placeholder={translate("wtpcommon.noactivityFound")} />
+          }
           renderItem={({ item, index }) => {
             return type === "default" ? (
               <View style={styles.listItem} key={index.toString()}>
-                <Text title1>{`\u2022 `}</Text>
+                <Text title1 >{`\u2022 `}</Text>
                 <Text body2>
                   {moment(item?.actionDate).format("LLL") ?? Date.now().toLocaleString()} :{" "}
                   {item?.actionBy} {item?.action}
@@ -81,14 +70,9 @@ const ActivityModal = ({
               </View>
             ) : (
               <View style={[styles.listItem, { alignItems: "center" }]} key={index.toString()}>
-                <Icon
-                  name={"check"}
-                  size={20}
-                  color="black"
-                  style={{ marginLeft: 10 }}
-                />
+                <Icon name={"check"} size={18.5} color="black" style={{ marginLeft: 10 }} />
 
-                <Text body1> This line has assigned to {item}</Text>
+                <Text body2 > This machine has assigned to {item}</Text>
               </View>
             )
           }}

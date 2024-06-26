@@ -127,7 +127,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
         const userinfo = await authStore.getUserInfo()
         const { login } = userinfo.data
         setVisible(false)
-        console.log("Updating")
+
         await haccpLinesStore.saveSelfEnroll(
           route?.id ?? "",
           route?.line?.haccp_id ?? "",
@@ -163,7 +163,6 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       sorting === "asc" ? setSorting("desc") : setSorting("asc")
     }
 
-    console.log("Assign role", isAssign)
     useEffect(() => {
       fetchLinesTable()
     }, [navigation, route])
@@ -446,25 +445,22 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                     </DataTable.Title>
                   </DataTable.Header>
                 </DataTable>
-                {loading ? (
-                  <ActivityIndicator color={colors.primary} size={40} />
-                ) : (
-                  <FlatList
-                    data={filterLines || haccpLine}
-                    refreshControl={
-                      <RefreshControl
-                        colors={["#0081F8"]}
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                      />
-                    }
-                    ListEmptyComponent={
-                      <EmptyFallback placeholder={translate("wtpcommon.noRecordFound")} />
-                    }
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={rendertableLine23}
-                  />
-                )}
+
+                <FlatList
+                  data={filterLines || haccpLine}
+                  refreshControl={
+                    <RefreshControl
+                      colors={["#0081F8"]}
+                      refreshing={loading}
+                      onRefresh={handleRefresh}
+                    />
+                  }
+                  ListEmptyComponent={
+                    <EmptyFallback placeholder={translate("wtpcommon.noRecordFound")} />
+                  }
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={rendertableLine23}
+                />
               </View>
             </View>
             <ActivityModal
@@ -592,27 +588,21 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 </DataTable.Header>
               </DataTable>
 
-              <View>
-                {loading ? (
-                  <ActivityIndicator color={colors.primary} size={40} />
-                ) : (
-                  <FlatList
-                    data={filterLines || haccpLine}
-                    refreshControl={
-                      <RefreshControl
-                        colors={["#0081F8"]}
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                      />
-                    }
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={rendertableLine456}
-                    ListEmptyComponent={
-                      <EmptyFallback placeholder={translate("wtpcommon.noRecordFound")} />
-                    }
+              <FlatList
+                data={filterLines || haccpLine}
+                refreshControl={
+                  <RefreshControl
+                    colors={["#0081F8"]}
+                    refreshing={loading}
+                    onRefresh={handleRefresh}
                   />
-                )}
-              </View>
+                }
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={rendertableLine456}
+                ListEmptyComponent={
+                  <EmptyFallback placeholder={translate("wtpcommon.noRecordFound")} />
+                }
+              />
             </View>
             <AlertDialog
               visible={visible}
