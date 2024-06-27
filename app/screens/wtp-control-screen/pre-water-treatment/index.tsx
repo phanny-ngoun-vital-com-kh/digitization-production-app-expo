@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import React, { FC, useEffect, useState } from "react"
+import React, { FC, useEffect, useRef, useState } from "react"
 import { observer } from "mobx-react-lite"
 import { useTheme } from "app/theme-v2"
 import moment from "moment"
@@ -30,6 +30,7 @@ import AlertDialog from "app/components/v2/AlertDialog"
 import { prewaterTreatmentApi } from "app/services/api/pre-water-treatment-api"
 import { translate } from "../../../i18n"
 import ActivityModal from "app/components/v2/ActivitylogModal"
+import { isCancel } from "apisauce"
 
 interface PrewaterTreatmentScreenProps extends AppStackScreenProps<"PrewaterTreatment"> {}
 
@@ -46,6 +47,8 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
       { time: "3:00", isWarning: false, pre_treatment_id: "" },
     ])
     const [isloading, setLoading] = useState(false)
+    const flatListRef = useRef<FlatList>(null)
+    const [cancelDate, setCancelDate] = useState(false)
     const [roles, setRoles] = useState<string[]>([])
     const [isRefreshing, setRefreshing] = useState(false)
     const [showActivitylog, setShowActivitylog] = useState(false)
@@ -192,6 +195,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
           showsVerticalScrollIndicator
           persistentScrollbar
           data={item?.pretreatmentlist || []}
+    
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item: subitem }) => {
             return (
@@ -466,6 +470,10 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
         const [allprogress] = result?.map((item) => item?.pretreatmentlist) as []
         const selectProgress = allprogress?.filter((item) => item?.status !== "pending")
         const pretreatmentlist = result?.map((item) => item?.pretreatmentlist)[0]
+        flatListRef.current?.scrollToOffset({
+          animated: true,
+          offset: 0,
+        })
         onCalculateSchedule(selectProgress?.length, pretreatmentlist?.length)
 
         setSelectTime(result)
@@ -480,7 +488,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
     const hideDialog = () => setVisible(false)
 
     useEffect(() => {
-      if (selectedWTP.value && datePicker.value) {
+      if (selectedWTP.value && datePicker.value && !cancelDate) {
         setLoading(true)
         const result = getCurrentSchedule(schedules, getCurrentTime())
 
@@ -510,7 +518,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
 
         fetchWtp(result?.time, result?.index, selectedWTP.name)
       }
-    }, [datePicker.value, selectedWTP.value])
+    }, [datePicker.value, selectedWTP.value, cancelDate])
 
     useEffect(() => {
       if (!wtp?.length) {
@@ -564,12 +572,16 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                 <Text>Test Form offline</Text>
               </Pressable> */}
               <HeaderBar
+                isLoading={isRefreshing}
                 enableWTP={true}
                 showLine={false}
                 onChangeDate={(e, v) => {
                   setDatePicker((pre) => ({ show: false, value: v }))
                   if (e.type === "set") {
                     setSelectProgess(0)
+                    setCancelDate(false)
+                  } else {
+                    setCancelDate(true)
                   }
                 }}
                 selectedWtp={selectedWTP}
@@ -578,7 +590,10 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                   setSelectTime([])
                   setSelectedWTP(item)
                 }}
-                onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
+                onPressdate={() => {
+                  setDatePicker((pre) => ({ ...pre, show: true }))
+                  setCancelDate(true)
+                }}
                 dateValue={datePicker.value}
                 showDate={datePicker.show}
                 currDate={new Date(Date.now())}
@@ -617,6 +632,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
 
                           selectedWTP.name,
                         )
+                  
                         setSelectProgess(0)
                       }}
                       isWarning={item.isWarning && selectedShift?.item != item.time}
@@ -663,6 +679,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                     }
                     showsVerticalScrollIndicator
                     persistentScrollbar
+                    ref={flatListRef}
                     data={selectTime}
                     refreshControl={
                       <RefreshControl

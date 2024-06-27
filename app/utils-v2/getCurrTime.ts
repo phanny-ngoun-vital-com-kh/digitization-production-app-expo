@@ -4,7 +4,7 @@ export const getCurrentTime = () => {
   const minutes = date.getMinutes()
 
   if (hours < 10) {
-    console.log("true")
+
     hours = "0" + hours
   }
   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes
@@ -59,7 +59,6 @@ export function cleanTimePreWtp(timeString: string) {
 
     const time = +(cleanedTime[0] + cleanedTime[1])
 
-    console.log("The time in pattern are", time)
     if (time === 7) {
       return "11:00"
     }

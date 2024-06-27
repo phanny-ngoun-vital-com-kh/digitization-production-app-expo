@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useState } from "react"
 import Icon from "react-native-vector-icons/AntDesign"
+import { default as SecondaryIcon } from "react-native-vector-icons/Ionicons"
 import DatePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import { Text } from "app/components/v2"
 import { View, Platform, TextStyle, TouchableOpacity } from "react-native"
@@ -9,6 +10,7 @@ import moment from "moment"
 import { translate } from "../../../i18n"
 type HeaderProps = {
   currDate: Date
+  isLoading?: boolean
   showDate: boolean
   dateValue: any
   selectedLine: string
@@ -32,6 +34,7 @@ const HeaderBar = ({
   onPressdate,
   onSelectWtp,
   onChangeDate,
+  isLoading = false,
 }: HeaderProps) => {
   const lines = [
     { name: "line 1", value: 1 },
@@ -71,19 +74,18 @@ const HeaderBar = ({
 
           {translate("wtpcommon.todayTask")}
         </Text>
-        <Text body2>{moment(currDate).format("LL")}</Text>
+        <Text body2>
+          {moment(currDate).format("LL")}
+
+          {/* {
+              clock
+            } */}
+        </Text>
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        {/* <Icon name="clockcircle" size={22} color={"black"} />
-        <View style={{marginRight:10}}
-        
-        >
-
-        </View>
-        <Text semibold style={{
-          color:"black"
-        }}>{clock || moment(new Date(Date.now())).format("LTS")} </Text> */}
+        <SecondaryIcon name="filter-sharp" size={20} style={{ marginRight: 8 }} />
+        <Text style={{ marginRight: 5 }}>Filter by:</Text>
         {showLine && (
           <Dropdown
             style={styles.dropdown}
@@ -106,6 +108,7 @@ const HeaderBar = ({
           <Dropdown
             style={[styles.dropdown, { width: 230 }]}
             data={wtps}
+            disable={isLoading}
             labelField="name"
             valueField="value"
             placeholder={translate("preWaterTreatment.selectTreatment")}
@@ -117,9 +120,7 @@ const HeaderBar = ({
 
             search
             value={selectedWtp}
-            onChangeText={(text: any) => {
-    
-            }}
+            onChangeText={(text: any) => {}}
             onChange={(item) => {
               onSelectWtp(item)
             }}
@@ -128,6 +129,7 @@ const HeaderBar = ({
 
         <View style={{ width: 200 }}>
           <TouchableOpacity
+            disabled={isLoading}
             onPress={onPressdate}
             style={[styles.date_button, { flexDirection: "row", alignItems: "center", gap: 10 }]}
           >

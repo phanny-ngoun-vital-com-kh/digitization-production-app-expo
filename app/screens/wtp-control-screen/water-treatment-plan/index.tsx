@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useLayoutEffect, useState } from "react"
+import React, { FC, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { observer } from "mobx-react-lite"
 import moment from "moment"
 import { useTheme } from "app/theme-v2"
@@ -9,6 +9,7 @@ import {
   ScrollView,
   FlatList,
   RefreshControl,
+  FlatListProps,
 } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import styles from "./styles"
@@ -41,12 +42,14 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     const [selectProgess, setSelectProgess] = useState(0)
     const [refreshing, setRefreshing] = useState(false)
     const { colors } = useTheme()
+    const flatListRef = useRef<FlatList>(null)
     const [wtp2, setWtp2] = useState<WaterTreatment[]>([])
     const [visible, setVisible] = React.useState(false)
     const [schedules, setSchedules] = useState<Treatment[]>()
     const [scheduleSnapshot, setScheduleSnapshot] = useState<Treatment[]>()
     const [isloading, setLoading] = useState(false)
     const [roles, setRoles] = useState<string[]>([])
+    const [cancelDate, setCancelDate] = useState(false)
     const [datePicker, setDatePicker] = useState({
       show: false,
       value: new Date(Date.now()),
@@ -269,11 +272,11 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }
     const fetchScehdules = async () => {
       try {
+        setLoading(true)
+        setRefreshing(true)
         getCurrentUserName()
         setQuery("")
         setSort("asc")
-        setLoading(true)
-        setRefreshing(true)
 
         if (datePicker.value) {
           const assign_date = moment(datePicker?.value).format("YYYY-MM-DD")
@@ -283,6 +286,11 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             selectedShift || "",
           )) as []
 
+          // console.log("done fetching", results.length)
+          flatListRef?.current?.scrollToOffset({
+            animated: true,
+            offset: 0,
+          })
           setWtp2(results)
 
           const schedules = results.map((item) => item?.treatmentlist)[0]
@@ -350,16 +358,19 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       return currShift
     })
     useLayoutEffect(() => {
-      fetchScehdules()
-
-      if (datePicker.value) {
+      // if(cancelDate ) {
+      //   return
+      // }
+      console.log(datePicker.value)
+      if (cancelDate === false && datePicker.value) {
+        fetchScehdules()
         fetchTimePanel()
       }
 
       // return () => {
       //   setSelectedShift('S1 (7:00)')
       // }
-    }, [datePicker.value, selectedShift])
+    }, [datePicker.value, selectedShift, cancelDate])
     useEffect(() => {
       onSearchItem()
       return () => setSchedules(scheduleSnapshot)
@@ -378,17 +389,26 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               ]}
             >
               <HeaderBar
+                isLoading={isloading}
                 enableWTP={false}
                 showLine={false}
                 onChangeDate={(e, v) => {
-                  setDatePicker((pre) => ({ show: false, value: v }))
+                  setDatePicker({ show: false, value: v })
 
                   if (e.type === "set") {
+                    // setWtp2([])
                     setSelectProgess(0)
+
+                    setCancelDate(false)
                     // setSelectedShift(`S1 (7:00)`)
+                  } else {
+                    setCancelDate(true)
                   }
                 }}
-                onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
+                onPressdate={() => {
+                  setDatePicker((pre) => ({ ...pre, show: true }))
+                  setCancelDate(true)
+                }}
                 dateValue={datePicker.value}
                 showDate={datePicker.show}
                 currDate={new Date(Date.now())}
@@ -473,6 +493,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                         onRefresh={() => refresh()}
                       />
                     }
+                    ref={flatListRef}
                     style={$useflex}
                     data={wtp2}
                     ListEmptyComponent={

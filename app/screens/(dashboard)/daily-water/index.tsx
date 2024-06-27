@@ -264,8 +264,10 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
         return {
           data: temporary,
           color: color,
+          dataPointsColor: color,
         }
       })
+
       setDataSet(newDatasets)
       const totalMachines = total_warning_count + total_normal_count + total_pending_count
 
@@ -348,6 +350,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       : selectedMachine?.length > 0 && selectDate.value != null && fetchChart("period")
   }, [selectedMachine, selectDate, selectionDate])
 
+  // console.log('data set is',dataSet[0]?.data)
   return (
     <Provider>
       <Portal>
@@ -372,11 +375,11 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                       {translate("haccpMonitoring.selectLine")}
                     </Text>
                     <View>
-                      {selectedMachine?.length > 4 && (
+                      {/* {selectedMachine?.length > 4 && (
                         <Text errorColor body2>
                           ( Maximum 5 water treatment machines )
                         </Text>
-                      )}
+                      )} */}
                     </View>
                   </View>
 
@@ -388,22 +391,22 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                         <TouchableOpacity
                           // disabled={selectedMachine?.length >= 4}
                           onPress={() => {
-                            if (selectedMachine?.length >= 5) {
-                              if (selectedMachine.includes(item.value)) {
-                                setSelectedMachine((pre) =>
-                                  pre.filter((machine) => machine !== item.value),
-                                )
-                                return
-                              }
+                            // if (selectedMachine?.length >= 5) {
+                            //   if (selectedMachine.includes(item.value)) {
+                            //     setSelectedMachine((pre) =>
+                            //       pre.filter((machine) => machine !== item.value),
+                            //     )
+                            //     return
+                            //   }
+                            // }
+
+                            if (selectedMachine.includes(item.value)) {
+                              setSelectedMachine((pre) =>
+                                pre.filter((machine) => machine !== item.value),
+                              )
+                              return
                             } else {
-                              if (selectedMachine.includes(item.value)) {
-                                setSelectedMachine((pre) =>
-                                  pre.filter((machine) => machine !== item.value),
-                                )
-                                return
-                              } else {
-                                setSelectedMachine((pre) => pre.concat(item.value))
-                              }
+                              setSelectedMachine((pre) => pre.concat(item.value))
                             }
                           }}
                         >
@@ -576,7 +579,8 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                 overflowTop={15}
                                 overflowBottom={50}
                                 disableScroll={false}
-                                dataSet={dataSet}
+                                // dataSet={dataSet}
+
                                 data={dataSet[0]?.data}
                                 data2={dataSet[1]?.data}
                                 data3={dataSet[2]?.data}
@@ -631,15 +635,18 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                   strokeDashArray: [2, 5],
                                   activatePointersDelay: 0,
 
-                                  persistPointer: false,
+                                  persistPointer: true,
+
                                   // barTouchable: true,
                                   resetPointerOnDataChange: true,
-
+                                  pointer1Color: "blue",
+                                  pointer2Color: "green",
+                                  pointer3Color: "orange",
                                   pointerColor: "transparent",
 
                                   radius: 4,
 
-                                  activatePointersOnLongPress: true,
+                                  activatePointersOnLongPress: false,
 
                                   pointerLabelComponent: (items: any[]) => {
                                     const datatoshow = dataSet?.map((item) => item.data)[0]

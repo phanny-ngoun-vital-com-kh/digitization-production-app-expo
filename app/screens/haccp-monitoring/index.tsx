@@ -26,6 +26,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
   const [selectedLine, setSelectedLine] = useState({ name: "", value: null })
   const [waterLines, setWaterLine] = useState<HaccpLines[]>([])
   const navigation = useNavigation()
+  const [cancelDate, setCancelDate] = useState(false)
   const [currUser, setCurrUser] = useState("")
   const { haccpLinesStore, authStore } = useStores()
   const getCurrentUser = async () => {
@@ -109,12 +110,12 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
   }
 
   useEffect(() => {
-    if (datePicker.value) {
+    if (datePicker.value && !cancelDate) {
       setLoading(true)
       fetchHaccp()
     }
     // haccpMonitoringStore.removeLines()
-  }, [selectedLine, datePicker.value])
+  }, [selectedLine, datePicker.value, cancelDate])
 
   return (
     <View style={$root}>
@@ -130,12 +131,20 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
           {/* {buttonWorkfromhome()} */}
           <HeaderBar
             onChangeDate={(e, v) => {
-              setDatePicker((pre) => ({ show: false, value: v }))
+              if (e.type == "set") {
+                setDatePicker({ show: false, value: v })
+                setCancelDate(false)
+              } else {
+                setCancelDate(true)
+              }
             }}
             onSelectLine={(item) => {
               setSelectedLine(item)
             }}
-            onPressdate={() => setDatePicker((pre) => ({ ...pre, show: true }))}
+            onPressdate={() => {
+              setCancelDate(true)
+              setDatePicker((pre) => ({ ...pre, show: true }))
+            }}
             dateValue={datePicker.value}
             showLine={false}
             showDate={datePicker.show}

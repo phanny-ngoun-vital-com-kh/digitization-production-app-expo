@@ -143,7 +143,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           type: ALERT_TYPE.SUCCESS,
           title: "ជោគជ័យ",
           textBody: "រក្សាទុកបានជោគជ័យ",
-          // button: 'close',
+
           autoClose: 100,
         })
         route?.onRefresh()
@@ -307,7 +307,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 <DataTable.Cell style={{ flex: 0.5 }}>
                   <Text style={{ marginLeft: 40 }}>{item?.fg ?? "N/A"}</Text>
                 </DataTable.Cell>
-                <DataTable.Cell style={{ flex: 0.5 }}>
+         <DataTable.Cell style={{ flex: 0.5 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     <View
                       style={{
@@ -316,7 +316,10 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         height: 15,
                         borderRadius: 100,
                       }}
-                    ></View>
+                    >
+                          
+
+                    </View>
                     <Text
                       style={{ marginLeft: 5 }}
                       errorColor={item?.status === "warning"}
@@ -330,13 +333,12 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         ? item?.warning_count + " warnings"
                         : "Pending"}
                     </Text>
-                    isAssign
+     
                   </View>
-                </DataTable.Cell>
+                </DataTable.Cell> 
                 <DataTable.Cell style={{ flex: 0.5 }}>
                   <Text style={{ marginLeft: 8 }}>{item?.done_by ?? "N/A"}</Text>
                 </DataTable.Cell>
-
                 <DataTable.Cell style={{ flex: 0.6 }}>
                   <Text style={{ marginRight: 0 }}> {item?.take_action ?? "N/A"} </Text>
                 </DataTable.Cell>
