@@ -13,9 +13,22 @@ const ApiURL = {
   saveWtp2: "post_daily_water_treatment",
   getTreatmentDaily: "get-treatment-daily",
   assignMachine: "assign-self",
+  fetchToday: "get-treatment-chart-day",
 }
 
 export class WaterTreatmentApi extends BaseApi {
+  async getTodayWtp(): Promise<any> {
+    try {
+      const rs = await this.requestService.list(ApiURL.fetchToday, {
+        period_type: "day",
+        period: "1",
+      })
+      return DataResponse(rs)
+    } catch (e: any) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data" }
+    }
+  }
   async getWtp2List(params: { assign_date: string; shift: string }): Promise<any> {
     try {
       const rs = await this.requestService.list(ApiURL.fetchShiftRoleAll, {
@@ -84,7 +97,7 @@ export class WaterTreatmentApi extends BaseApi {
       return { kind: "bad-data" }
     }
   }
-  async saveAssign(params: { id: string, action: string, treatment_id: string}): Promise<any> {
+  async saveAssign(params: { id: string; action: string; treatment_id: string }): Promise<any> {
     try {
       const rs = await this.requestService.exec(ApiURL.assignMachine, {
         ...params,

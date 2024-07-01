@@ -33,6 +33,7 @@ export const AuthenticationStoreModel = types
       store.authToken = undefined
       store.username = ""
       
+      
       // store.isAuthenticated = false
       // storage.remove("token")
       // store.authInfo = undefined

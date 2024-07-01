@@ -19,7 +19,7 @@ export type MachinePanelProps = {
   time: string | undefined
   onPress: (isValidShift: any) => void
   currUser?: string | null
-  handleAssigntask?: (id: number, assign_to_user: string) => void
+  handleAssigntask?: (id: number, assign_to_user: string,users?: string[]) => void
   id: number
   pre_treatment_type?: string
   pre_treatment_id?: string

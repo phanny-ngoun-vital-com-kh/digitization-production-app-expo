@@ -82,6 +82,11 @@ const HeaderBar = ({
             } */}
         </Text>
       </View>
+ 
+   
+
+
+
 
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <SecondaryIcon name="filter-sharp" size={20} style={{ marginRight: 8 }} />

@@ -68,7 +68,7 @@ export class AuthApi extends BaseApi {
     }
 
     async doLogin(data: any): Promise<GetLoginResult> {
-        console.log(data)
+  
         try {
             this.requestService.api.waiting?.(true)
             const response = await this.requestService.api.apisauce.post<Login>(ApiURL.login, data, {
@@ -77,7 +77,7 @@ export class AuthApi extends BaseApi {
                 },
             })
 
-            console.log(response)
+   
 
             if (!response.ok) {
                 const problem = getGeneralApiProblem(response)

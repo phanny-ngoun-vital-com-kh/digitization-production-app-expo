@@ -5,6 +5,7 @@ import { observer } from "mobx-react-lite"
 import {
   FlatList,
   ScrollView,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
   ViewStyle,
@@ -16,15 +17,15 @@ import { Button, Text } from "app/components/v2"
 import styles from "./styles"
 import BadgeChart from "app/components/v2/Chart/BadgeChart"
 import DateRangePicker from "app/components/v2/DateRange"
-import { DataSetProps } from "./type"
+import { DataPoint, DataSetProps } from "./type"
 import EmptyLineChart from "app/components/v2/Dashboard/EmptyLineChart"
-import { TouchableOpacity } from "react-native"
 import { useStores } from "app/models"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import moment from "moment"
 import { translate } from "../../../i18n"
 import PerformanceChart from "app/components/v2/Dashboard/PerformanceChart"
 import { customDataPoint } from "app/utils-v2/dashboard/customPoint"
+import PointerItem from "app/components/v2/PointerItem"
 interface DailyDsScreenProps extends AppStackScreenProps<"DailyDs"> {}
 
 export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function DailyDsScreen() {
@@ -63,7 +64,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
     { label: "Reverses Osmosis", value: "Reverses Osmosis" },
   ]
 
-  const [fakeScrollIndicator, setFakeScrollIndicator] = useState(true)
+  const [showPointerBar, setShowPointerBar] = useState(true)
   const [selectedMachine, setSelectedMachine] = useState<string[]>([])
   const [selectColors, setSelectColors] = useState<{ label: string; color: string }[]>([])
   const [dataSet, setDataSet] = useState<DataSetProps[]>([])
@@ -357,6 +358,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
         <TouchableWithoutFeedback
           onPress={() => {
             setShowPopup(false)
+
             setPopupdata({
               percentages: "",
               label: "",
@@ -565,12 +567,20 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                           $horiContainer,
                         ]}
                       >
-                        {isLoading && (
+                        {isLoading ? (
                           <View style={styles.loadingStyle}>
-                            <Text textAlign={"center"}>
-                              {translate("wtpcommon.loadingData")}...{" "}
+                            <Text textAlign={"center"} primaryColor>
+                              {translate("wtpcommon.loadingData")}.....
                             </Text>
                           </View>
+                        ) : dashboard.length === 0 && selectedMachine?.length !== 0 ? (
+                          <View style={styles.loadingStyle}>
+                            <Text textAlign={"center"} errorColor>
+                              {translate("wtpcommon.noRecordFound")}
+                            </Text>
+                          </View>
+                        ) : (
+                          <></>
                         )}
                         <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
                           {dataSet && dataSet.length > 0 && (
@@ -580,7 +590,6 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                 overflowBottom={50}
                                 disableScroll={false}
                                 // dataSet={dataSet}
-
                                 data={dataSet[0]?.data}
                                 data2={dataSet[1]?.data}
                                 data3={dataSet[2]?.data}
@@ -597,12 +606,12 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                 yAxisColor={"transparent"}
                                 // maxValue={100}
                                 noOfSections={4}
-                                onStartReached={() => setFakeScrollIndicator(true)}
+                                onStartReached={() => {}}
                                 isAnimated={true}
                                 rulesType="dashed"
                                 endOpacity={0.1}
                                 spacing={maxWidth / 6}
-                                endSpacing={25}
+                                endSpacing={50}
                                 indicatorColor="white"
                                 showScrollIndicator={true}
                                 initialSpacing={40}
@@ -621,35 +630,35 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                   fontWeight: "bold",
                                 }}
                                 textFontSize={12}
-                                onScroll={() => setFakeScrollIndicator(false)}
+                                onScroll={() => {}}
                                 curved={false}
                                 // yAxisLabelSuffix="%"
                                 xAxisColor={"gray"}
                                 xAxisThickness={1}
                                 hideDataPoints={false}
+                                unFocusOnPressOut
                                 xAxisType={"dashed"}
                                 pointerConfig={{
                                   pointerStripUptoDataPoint: false,
-                                  pointerStripColor: "gray",
-                                  pointerStripWidth: 2,
+                                  pointerStripColor: "black",
+                                  pointerStripWidth: 3,
                                   strokeDashArray: [2, 5],
                                   activatePointersDelay: 0,
-
-                                  persistPointer: true,
-
-                                  // barTouchable: true,
-                                  resetPointerOnDataChange: true,
-                                  pointer1Color: "blue",
-                                  pointer2Color: "green",
-                                  pointer3Color: "orange",
                                   pointerColor: "transparent",
-
+                                  resetPointerOnDataChange: true,
                                   radius: 4,
-
                                   activatePointersOnLongPress: false,
+                                  pointerVanishDelay: 0,
 
                                   pointerLabelComponent: (items: any[]) => {
                                     const datatoshow = dataSet?.map((item) => item.data)[0]
+                                    const dataPopup: DataPoint[] = []
+                                    dataSet.forEach((item, index) => {
+                                      const data: DataPoint = item.data.find(
+                                        (item) => item.label === items[0]?.label,
+                                      )
+                                      dataPopup.push(data)
+                                    })
 
                                     const labels = items.map((item) => item.label)[0]
                                     const indexFound = datatoshow
@@ -659,62 +668,16 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                     const warning_count = items?.reduce((pre, sum) => {
                                       return pre + sum?.dataPointText
                                     }, 0)
+
                                     return (
-                                      <View
-                                        style={[
-                                          {
-                                            backgroundColor: "#EEF5FF",
-                                            width: 250,
-                                            position: "absolute",
-                                            borderRadius: 15,
-                                            zIndex: 0,
-                                            // alignItems: "start",
-                                            paddingHorizontal: 10,
-                                            paddingVertical: 10,
-                                          },
-
-                                          dashboard?.length === 1
-                                            ? { left: 20 }
-                                            : indexFound >= dashboard.length - 1
-                                            ? { right: 0 }
-                                            : { left: 0 },
-                                        ]}
-                                      >
-                                        <Text body1 semibold style={{ marginVertical: 10 }}>
-                                          Week of {items[0]?.label}
-                                        </Text>
-                                        <Text errorColor bold body2 style={{ marginVertical: 10 }}>
-                                          Warning State Percentages
-                                        </Text>
-                                        {items?.map((data, index) => {
-                                          const lines = selectColors.find(
-                                            (colors) => colors.color === data.textColor,
-                                          )
-                                          return (
-                                            <View key={index?.toString()}>
-                                              <View key={index}>
-                                                <Text body2>
-                                                  <Text errorColor>
-                                                    {lines?.label} count {data?.dataPointText}
-                                                  </Text>
-                                                </Text>
-                                              </View>
-                                            </View>
-                                          )
-                                        })}
-
-                                        <Divider style={{ marginVertical: 15 }} />
-
-                                        <Text
-                                          body2
-                                          regular
-                                          semibold
-                                          style={{ marginVertical: 10 }}
-                                          errorColor
-                                        >
-                                          Total Warning Count : {warning_count}
-                                        </Text>
-                                      </View>
+                                      <PointerItem
+                                        dataPopup={dataPopup}
+                                        indexFound={indexFound}
+                                        length={dashboard.length}
+                                        label={items[0]?.label}
+                                        selectedColors={selectColors}
+                                        warning_count={warning_count}
+                                      />
                                     )
                                   },
                                 }}

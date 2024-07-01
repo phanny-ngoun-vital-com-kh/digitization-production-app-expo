@@ -1,27 +1,27 @@
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
-import {
-  Dimensions,
-  FlatList,
-  View,
-} from "react-native"
+import { Dimensions, FlatList, View } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import IconFontisto from "react-native-vector-icons/Fontisto"
 import IconMaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card } from "react-native-paper"
+import { createTables, openConnection } from "app/lib/offline-db"
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const {
     authStore: { getUserInfo },
+    waterTreatmentStore,
+    preWaterTreatmentStore,
+    haccpLinesStore,
   } = useStores()
   const { width: ScreenWidth } = Dimensions.get("screen")
   const [isNotiVisible, setNotiVisible] = useState(false)
   const icon1 = <IconFontisto name="arrow-swap" size={40} color="#000" />
   const icon2 = <IconMaterialCommunityIcons name="warehouse" size={40} />
-
+  const [isInitDb, setInitDb] = useState(false)
   const remoteWork = () => {
     const updatedList = [
       {
@@ -76,6 +76,14 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     ]
     setList(updatedList)
   }
+  async function initDb() {
+    await openConnection()
+    await createTables()
+    // await waterTreatmentStore.loadWtp()
+    // await waterTreatmentStore.syncDataToserver()
+    // console.log("SQL is running")
+  }
+
   useEffect(() => {
     const role = async () => {
       try {
@@ -120,8 +128,8 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               navigation: "HccpMonitor",
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
-            }
-   
+            },
+
             // Add other items as needed
           ]
           setList(updatedList)
@@ -171,7 +179,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               iconname: "view-dashboard-outline",
               icontype: "MaterialCommunityIcons",
             },
-      
+
             // {
             //   id: 4,
             //   name: "HACCP Monitoring",
@@ -182,8 +190,8 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
             // },
           ]
           setList(updatedList)
-        } 
-        
+        }
+
         // else {
         //   const updatedList = [
         //     {
@@ -233,6 +241,8 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         // }
       } catch (e) {
         console.log(e)
+      } finally {
+        await initDb()
       }
     }
 

@@ -140,8 +140,8 @@ const MachinePanel = ({
             ]}
           >
             <TouchableOpacity
-              onPress={() => handleAssigntask!(id, assign_to_user)}
-              style={$containerHorizon}
+            onPress={() => handleAssigntask!(id, assign_to_user,assign_to_user?.split(" "))}
+            style={$containerHorizon}
             >
               <Icon name="edit" size={18} color="#0081F8" />
               <Text semibold caption1 style={{ marginLeft: 5, color: "#0081F8" }}>
@@ -158,38 +158,63 @@ const MachinePanel = ({
         <View
           style={[
             $containerHorizon,
-            { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
+            { justifyContent: "center", alignItems: "center", marginVertical: 25, gap: 25 },
           ]}
         >
           <TouchableOpacity
-            onPress={() => handleAssigntask!(id, assign_to_user)}
+            onPress={() => handleAssigntask!(id, assign_to_user,assign_to_user?.split(" "))}
             style={$containerHorizon}
           >
             <Icon name="closecircle" size={18} color="#D32600" />
             <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-              Unassign this task
               {translate("wtpcommon.unassignMyTask")}
             </Text>
           </TouchableOpacity>
+          <View style={[$containerHorizon, { justifyContent: "center", alignItems: "center" }]}>
+            <TouchableOpacity
+              onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
+              style={$containerHorizon}
+            >
+              <Icon name="eye" size={18} color="#0081F8" />
+              <Text semibold caption1 style={{ marginLeft: 5 }} primaryColor>
+                {translate("wtpcommon.viewAssignment")}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
-        <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} />
+        <>
+          <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} />
+        </>
       )}
-      <View
-        style={[
-          $containerHorizon,
-          { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
-        ]}
-      >
+
+      {!validDate ||
+        (!validShift && (
+          <View
+            style={[
+              $containerHorizon,
+              { justifyContent: "center", alignItems: "center", marginVertical: 25 },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
+              style={$containerHorizon}
+            >
+              <Icon name="eye" size={18} color="#0081F8" />
+              <Text semibold caption1 style={{ marginLeft: 5 }} primaryColor>
+                {translate("wtpcommon.viewAssignment")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      <View style={[$containerHorizon, { justifyContent: "center", alignItems: "center" }]}>
         <TouchableOpacity
           onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
           style={$containerHorizon}
         >
           <Icon name="eye" size={18} color="#0081F8" />
           <Text semibold caption1 style={{ marginLeft: 5 }} primaryColor>
-           {
-            translate("wtpcommon.viewAssignment")
-           }
+            {translate("wtpcommon.viewAssignment")}
           </Text>
         </TouchableOpacity>
       </View>

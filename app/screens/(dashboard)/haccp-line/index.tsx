@@ -19,6 +19,7 @@ import moment from "moment"
 import { TouchableWithoutFeedback } from "react-native"
 import PerformanceChart from "app/components/v2/Dashboard/PerformanceChart"
 import { translate } from "../../../i18n/translate"
+import PointerItem from "app/components/v2/PointerItem"
 
 // import { useNavigation } from "@react-navigation/native"
 // import { useStores } from "app/models"
@@ -556,13 +557,20 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                           $horiContainer,
                         ]}
                       >
-                        {isLoading && (
+                        {isLoading ? (
                           <View style={styles.loadingStyle}>
-                            <Text textAlign={"center"}>
-                              {" "}
-                              {translate("wtpcommon.loadingData")}...{" "}
+                            <Text textAlign={"center"} primaryColor>
+                              {translate("wtpcommon.loadingData")}.....
                             </Text>
                           </View>
+                        ) : dashboard.length === 0 && selectedMachine?.length !== 0 ? (
+                          <View style={styles.loadingStyle}>
+                            <Text textAlign={"center"} errorColor>
+                              {translate("wtpcommon.noRecordFound")}
+                            </Text>
+                          </View>
+                        ) : (
+                          <></>
                         )}
                         <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
                           {dataSet && dataSet.length > 0 && (
@@ -621,21 +629,19 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                                 xAxisType={"dashed"}
                                 pointerConfig={{
                                   pointerStripUptoDataPoint: false,
-                                  pointerStripColor: "gray",
+                                  pointerStripColor: "black",
                                   pointerStripWidth: 2,
                                   strokeDashArray: [2, 5],
                                   activatePointersDelay: 0,
-
                                   persistPointer: false,
+                                  pointerVanishDelay: 0,
+
                                   // barTouchable: true,
                                   resetPointerOnDataChange: true,
-
                                   pointerColor: "transparent",
-
                                   radius: 4,
 
-                                  activatePointersOnLongPress: true,
-
+                                  activatePointersOnLongPress: false,
                                   pointerLabelComponent: (items: any[]) => {
                                     const datatoshow = dataSet?.map((item) => item.data)[0]
 
@@ -648,60 +654,14 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                                       return pre + sum?.dataPointText
                                     }, 0)
                                     return (
-                                      <View
-                                        style={[
-                                          {
-                                            backgroundColor: "#EEF5FF",
-                                            width: 250,
-                                            position: "absolute",
-                                            borderRadius: 15,
-                                            zIndex: 0,
-                                            // alignItems: "start",
-                                            paddingHorizontal: 10,
-                                            paddingVertical: 10,
-                                          },
-                                          dashboard?.length === 1
-                                            ? { left: 20 }
-                                            : indexFound >= dashboard.length - 1
-                                            ? { right: 0 }
-                                            : { left: 0 },
-                                        ]}
-                                      >
-                                        <Text body1 semibold style={{ marginVertical: 10 }}>
-                                          Week of {items[0]?.label}
-                                        </Text>
-                                        <Text errorColor bold body2 style={{ marginVertical: 10 }}>
-                                          Warning State Percentages
-                                        </Text>
-                                        {items?.map((data, index) => {
-                                          const lines = selectColors.find(
-                                            (colors) => colors.color === data.textColor,
-                                          )
-                                          return (
-                                            <View key={index?.toString()}>
-                                              <View key={index}>
-                                                <Text body2>
-                                                  <Text errorColor>
-                                                    {lines?.label} count {data?.dataPointText}
-                                                  </Text>
-                                                </Text>
-                                              </View>
-                                            </View>
-                                          )
-                                        })}
-
-                                        <Divider style={{ marginVertical: 15 }} />
-
-                                        <Text
-                                          body2
-                                          regular
-                                          semibold
-                                          style={{ marginVertical: 10 }}
-                                          errorColor
-                                        >
-                                          Total Warning Count : {warning_count}
-                                        </Text>
-                                      </View>
+                                      <PointerItem
+                                        dataPopup={items}
+                                        indexFound={indexFound}
+                                        length={dashboard.length}
+                                        label={items[0]?.label}
+                                        selectedColors={selectColors}
+                                        warning_count={warning_count}
+                                      />
                                     )
                                   },
                                 }}

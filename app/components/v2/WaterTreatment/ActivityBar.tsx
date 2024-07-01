@@ -10,14 +10,16 @@ const ActivityBar = ({
   onActivity,
   onAttachment,
   onClickinfo,
+  disable = false ,
   onScanCamera,
-  hideActivityLog = false ,
+  hideActivityLog = false,
   showInfo = false,
 }: {
   direction: "end" | "start "
   onActivity?: () => void
   onAttachment?: () => void
   showInfo?: boolean
+  disable?: boolean
   hideActivityLog?: boolean
   onClickinfo?: () => void
   onScanCamera?: () => void
@@ -29,16 +31,21 @@ const ActivityBar = ({
         { justifyContent: direction === "end" ? "flex-end" : "flex-start" },
       ]}
     >
-      <TouchableOpacity onPress={onScanCamera}>
-        <View style={styles.iconBorder}>
-          <Icon name="scan-outline" size={30} />
-        </View>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onAttachment}>
-        <View style={styles.iconBorder}>
-          <Icon name="link-outline" size={30} />
-        </View>
-      </TouchableOpacity>
+      {!disable && (
+        <>
+          <TouchableOpacity onPress={onScanCamera}>
+            <View style={styles.iconBorder}>
+              <Icon name="scan-outline" size={30} />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onAttachment}>
+            <View style={styles.iconBorder}>
+              <Icon name="link-outline" size={30} />
+            </View>
+          </TouchableOpacity>
+        </>
+      )}
+
       {!hideActivityLog && (
         <Button onPress={onActivity}>
           <Text whiteColor body2>
