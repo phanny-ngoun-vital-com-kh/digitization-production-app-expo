@@ -1,14 +1,26 @@
+import { useFocusEffect, useIsFocused } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import { Dimensions, FlatList, View } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
+import NetInfo from "@react-native-community/netinfo"
 import IconFontisto from "react-native-vector-icons/Fontisto"
 import IconMaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card } from "react-native-paper"
-import { createTables, openConnection } from "app/lib/offline-db"
+import { createTables, getDBConnection, openConnection } from "app/lib/offline-db"
+import * as TaskManager from "expo-task-manager"
+import * as BackgroundFetch from "expo-background-fetch"
+import { WaterTreatment } from "app/models/water-treatment/water-treatment-model"
+import networkStore from "app/models/network"
+
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
+const BACKGROUND_SYNC_TASK = "background-sync-task"
+
+async function unregisterBackgroundFetchAsync() {
+  return BackgroundFetch.unregisterTaskAsync(BACKGROUND_SYNC_TASK)
+}
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const {
@@ -18,10 +30,14 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     haccpLinesStore,
   } = useStores()
   const { width: ScreenWidth } = Dimensions.get("screen")
+
   const [isNotiVisible, setNotiVisible] = useState(false)
   const icon1 = <IconFontisto name="arrow-swap" size={40} color="#000" />
   const icon2 = <IconMaterialCommunityIcons name="warehouse" size={40} />
   const [isInitDb, setInitDb] = useState(false)
+  const [isRegistered, setIsRegistered] = useState(false)
+  const [status, setStatus] = useState(null)
+  const isFocused = useIsFocused()
   const remoteWork = () => {
     const updatedList = [
       {
@@ -76,12 +92,123 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     ]
     setList(updatedList)
   }
+  const registerBackgroundSyncTask = async () => {
+    try {
+      //Handle case when user get out of app without internet we want to sync in abckground
+      await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
+        minimumInterval: 15 * 60, // Run every 15 minutes
+        stopOnTerminate: false, // Continue running even if the app is terminated
+        startOnBoot: true, // Start task when the device is booted
+      })
+      console.log("Background sync task registered")
+    } catch (error) {
+      console.error("Error registering background sync task:", error)
+    }
+  }
+
+  TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
+    try {
+      console.log("Running background sync task")
+
+      // Call all Sync to Server here
+      await waterTreatmentStore.syncDataToserver()
+      return BackgroundFetch.BackgroundFetchResult.NewData
+    } catch (error) {
+      console.error("Error in background sync task:", error)
+      return BackgroundFetch.BackgroundFetchResult.Failed
+    }
+  })
+
   async function initDb() {
     await openConnection()
     await createTables()
     // await waterTreatmentStore.loadWtp()
     // await waterTreatmentStore.syncDataToserver()
     // console.log("SQL is running")
+  }
+
+  // TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
+  //   try {
+  //     console.log("Running background sync task")
+
+  //     // Call all Sync to Server here
+  //     await waterTreatmentStore.syncDataToserver()
+  //     return BackgroundFetch.BackgroundFetchResult.NewData
+  //   } catch (error) {
+  //     console.error("Error in background sync task:", error)
+  //     return BackgroundFetch.BackgroundFetchResult.Failed
+  //   }
+  // })
+
+  const BindingWaterTreatment = async () => {
+    try {
+      const db = await getDBConnection()
+      db?.withExclusiveTransactionAsync(async () => {
+        await db?.runAsync(`DELETE FROM treatments;`)
+        await db?.runAsync(`DELETE FROM treatment_list;`)
+        await db?.runAsync(`DELETE FROM assignself;`)
+      })
+      const result = await waterTreatmentStore.loadWtp()
+
+      result.forEach(async (element: WaterTreatment) => {
+        await db?.runAsync(
+          `
+        INSERT OR REPLACE INTO treatments 
+        (assign_to, shift, treatment_id, remark, createdBy, createdDate, lastModifiedBy, lastModifiedDate, assign_date) 
+        VALUES 
+        (?, ?, ?, ?, ?, ?, ?, ?, ?);
+      `,
+          [
+            element?.assign_to,
+            element?.shift,
+            element?.treatment_id,
+            element?.remark,
+            element?.createdBy,
+            element?.createdDate,
+            element?.lastModifiedBy,
+            element?.lastModifiedDate,
+            element?.assign_date,
+          ],
+        )
+
+        element.treatmentlist.forEach(async (treatment) => {
+          await db?.runAsync(
+            `INSERT OR REPLACE INTO treatment_list 
+          (id, machine, treatment_id, tds, ph, temperature, pressure, air_release, press_inlet, press_treat, press_drain, check_by, status, warning_count, odor, taste, other, assign_to_user, createdBy, createdDate, lastModifiedBy, lastModifiedDate) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `,
+            [
+              treatment?.id,
+              treatment?.machine,
+              treatment?.treatment_id,
+              treatment?.tds,
+              treatment?.ph,
+              treatment?.temperature,
+              treatment?.pressure,
+              treatment?.air_release,
+              treatment?.press_inlet,
+              treatment?.press_treat,
+              treatment?.press_drain,
+              treatment?.check_by,
+              treatment?.status,
+              treatment?.warning_count,
+              treatment?.odor,
+              treatment?.taste,
+              treatment?.other,
+              treatment?.assign_to_user,
+              treatment?.createdBy,
+              treatment?.createdDate,
+              treatment?.lastModifiedBy,
+              treatment?.lastModifiedDate,
+            ],
+          )
+        })
+      })
+    } catch (error) {
+      console.error("Error local again", error)
+    } finally {
+      console.log("Load server to local")
+    }
   }
 
   useEffect(() => {
@@ -242,7 +369,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
       } catch (e) {
         console.log(e)
       } finally {
-        await initDb()
       }
     }
 
@@ -257,6 +383,35 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
   //   }
 
   // }, [isWareAdm, isProdAdm, role])
+
+  const checkStatusAsync = async () => {
+    const status = await BackgroundFetch.getStatusAsync()
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK)
+    setStatus(status)
+    setIsRegistered(isRegistered)
+  }
+
+  const toggleFetchTask = async () => {
+    if (isRegistered) {
+      await unregisterBackgroundFetchAsync()
+    } else {
+      await unregisterBackgroundFetchAsync()
+    }
+
+    checkStatusAsync()
+  }
+
+  // const handleNetworkChanges = () => {
+  //   NetInfo.addEventListener((state) => {
+  //     if (state.isConnected) {
+  //       console.log("Internet connection restored, triggering background sync task")
+  //       // Trigger the background sync task when the internet connection is restored
+  //       registerBackgroundSyncTask()
+  //     } else {
+  //       console.log("Wifi or Internet has disconnected, switch to offlien Mode")
+  //     }
+  //   })
+  // }
 
   const formatData = (data, numColumns) => {
     const numberOfFullRows = Math.floor(data.length / numColumns)
@@ -316,7 +471,38 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
       </View>
     )
   }
+  // handleNetworkChanges()
 
+  React.useEffect(() => {
+    let unsubscribe: () => void
+    const handleNetworkChanges = () => {
+      unsubscribe = NetInfo.addEventListener(async (state) => {
+        if (state.isConnected) {
+          console.log("Internet connection restored, triggering background sync task")
+          // Trigger the background sync task when the internet connection is restored
+          await initDb()
+          await waterTreatmentStore.syncDataToserver()
+
+          registerBackgroundSyncTask()
+        } else {
+          console.log("Wifi or Internet has disconnected, switch to offline mode")
+        }
+      })
+    }
+
+    handleNetworkChanges()
+    checkStatusAsync()
+
+    return () => {
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (networkStore.isConnected) {
+      BindingWaterTreatment()
+    }
+  }, [isFocused])
   return (
     <>
       <FlatList

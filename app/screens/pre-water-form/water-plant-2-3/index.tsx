@@ -23,7 +23,7 @@ import ActivityModal from "app/components/v2/ActivitylogModal"
 import { styles } from "../styles"
 import BadgeWarning from "app/components/v2/Badgewarn"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
-import {translate} from "../../../i18n/translate"
+import { translate } from "../../../i18n/translate"
 
 interface PreWaterForm1ScreenProps extends AppStackScreenProps<"PreWaterForm1"> {}
 
@@ -342,7 +342,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
       }
       const [sf1, resin, acf1, mM5] = numeric
 
-
       setForm({
         sf1: sf1,
         acf1: acf1,
@@ -424,7 +423,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         // Function to check if a sequence of words matches the pattern to ignore
         let shouldIgnoreSequence: any
         if (route?.type?.toLowerCase().includes("ph")) {
-
           shouldIgnoreSequence = (sequence) => {
             const ignorePattern = ["*", "Warning", "Level", "(", "6.5", "-", "8.5", ")"]
             for (let i = 0; i < ignorePattern.length; i++) {
@@ -483,18 +481,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     }
     const checkUserRole = async () => {
       // console.log("machine user assign to", route?.items?.assign_to_user)
-      if (!route?.item?.assign_to_user) {
-        setEditable(false)
-
-        return
-      }
-      const currUser = await getCurrentUserName()
-      const arrUsers = route?.item?.assign_to_user?.split(" ") as string[]
-      if (arrUsers.includes(currUser)) {
-        setEditable(true)
-      } else {
-        setEditable(false)
-      }
+      setEditable(route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift)
     }
     useLayoutEffect(() => {
       navigation.setOptions({
@@ -515,7 +502,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-                {translate('wtpcommon.save')}
+                {translate("wtpcommon.save")}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -605,21 +592,22 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                 <></>
               ) : route?.type?.toLowerCase().includes("tds") ? (
                 <Text errorColor semibold body1>
-                  {`* ${translate('preWaterTreatment.warningLevel')} ( > 300 ppm ) `}
+                  {`* ${translate("preWaterTreatment.warningLevel")} ( > 300 ppm ) `}
                 </Text>
               ) : route?.type?.toLowerCase().includes("ph") ? (
                 <Text errorColor semibold body1>
-                  {`* ${translate('preWaterTreatment.warningLevel')}( 6.5 - 8.5  ) `}
+                  {`* ${translate("preWaterTreatment.warningLevel")}( 6.5 - 8.5  ) `}
                 </Text>
               ) : (
                 <Text errorColor semibold body1>
-                  {`* ${translate('preWaterTreatment.warningLevel')}( 0.1 - 0.3 Mpa ) `}
+                  {`* ${translate("preWaterTreatment.warningLevel")}( 0.1 - 0.3 Mpa ) `}
                 </Text>
               )}
 
               {route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift && (
                 <ActivityBar
                   direction="end"
+                  disable
                   onScanCamera={onlaunchCamera}
                   onAttachment={onlaunchGallery}
                   onActivity={() => setShowlog(true)}

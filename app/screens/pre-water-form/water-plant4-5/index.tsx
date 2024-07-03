@@ -21,7 +21,7 @@ import { PreTreatmentListItemModel } from "app/models/pre-water-treatment/pre-wa
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
-import {translate} from "../../../i18n/translate"
+import { translate } from "../../../i18n/translate"
 
 interface PreWaterForm2ScreenProps extends AppStackScreenProps<"PreWaterForm2"> {}
 
@@ -168,7 +168,6 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       if (route?.type?.toLowerCase().startsWith("pressure")) {
         const [sf1, sf2, mM102, acf1, acf2, _mM102, mM101] = numeric
 
-
         setForm({
           acf1: acf1 ?? "",
           acf2: acf2 ?? "",
@@ -253,8 +252,6 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
           return
         }
         const annotations = result["annotations"]
-     
- 
 
         // Function to check if a sequence of words matches the pattern to ignore
         let shouldIgnoreSequence: any
@@ -399,18 +396,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
     }
     const checkUserRole = async () => {
       // console.log("machine user assign to", route?.items?.assign_to_user)
-      if (!route?.item?.assign_to_user) {
-        setEditable(false)
-
-        return
-      }
-      const currUser = await getCurrentUserName()
-      const arrUsers = route?.item?.assign_to_user?.split(" ") as string[]
-      if (arrUsers.includes(currUser)) {
-        setEditable(true)
-      } else {
-        setEditable(false)
-      }
+      setEditable(route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift)
     }
     useLayoutEffect(() => {
       navigation.setOptions({
@@ -450,9 +436,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-                 {
-                  translate("wtpcommon.save")
-                 }
+                {translate("wtpcommon.save")}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -526,6 +510,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               {route?.isvalidDate && route?.item?.assign_to_user && (
                 <ActivityBar
                   direction="end"
+                  disable
                   onScanCamera={onlaunchCamera}
                   onAttachment={onlaunchGallery}
                   onActivity={() => setShowlog(true)}
@@ -739,7 +724,6 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
           </View>
         </ScrollView>
         <ActivityModal log={[]} onClose={() => setShowlog(false)} isVisible={showLog} />
-
       </KeyboardAvoidingView>
     )
   },

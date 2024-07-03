@@ -18,13 +18,11 @@ if (__DEV__) {
 }
 
 import "./i18n"
-import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from "expo-sqlite"
 import "./utils/ignoreWarnings"
 import { useFonts } from "expo-font"
 import React, { Suspense, useEffect, useState } from "react"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import * as Linking from "expo-linking"
-import * as SQLite from "expo-sqlite"
 import { useInitialRootStore } from "./models"
 import { AppNavigator, useNavigationPersistence } from "./navigators"
 import { ErrorBoundary } from "./screens/ErrorScreen/ErrorBoundary"
@@ -34,8 +32,6 @@ import Config from "./config"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { ViewStyle } from "react-native"
 import { AlertNotificationRoot } from "react-native-alert-notification"
-import { Text } from "./components/v2"
-import { createTables, openConnection } from "./lib/offline-db/wtp"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -105,9 +101,7 @@ function App(props: AppProps) {
   // otherwise, we're ready to render the app
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <Suspense fallback={<Text>Loading...</Text>}>
         <ErrorBoundary catchErrors={Config.catchErrors}>
-          <SQLiteProvider databaseName="dbtest.db" useSuspense={false}>
             <GestureHandlerRootView style={$container}>
               <AlertNotificationRoot>
                 <AppNavigator
@@ -117,9 +111,7 @@ function App(props: AppProps) {
                 />
               </AlertNotificationRoot>
             </GestureHandlerRootView>
-          </SQLiteProvider>
         </ErrorBoundary> 
-      </Suspense>
     </SafeAreaProvider>
   )
 }

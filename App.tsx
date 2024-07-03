@@ -1,4 +1,5 @@
 import "@expo/metro-runtime"
+import 'react-native-gesture-handler';
 import React from "react"
 import * as SplashScreen from "expo-splash-screen"
 import App from "./app/app"

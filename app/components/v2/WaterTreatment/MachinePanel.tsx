@@ -1,5 +1,6 @@
 import React from "react"
 import Icon from "react-native-vector-icons/AntDesign"
+import { default as IconFontA5 } from "react-native-vector-icons/FontAwesome5"
 import { Text } from "app/components/v2"
 import styles from "./styles"
 import { TouchableOpacity, View } from "react-native"
@@ -108,16 +109,26 @@ const MachinePanel = ({
             </View>
             {assign_to_user ? (
               <View style={$containerHorizon}>
-                <Icon name="clockcircleo" style={{ marginRight: 5 }} size={18} color="black" />
+                <IconFontA5
+                  name="user-friends"
+                  style={{ marginRight: 5 }}
+                  size={16}
+                  color="black"
+                />
                 <Text semibold caption1>
-                  Assignment count {assign_to_user?.split(" ")?.length}
+                  {assign_to_user?.split(" ")?.length}
                 </Text>
               </View>
             ) : (
               <View style={$containerHorizon}>
-                <Icon name="clockcircleo" style={{ marginRight: 5 }} size={18} color="black" />
+                <IconFontA5
+                  name="user-friends"
+                  style={{ marginRight: 5 }}
+                  size={16}
+                  color="black"
+                />
                 <Text semibold caption1>
-                  Assignment count 0
+                  0
                 </Text>
               </View>
             )}
@@ -136,18 +147,27 @@ const MachinePanel = ({
           <View
             style={[
               $containerHorizon,
-              { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15 },
+              { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15,gap:25 },
             ]}
           >
             <TouchableOpacity
-            onPress={() => handleAssigntask!(id, assign_to_user,assign_to_user?.split(" "))}
-            style={$containerHorizon}
+              onPress={() => handleAssigntask!(id, assign_to_user, assign_to_user?.split(" "))}
+              style={$containerHorizon}
             >
               <Icon name="edit" size={18} color="#0081F8" />
               <Text semibold caption1 style={{ marginLeft: 5, color: "#0081F8" }}>
                 {/* Enroll this task */}
 
                 {translate("wtpcommon.enrollMyTask")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
+              style={$containerHorizon}
+            >
+              <Icon name="eye" size={18} color="#0081F8" />
+              <Text semibold caption1 style={{ marginLeft: 5 }} primaryColor>
+                {translate("wtpcommon.viewAssignment")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -161,15 +181,30 @@ const MachinePanel = ({
             { justifyContent: "center", alignItems: "center", marginVertical: 25, gap: 25 },
           ]}
         >
-          <TouchableOpacity
-            onPress={() => handleAssigntask!(id, assign_to_user,assign_to_user?.split(" "))}
-            style={$containerHorizon}
-          >
-            <Icon name="closecircle" size={18} color="#D32600" />
-            <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
-              {translate("wtpcommon.unassignMyTask")}
-            </Text>
-          </TouchableOpacity>
+          {isAssign ? (
+            <TouchableOpacity
+              onPress={() => handleAssigntask!(id, assign_to_user, assign_to_user?.split(" "))}
+              style={$containerHorizon}
+            >
+              <Icon name="closecircle" size={18} color="#D32600" />
+              <Text semibold caption1 style={{ marginLeft: 5, color: "#D32600" }}>
+                {translate("wtpcommon.unassignMyTask")}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => handleAssigntask!(id, assign_to_user, assign_to_user?.split(" "))}
+              style={$containerHorizon}
+            >
+              <Icon name="edit" size={18} color="#0081F8" />
+              <Text semibold caption1 style={{ marginLeft: 5, color: "#0081F8" }}>
+                {/* Enroll this task */}
+
+                {translate("wtpcommon.enrollMyTask")}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <View style={[$containerHorizon, { justifyContent: "center", alignItems: "center" }]}>
             <TouchableOpacity
               onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
@@ -187,7 +222,7 @@ const MachinePanel = ({
           <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} />
         </>
       )}
-
+      {/* 
       {!validDate ||
         (!validShift && (
           <View
@@ -206,18 +241,26 @@ const MachinePanel = ({
               </Text>
             </TouchableOpacity>
           </View>
-        ))}
-      <View style={[$containerHorizon, { justifyContent: "center", alignItems: "center" }]}>
-        <TouchableOpacity
-          onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
-          style={$containerHorizon}
+        ))} */}
+
+      {!(validDate === true && validShift === -1) && (
+        <View
+          style={[
+            $containerHorizon,
+            { justifyContent: "center", alignItems: "center", marginBottom: 20 },
+          ]}
         >
-          <Icon name="eye" size={18} color="#0081F8" />
-          <Text semibold caption1 style={{ marginLeft: 5 }} primaryColor>
-            {translate("wtpcommon.viewAssignment")}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            onPress={() => handleShowdialog!(assign_to_user?.split(" "))}
+            style={$containerHorizon}
+          >
+            <Icon name="eye" size={18} color="#0081F8" />
+            <Text semibold caption1 style={{ marginLeft: 5 }} primaryColor>
+              {translate("wtpcommon.viewAssignment")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   )
 }

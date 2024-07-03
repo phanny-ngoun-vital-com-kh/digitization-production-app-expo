@@ -3,7 +3,6 @@ import React, { FC, useEffect, useState } from "react"
 import { Dimensions, FlatList, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import NetInfo from "@react-native-community/netinfo"
-
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card } from "react-native-paper"
@@ -15,7 +14,6 @@ interface WaterTreatmentControlListScreenProps
 
 export const WaterTreatmentControlListScreen: FC<WaterTreatmentControlListScreenProps> = observer(
   function WaterTreatmentControlListScreen() {
-    const { authStore, waterTreatmentStore } = useStores()
     const navigation = useNavigation()
 
     useEffect(() => {
@@ -51,22 +49,7 @@ export const WaterTreatmentControlListScreen: FC<WaterTreatmentControlListScreen
       // role();
     }, [])
 
-    useEffect(() => {
-      const unsubscribe = NetInfo.addEventListener(async (state) => {
-        if (state.isConnected) {
-          console.log("Connected to wifi")
-
-          await waterTreatmentStore.syncDataToserver()
-
-          // syncLocalChanges()
-        } else {
-          console.log("Disconnected from wifi")
-          // await waterTreatmentStore.loadTreatmentLocal()
-        }
-      })
-
-      return () => unsubscribe()
-    }, [])
+    useEffect(() => {}, [])
     const formatData = (data, numColumns) => {
       const numberOfFullRows = Math.floor(data.length / numColumns)
 

@@ -7,7 +7,7 @@ import {
 import { Instance, SnapshotIn, SnapshotOut, types } from "mobx-state-tree"
 import { watertreatmentApi } from "app/services/api/water-treatment-api"
 import { assignDailywtp2Api } from "app/services/api/assign-daily-wtp-api"
-import { getDBConnection } from "app/lib/offline-db"
+import { openConnection } from "app/lib/offline-db"
 
 /**
  * Model description here for TypeScript hints.
@@ -80,19 +80,51 @@ export const WaterTreatmentStoreModel = types
       syncDataToserver: async () => {
         //when internet connection is available again
         try {
-          console.log("Sync data")
-          const db = await getDBConnection()
+          console.log("Sync water treatment data store ")
+          const db = await openConnection()
           const query = `SELECT t.*, tl.*
           FROM treatments t
           LEFT JOIN treatment_list tl
           ON t.treatment_id = tl.treatment_id
           WHERE t.is_synced = 1;`
-          const updateSyncQuery = `UPDATE treatments SET is_synced = 0`
+
+          const queryAssignSelf = "SELECT * from assignself WHERE is_synced = 1;"
+
+          const updateSyncQuery = `UPDATE treatments SET is_synced = 0;`
+
+          const updateSyncSelfAssign = `UPDATE assignself SET is_synced = 0;`
+
+          const rawQuery = await db?.getAllAsync(query)
+          const selfAssignQuery = await db?.getAllAsync<{
+            id: string
+            action: string
+            treatment_id: string
+          }>(queryAssignSelf)
+
+          // console.log("Activity user is ",selfAssignQuery,selfAssignQuery?.length)
+          // console.log("Wtp length is ",rawQuery?.length)
+
+          if (selfAssignQuery?.length) {
+            for (const row of selfAssignQuery!) {
+              const rs = await watertreatmentApi.saveAssign({
+                id: row.id,
+                action: row.action,
+                treatment_id: row.treatment_id,
+              })
+              if (rs.kind === "ok") console.log("Success")
+              else {
+                console.log("Error update activity ")
+                throw Error(rs.kind)
+              }
+            }
+          }
+          await db?.runAsync(updateSyncSelfAssign)
+
           if (query.length <= 0) {
             return
           }
-          const rawQuery = await db.getAllAsync(query)
-          await db.runAsync(updateSyncQuery)
+          await db?.runAsync(updateSyncQuery)
+
           const mappedResult = rawQuery.reduce((acc, item) => {
             let treatment = acc.find((t) => t.treatment_id === item.treatment_id)
             if (!treatment) {
@@ -137,8 +169,6 @@ export const WaterTreatmentStoreModel = types
             return acc
           }, [])
 
-          console.log("Mapped result", mappedResult?.length)
-
           for (const row of mappedResult) {
             const rs = await watertreatmentApi.saveWtp2({
               tds: row?.tds ?? null,
@@ -174,7 +204,7 @@ export const WaterTreatmentStoreModel = types
 
       loadTreatmentLocal: async () => {
         try {
-          const db = await getDBConnection()
+          const db = await openConnection()
 
           const query = `SELECT t.*, tl.*
         FROM treatments t
@@ -230,12 +260,12 @@ export const WaterTreatmentStoreModel = types
           console.error(error)
           throw Error(error?.message)
         } finally {
-          console.log("loadTreatmentLocal is loaded")
+          // console.log("loadTreatmentLocal is loaded")
         }
       },
       getOfflineWtp: async (assign_date: string, selectedShift: string) => {
         try {
-          const db = await getDBConnection()
+          const db = await openConnection()
           const query = `SELECT t.*, tl.*
           FROM treatments t
           INNER JOIN treatment_list tl
@@ -287,17 +317,20 @@ export const WaterTreatmentStoreModel = types
             treatment.treatmentlist.push(treatmentListItem)
             return acc
           }, [])
+
+          console.log(mappedResult[0])
+
           return mappedResult
         } catch (error: any) {
           console.error(error)
           throw Error(error?.message)
         } finally {
-          console.log("loadTreatmentLocal is loaded")
+          // console.log("loadTreatmentLocal is loaded")
         }
       },
       getOfflineWtpByDate: async (assign_date: string) => {
         try {
-          const db = await getDBConnection()
+          const db = await openConnection()
           const query = `SELECT t.*, tl.*
           FROM treatments t
           INNER JOIN treatment_list tl
@@ -306,7 +339,6 @@ export const WaterTreatmentStoreModel = types
           const args = `${assign_date}%` // Use wildcard search pattern
           const result = await db.getAllAsync<any>(query, [args])
 
-          console.log("Result is ", result?.length)
           const mappedResult = result.reduce((acc, item) => {
             let treatment = acc.find((t) => t.treatment_id === item.treatment_id)
             if (!treatment) {
@@ -355,7 +387,7 @@ export const WaterTreatmentStoreModel = types
           console.error(error)
           throw Error(error?.message)
         } finally {
-          console.log("loadTreatmentLocal is loaded")
+          // console.log("loadTreatmentLocal is loaded")
         }
       },
 

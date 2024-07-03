@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
-import { FlatList, RefreshControl, Text, View, ViewStyle } from "react-native"
+import { FlatList, RefreshControl, Text, View, ViewStyle,TouchableOpacity } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import HeaderBar from "app/components/v2/WaterTreatment/HeaderBar"
 import { Divider } from "react-native-paper"
@@ -13,7 +13,7 @@ import { useStores } from "app/models"
 import { HaccpLines } from "app/models/haccp-monitoring/haccp-lines-store"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import { translate } from "../../i18n"
-import { TouchableOpacity } from "react-native-gesture-handler"
+
 
 interface HccpMonitorScreenProps extends AppStackScreenProps<"HccpMonitor"> {}
 

@@ -195,7 +195,6 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
           showsVerticalScrollIndicator
           persistentScrollbar
           data={item?.pretreatmentlist || []}
-    
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item: subitem }) => {
             return (
@@ -240,6 +239,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                       type: subitem?.control,
                       onBack: onSendback,
                       isValidShift: isValidShift(item?.time) === -1 ? true : false,
+
                       isvalidDate:
                         moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
 
@@ -248,6 +248,12 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                         pre_treatment_type: item?.pre_treatment_type,
                         pre_treatment_id: item?.pre_treatment_id,
                       },
+                      isEdit:
+                        isValidShift(item?.time) === -1
+                          ? true
+                          : false &&
+                            moment(Date.now()).format("LL") ===
+                              moment(item?.createdDate).format("LL"),
                     },
                   )
                 }}
@@ -632,7 +638,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
 
                           selectedWTP.name,
                         )
-                  
+
                         setSelectProgess(0)
                       }}
                       isWarning={item.isWarning && selectedShift?.item != item.time}

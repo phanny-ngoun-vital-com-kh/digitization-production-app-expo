@@ -1,11 +1,10 @@
 import React from "react"
 import Icon from "react-native-vector-icons/Ionicons"
-import { View, ViewStyle } from "react-native"
+import { View, ViewStyle,TouchableOpacity } from "react-native"
 import { Text } from "app/components/v2"
 import { ProgressBar } from "react-native-paper"
 import styles from "./styles"
 import { translate } from "../../../i18n/translate"
-import { TouchableOpacity } from "react-native-gesture-handler"
 import { HaccpLines } from "app/models/haccp-monitoring/haccp-lines-store"
 import BadgeOutofdate from "../BadgePanel"
 interface LinePanelProps {

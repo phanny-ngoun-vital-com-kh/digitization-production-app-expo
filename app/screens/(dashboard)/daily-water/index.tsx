@@ -35,8 +35,8 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
     { label: "Sand Filter", color: "#059212" },
     { label: "Carbon Filter", color: "#D10363" },
     { label: "Resin Filter", color: "#DC5F00" },
-    { label: "MicroFilter 5 Mm", color: "#604CC3" },
-    { label: "MicroFilter 1Mm", color: "#071952" },
+    { label: "Microfilter 5µm", color: "#604CC3" },
+    { label: "Microfilter 1µm", color: "#071952" },
     { label: "Reverses Osmosis", color: "#79155B" },
   ]
   const [isLoading, setLoading] = useState(false)
@@ -47,20 +47,22 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
     end: null,
   })
   const [percentages, setPercentages] = useState(-1)
+  const [selectAll, setSelectAll] = useState(false)
   const [selectDate, setSelectDate] = useState<{
-    value: Date | null
+    value: Date
     range: number
   }>({
-    value: null,
+    value: new Date(Date.now()),
     range: 0,
   })
   const data = [
+    { label: "All", value: "All" },
     { label: "Raw Water Stock", value: "Raw Water Stock" },
     { label: "Sand Filter", value: "Sand Filter" },
     { label: "Carbon Filter", value: "Carbon Filter" },
     { label: "Resin Filter", value: "Resin Filter" },
-    { label: "MicroFilter 5 Mm", value: "MicroFilter 5 Mm" },
-    { label: "MicroFilter 1Mm", value: "MicroFilter 1Mm" },
+    { label: "Microfilter 5µm", value: "Microfilter 5µm" },
+    { label: "Microfilter 1µm", value: "Microfilter 1µm" },
     { label: "Reverses Osmosis", value: "Reverses Osmosis" },
   ]
 
@@ -80,6 +82,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
         machine: string
         warning_count: number
         pending_count: number
+        normal_count: number
         status: "pending" | "normal" | "warning"
       }[]
       date: string
@@ -106,7 +109,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       end: moment(enddate).format("YYYY-MM-DD") ?? "",
     })
     setSelectDate({
-      range: null,
+      range: -1,
       value: null,
     })
     setModalVisible(false)
@@ -138,14 +141,22 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
         if (!warningCountsByDateAndMachine[date][item?.machine]) {
           warningCountsByDateAndMachine[date][item?.machine] = {
             warning_count: 0,
+            normal_count: 0,
             pending_count: 0, // Initialize pending count
             status: null,
           }
         }
-        warningCountsByDateAndMachine[date][item?.machine].warning_count += item.warning_count || 0
+
         if (item.status === "pending") {
           warningCountsByDateAndMachine[date][item?.machine].pending_count += 1 // Increment pending count if status is pending
         }
+        if (item.status === "normal") {
+          warningCountsByDateAndMachine[date][item?.machine].normal_count += 1 // Increment normal count if status is pending
+        }
+        if (item.status === "warning") {
+          warningCountsByDateAndMachine[date][item?.machine].warning_count += 1
+        }
+
         warningCountsByDateAndMachine[date][item?.machine].status = item.status // Add status
       })
     })
@@ -155,6 +166,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       machines: Object.keys(warningCountsByDateAndMachine[date]).map((machine) => ({
         machine,
         warning_count: warningCountsByDateAndMachine[date][machine].warning_count,
+        normal_count: warningCountsByDateAndMachine[date][machine].normal_count,
         pending_count: warningCountsByDateAndMachine[date][machine].pending_count, // Include pending count
         status: warningCountsByDateAndMachine[date][machine].status, // Include status
       })),
@@ -246,8 +258,10 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
 
           const warningCount = machineData ? machineData.warning_count : 0
           const pendingCount = machineData ? machineData?.pending_count : 0
+          const normal = machineData ? machineData?.normal_count : 0
+
           total_warning_count += warningCount
-          total_normal_count += warningCount <= 0 ? 1 : 0
+          total_normal_count += normal //check status 1 more
           total_pending_count += pendingCount
           const machineColor =
             machineColors.find((color) => color.label === machine)?.color || "#ccc"
@@ -270,8 +284,8 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
       })
 
       setDataSet(newDatasets)
-      const totalMachines = total_warning_count + total_normal_count + total_pending_count
 
+      const totalMachines = total_warning_count + total_normal_count + total_pending_count
       const warning_percentages = ((total_warning_count / totalMachines) * 100).toFixed(2)
       const normal_percentage = ((total_normal_count / totalMachines) * 100).toFixed(2)
       const pending_percentages = 100 - (+warning_percentages + +normal_percentage)
@@ -388,20 +402,22 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                   <FlatList
                     horizontal
                     scrollEnabled={false}
+                    style={{ marginTop: 12 }}
                     renderItem={({ item, index }) => {
                       return (
                         <TouchableOpacity
                           // disabled={selectedMachine?.length >= 4}
                           onPress={() => {
-                            // if (selectedMachine?.length >= 5) {
-                            //   if (selectedMachine.includes(item.value)) {
-                            //     setSelectedMachine((pre) =>
-                            //       pre.filter((machine) => machine !== item.value),
-                            //     )
-                            //     return
-                            //   }
-                            // }
+                            if (index === 0) {
+                              const Allmachines = data
+                                .filter((machine) => machine!.label !== "All")
+                                .map((item) => item.value)
 
+                              selectAll ? setSelectedMachine([]) : setSelectedMachine(Allmachines)
+                              setSelectAll((pre) => !pre)
+                              return
+                            }
+                            setSelectAll(false)
                             if (selectedMachine.includes(item.value)) {
                               setSelectedMachine((pre) =>
                                 pre.filter((machine) => machine !== item.value),
@@ -420,9 +436,10 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                 alignItems: "center",
                                 borderRadius: 10,
 
-                                backgroundColor: selectedMachine.includes(item.value)
-                                  ? "#0081F8"
-                                  : "#DFDFDE",
+                                backgroundColor:
+                                  selectedMachine.includes(item.value) || selectAll
+                                    ? "#0081F8"
+                                    : "#DFDFDE",
 
                                 gap: 10,
                                 marginTop: 8,
@@ -440,7 +457,10 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                             <Text
                               style={{
                                 fontSize: 13,
-                                color: selectedMachine.includes(item.value) ? "white" : "gray",
+                                color:
+                                  selectedMachine.includes(item.value) || selectAll
+                                    ? "white"
+                                    : "gray",
                               }}
                             >
                               {item.label}
@@ -471,7 +491,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                         }}
                       >
                         <Text body1 semibold>
-                          {translate("dashboard.machineActivity")}
+                          Machine Status
                         </Text>
                         <View
                           style={[
@@ -480,6 +500,22 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                           ]}
                         >
                           <View style={$horiContainer}>
+                            <Button
+                              style={[
+                                styles.dateAgo,
+                                selectDate.range === 0 && { backgroundColor: "#0081F8" },
+                              ]}
+                              outline
+                              onPress={() => onSelectRangeDate(0)}
+                              styleText={{
+                                fontWeight: "bold",
+                              }}
+                            >
+                              <Text caption1 primaryColor whiteColor={selectDate.range === 0}>
+                                Today
+                              </Text>
+                            </Button>
+
                             <Button
                               style={[
                                 styles.dateAgo,
@@ -589,7 +625,7 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
                                 overflowTop={15}
                                 overflowBottom={50}
                                 disableScroll={false}
-                                // dataSet={dataSet}
+                                dataSet={dataSet}
                                 data={dataSet[0]?.data}
                                 data2={dataSet[1]?.data}
                                 data3={dataSet[2]?.data}

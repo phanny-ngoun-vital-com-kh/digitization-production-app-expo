@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useLayoutEffect, useState } from "react"
 import * as ImagePicker from "expo-image-picker"
+import { default as IconSecondary } from "react-native-vector-icons/Ionicons"
 import { observer } from "mobx-react-lite"
 import Icon from "react-native-vector-icons/Ionicons"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
@@ -16,12 +17,14 @@ import { KeyboardAvoidingView, ScrollView, TouchableOpacity, View, ViewStyle } f
 import { styles } from "./styles"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 import { translate } from "../../i18n/translate"
+import networkStore from "app/models/network"
 interface WaterTreatmentPlant2FormScreenProps
   extends AppStackScreenProps<"WaterTreatmentPlant2Form"> {}
 
 export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenProps> = observer(
   function WaterTreatmentPlant2FormScreen() {
     const { waterTreatmentStore, authStore } = useStores()
+    const [isOffline, setIsOffline] = useState(false)
     const navigation = useNavigation()
     const [isLoading, setLoading] = useState({
       image: false,
@@ -33,7 +36,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       warning_count: 0,
     })
     const [activities, setActivities] = useState<Activities[]>([])
-    const [isEditable, setEditable] = useState(false)
+    const [isEditable, setEditable] = useState(true)
     const route = useRoute().params
     const [oldRoute, setRoute] = useState({})
     const [form, setForm] = useState({
@@ -67,25 +70,26 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
     const [image, setImage] = useState(null)
     const checkUserRole = async () => {
       // console.log("machine user assign to", route?.items?.assign_to_user)
-      if (!route?.items?.assign_to_user) {
-        setEditable(false)
-
-        return
-      }
-      const currUser = await getCurrentUserName()
-
-      const arrUsers = route?.items?.assign_to_user?.split(" ") as string[]
-      if (arrUsers.includes(currUser)) {
-        setEditable(true)
-      } else {
-        setEditable(false)
-      }
+      setEditable(route?.isvalidDate && route?.isValidShift && route?.isEdit)
     }
 
     useLayoutEffect(() => {
+      checkUserRole()
       navigation.setOptions({
         headerShown: true,
         title: route?.type || "Raw Water",
+        // headerRight: () => (
+        //   <TouchableOpacity
+        //     style={{ flexDirection: "row", alignItems: "center" }}
+        //     onPress={() => validate()}
+        //   >
+        //     <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
+        //     <Text primaryColor body1 semibold>
+        //       {translate("wtpcommon.save")}
+        //     </Text>
+        //   </TouchableOpacity>
+        // ),
+
         headerRight: () =>
           route?.isvalidDate && route?.isValidShift && route?.isEdit ? (
             <TouchableOpacity
@@ -94,10 +98,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-             
-                {
-                  translate("wtpcommon.save")
-                }
+                {translate("wtpcommon.save")}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -108,6 +109,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       })
       validateStateMachine()
     }, [errors, navigation, route, form, route?.isEdit])
+
     useEffect(() => {
       if (route?.items) {
         checkUserRole()
@@ -143,6 +145,13 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
       }
     }, [route])
     const fetchUserActivities = async () => {
+      //fetch user activity log from local if
+
+      if (!networkStore.isConnected) {
+        setActivities([])
+        setIsOffline(true)
+        return
+      }
       const result = await waterTreatmentStore.getTreatmentActivitiesMachine(route?.items?.id, 20)
       setActivities(result?.items?.sort((a, b) => (a.id > b.id ? -1 : 1)))
     }
@@ -507,11 +516,6 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
         })
       }
     }
-    const getCurrentUserName = async () => {
-      const userinfo = await authStore.getUserInfo()
-      const { login } = userinfo.data
-      return login
-    }
 
     return (
       <Provider>
@@ -522,7 +526,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                 <ActivityIndicator color="#8CC8FF" size={35} />
                 <View style={{ marginVertical: 15 }}></View>
                 <Text whiteColor textAlign={"center"}>
-                 {translate('wtpcommon.processImage')} ...
+                  {translate("wtpcommon.processImage")} ...
                 </Text>
               </View>
             )}
@@ -531,7 +535,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                 <ActivityIndicator color="#8CC8FF" size={35} />
                 <View style={{ marginVertical: 15 }}></View>
                 <Text whiteColor textAlign={"center"}>
-                {translate('wtpcommon.savingRecord')} ...
+                  {translate("wtpcommon.savingRecord")} ...
                 </Text>
               </View>
             )}
@@ -539,13 +543,24 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
             <View>
               <ScrollView>
                 <View style={$outer}>
-                  {route?.isvalidDate && route?.isValidShift  && route?.isEdit && (
-                    <ActivityBar
-                      onScanCamera={onlaunchCamera}
-                      direction="end"
-                      onActivity={() => setShowlog(true)}
-                      onAttachment={onlaunchGallery}
-                    />
+                  {route?.isvalidDate && route?.isValidShift && route?.isEdit && (
+                    <View>
+                      {isOffline && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                          <IconSecondary name="cloud-offline" size={19} color={"red"} />
+                          <Text style={{ marginRight: 5 }} errorColor caption1 semibold>
+                            You are offline
+                          </Text>
+                        </View>
+                      )}
+                      <ActivityBar
+                        onScanCamera={onlaunchCamera}
+                        direction="end"
+                        disable
+                        onActivity={() => setShowlog(true)}
+                        onAttachment={onlaunchGallery}
+                      />
+                    </View>
                   )}
 
                   <View
@@ -555,7 +570,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                     <View style={$width}>
                       <CustomInput
                         key={1}
-                        disabled={route?.isEdit}
+                        disabled={isEditable}
                         warning={form.tds && +form?.tds > 300}
                         hintLimit="<=300 ppm"
                         showIcon={false}
@@ -581,7 +596,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={$width}>
                         <CustomInput
                           key={2}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           hintLimit="6.5 - 8.5"
                           warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
                           keyboardType="decimal-pad"
@@ -607,9 +622,8 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={$width}>
                         <CustomInput
                           key={3}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           hintLimit="25 - 35 °C"
-                          disabled={route?.isEdit}
                           keyboardType="decimal-pad"
                           warning={
                             (form.temperature && +form?.temperature < 25) || +form?.temperature > 35
@@ -640,7 +654,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={$width}>
                         <CustomInput
                           key={4}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           hintLimit="6.5 - 8.5"
                           showIcon={false}
                           warning={(form.ph && +form?.ph < 6.5) || +form?.ph > 8.5}
@@ -665,7 +679,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={$width}>
                         <CustomInput
                           key={5}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           showIcon={false}
                           value={form.other?.toString() || ""}
                           onChangeText={(text) => {
@@ -688,7 +702,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
                           <View style={[$containerHorizon, { marginTop: 10 }]}>
                             <TouchableOpacity
-                              disabled={!route?.isEdit}
+                              disabled={!isEditable}
                               style={$containerHorizon}
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
@@ -696,7 +710,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                               }}
                             >
                               <Checkbox
-                                disabled={!route?.isEdit}
+                                disabled={!isEditable}
                                 status={
                                   form.air_release == null
                                     ? "unchecked"
@@ -714,7 +728,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                              disabled={!route?.isEdit}
+                              disabled={!isEditable}
                               style={$containerHorizon}
                               onPress={() => {
                                 setErrors((pre) => ({ ...pre, air_release: false }))
@@ -722,7 +736,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                               }}
                             >
                               <Checkbox
-                                disabled={!route?.isEdit}
+                                disabled={!isEditable}
                                 status={
                                   form.air_release == null
                                     ? "unchecked"
@@ -752,7 +766,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={{ flex: 0.5 }}>
                         <CustomInput
                           key={6}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           keyboardType="decimal-pad"
                           showIcon={false}
                           value={form?.pressure}
@@ -783,7 +797,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={$width}>
                         <CustomInput
                           key={7}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           keyboardType="decimal-pad"
                           value={form.press_inlet?.toString() || ""}
                           showIcon={false}
@@ -793,7 +807,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                               : setErrors((pre) => ({ ...pre, press_inlet: true }))
                           }}
                           warning={
-                            (form?.press && form?.press_inlet && +form?.press_inlet < 0.01) ||
+                            (form?.press_inlet && form?.press_inlet && +form?.press_inlet < 0.01) ||
                             +form?.press_inlet > 0.3
                           }
                           onChangeText={(text) => {
@@ -812,7 +826,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={$width}>
                         <CustomInput
                           key={8}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           warning={
                             (form?.press_treat && form?.press_treat && +form?.press_treat < 0.01) ||
                             +form?.press_treat > 0.3
@@ -840,7 +854,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                       <View style={$width}>
                         <CustomInput
                           key={9}
-                          disabled={route?.isEdit}
+                          disabled={isEditable}
                           warning={
                             (form?.press_drain && form?.press_drain && +form?.press_drain < 0.01) ||
                             +form?.press_drain > 0.3
@@ -876,7 +890,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
 
                         <View style={[$containerHorizon, { marginTop: 10 }]}>
                           <TouchableOpacity
-                            disabled={!route?.isEdit}
+                            disabled={!isEditable}
                             style={$containerHorizon}
                             onPress={() => {
                               if (!form.odor) {
@@ -889,7 +903,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                             }}
                           >
                             <Checkbox
-                              disabled={!route?.isEdit}
+                              disabled={!isEditable}
                               status={form?.odor || false ? "checked" : "unchecked"}
                               onPress={() => {
                                 if (!form.odor) {
@@ -905,7 +919,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                             <Text>Odor</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
-                            disabled={!route?.isEdit}
+                            disabled={!isEditable}
                             style={$containerHorizon}
                             onPress={() => {
                               if (!form.taste) {
@@ -917,7 +931,7 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
                             }}
                           >
                             <Checkbox
-                              disabled={!route?.isEdit}
+                              disabled={!isEditable}
                               status={form?.taste || false ? "checked" : "unchecked"}
                               onPress={() => {
                                 if (!form.taste) {

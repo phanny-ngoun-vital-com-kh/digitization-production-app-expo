@@ -1,14 +1,13 @@
 import React, { FC, useEffect, useState } from "react"
 import { LineChart } from "react-native-gifted-charts"
-import { Divider } from "react-native-paper"
 import Icon from "react-native-vector-icons/AntDesign"
+import { ReactNativeZoomableView } from "@openspacelabs/react-native-zoomable-view"
 import { observer } from "mobx-react-lite"
-import { View, ViewStyle, useWindowDimensions } from "react-native"
+import { View, ViewStyle, useWindowDimensions, ScrollView } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { Button, Text } from "app/components/v2"
 import styles from "./styles"
 import DateRangePicker from "app/components/v2/DateRange"
-import { ScrollView } from "react-native-gesture-handler"
 import { FlatList } from "react-native"
 import { TouchableOpacity } from "react-native"
 import { DataSetProps } from "../daily-water/type"
@@ -33,14 +32,15 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
   const [fakeScrollIndicator, setFakeScrollIndicator] = useState(true)
 
   const data = [
+    { label: "All", value: "All" },
     { label: "Water Treatment Plant 2", value: "Water Treatment Plant 2" },
     { label: "Water Treatment Plant 3", value: "Water Treatment Plant 3" },
     { label: "Water Treatment Plant 4", value: "Water Treatment Plant 4" },
   ]
   const machineColors = [
-    { label: data[0].label, color: "#604CC3" },
-    { label: data[1].label, color: "#059212" },
-    { label: data[2].label, color: "#D10363" },
+    { label: data[1].label, color: "#604CC3" },
+    { label: data[2].label, color: "#059212" },
+    { label: data[3].label, color: "#D10363" },
   ]
 
   const { width: maxWidth } = useWindowDimensions()
@@ -49,7 +49,7 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
   const [selectedMachine, setSelectedMachine] = useState<string[]>([])
   const [selectColors, setSelectColors] = useState<{ label: string; color: string }[]>([])
   const [dataSet, setDataSet] = useState<DataSetProps[]>([])
-
+  const [selectAll, setSelectAll] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
   const [popupData, setPopupdata] = useState({
     percentages: "",
@@ -62,7 +62,7 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
     value: Date | null
     range: number
   }>({
-    value: null,
+    value: new Date(Date.now()),
     range: 0,
   })
   const [pieData, setPieData] = useState([
@@ -93,7 +93,7 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
     const startdate = new Date(year, month - 1, day)
     const enddate = new Date(eyear, emonth - 1, eday)
     setSelectDate({
-      range: 0,
+      range: -1,
       value: null,
     })
     setSelectionDate({
@@ -135,9 +135,10 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
 
           const warningCount = machineData ? machineData.warning_count : 0
           const pendingCount = machineData ? machineData.pending_count : 0
+          const normalCount = machineData ? machineData?.normal_count : 0
 
           total_warning_count += warningCount
-          total_normal_count += warningCount <= 0 ? 1 : 0
+          total_normal_count += normalCount //check status 1 more
           total_pending_count += pendingCount
 
           const machineColor =
@@ -164,7 +165,6 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
       setDataSet(newDatasets)
 
       const totalMachines = total_warning_count + total_normal_count + total_pending_count
-
       const warning_percentages = ((total_warning_count / totalMachines) * 100).toFixed(2)
       const normal_percentage = ((total_normal_count / totalMachines) * 100).toFixed(2)
       const pending_percentages = 100 - (+warning_percentages + +normal_percentage)
@@ -207,9 +207,8 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
       ])
 
       const allColors = newDatasets.map((item) => item.color)
-
-      console.log("   map color", allColors)
       const resultColor = machineColors.filter((item) => allColors.includes(item.color))
+
       setSelectColors(resultColor)
     } else {
       setDataSet([])
@@ -239,15 +238,23 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
         if (!warningCountsByDateAndMachine[date][entry.pre_treatment_type]) {
           warningCountsByDateAndMachine[date][entry.pre_treatment_type] = {
             warning_count: 0,
+            normal_count: 0,
             pending_count: 0, // Initialize pending count
             status: null,
           }
         }
-        warningCountsByDateAndMachine[date][entry.pre_treatment_type].warning_count +=
-          item.warning_count || 0
+
         if (item.status === "pending") {
           warningCountsByDateAndMachine[date][entry.pre_treatment_type].pending_count += 1 // Increment pending count if status is pending
         }
+        if (item.status === "normal") {
+          warningCountsByDateAndMachine[date][entry.pre_treatment_type].normal_count += 1 // Increment pending count if status is pending
+        }
+
+        if (item.status === "warning") {
+          warningCountsByDateAndMachine[date][entry.pre_treatment_type].warning_count += 1
+        }
+
         warningCountsByDateAndMachine[date][entry.pre_treatment_type].status = item.status // Add status
       })
     })
@@ -257,6 +264,7 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
       machines: Object.keys(warningCountsByDateAndMachine[date]).map((machine) => ({
         machine,
         warning_count: warningCountsByDateAndMachine[date][machine].warning_count,
+        normal_count: warningCountsByDateAndMachine[date][machine].normal_count,
         pending_count: warningCountsByDateAndMachine[date][machine].pending_count, // Include pending count
         status: warningCountsByDateAndMachine[date][machine].status, // Include status
       })),
@@ -369,39 +377,35 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                 <Text semibold body1>
                   {translate("haccpMonitoring.selectLine")}
                 </Text>
-                <View>
-                  {selectedMachine?.length > 4 && (
-                    <Text errorColor body2>
-                      ( Maximum 5 water treatment machines )
-                    </Text>
-                  )}
-                </View>
               </View>
 
               <FlatList
                 horizontal
                 scrollEnabled={false}
+                style={{ marginTop: 10 }}
                 renderItem={({ item, index }) => {
                   return (
                     <TouchableOpacity
                       // disabled={selectedMachine?.length >= 4}
                       onPress={() => {
-                        if (selectedMachine?.length >= 5) {
-                          if (selectedMachine.includes(item.value)) {
-                            setSelectedMachine((pre) =>
-                              pre.filter((machine) => machine !== item.value),
-                            )
-                            return
-                          }
+                        console.log(item)
+                        if (index === 0) {
+                          const Allmachines = data
+                            .filter((machine) => machine!.label !== "All")
+                            .map((item) => item.value)
+
+                          selectAll ? setSelectedMachine([]) : setSelectedMachine(Allmachines)
+                          setSelectAll((pre) => !pre)
+                          return
+                        }
+                        setSelectAll(false)
+                        if (selectedMachine.includes(item.value)) {
+                          setSelectedMachine((pre) =>
+                            pre.filter((machine) => machine !== item.value),
+                          )
+                          return
                         } else {
-                          if (selectedMachine.includes(item.value)) {
-                            setSelectedMachine((pre) =>
-                              pre.filter((machine) => machine !== item.value),
-                            )
-                            return
-                          } else {
-                            setSelectedMachine((pre) => pre.concat(item.value))
-                          }
+                          setSelectedMachine((pre) => pre.concat(item.value))
                         }
                       }}
                     >
@@ -413,9 +417,10 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                             alignItems: "center",
                             borderRadius: 10,
 
-                            backgroundColor: selectedMachine.includes(item.value)
-                              ? "#0081F8"
-                              : "#DFDFDE",
+                            backgroundColor:
+                              selectedMachine.includes(item.value) || selectAll
+                                ? "#0081F8"
+                                : "#DFDFDE",
 
                             gap: 10,
                             marginTop: 8,
@@ -433,7 +438,8 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                         <Text
                           style={{
                             fontSize: 13,
-                            color: selectedMachine.includes(item.value) ? "white" : "gray",
+                            color:
+                              selectedMachine.includes(item.value) || selectAll ? "white" : "gray",
                           }}
                         >
                           {item.label}
@@ -464,8 +470,9 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                     }}
                   >
                     <Text body1 semibold>
-                      Machine Activity
+                      Machine Status
                     </Text>
+
                     <View
                       style={[
                         $horiContainer,
@@ -473,6 +480,22 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                       ]}
                     >
                       <View style={$horiContainer}>
+                        <Button
+                          style={[
+                            styles.dateAgo,
+                            selectDate.range === 0 && { backgroundColor: "#0081F8" },
+                          ]}
+                          outline
+                          onPress={() => onSelectRangeDate(0)}
+                          styleText={{
+                            fontWeight: "bold",
+                          }}
+                        >
+                          <Text caption1 primaryColor whiteColor={selectDate.range === 0}>
+                            Today
+                          </Text>
+                        </Button>
+
                         <Button
                           style={[
                             styles.dateAgo,
@@ -575,9 +598,21 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                     ) : (
                       <></>
                     )}
+
                     <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
                       {dataSet && dataSet.length > 0 && (
-                        <>
+                        <ReactNativeZoomableView
+                        pinchToZoomInSensitivity ={10}
+                          zoomStep={1}
+                          minZoom={100}
+                          maxZoom={100}
+                          initialZoom={0.75}
+                          // Give these to the zoomable view so it can apply the boundaries around the actual content.
+                          // Need to make sure the content is actually centered and the width and height are
+                          // dimensions when it's rendered naturally. Not the intrinsic size.
+                          // For example, an image with an intrinsic size of 400x200 will be rendered as 300x150 in this case.
+                          // Therefore, we'll feed the zoomable view the 300x150 size.
+                        >
                           <LineChart
                             overflowTop={15}
                             overflowBottom={50}
@@ -586,15 +621,11 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                             data={dataSet[0]?.data}
                             data2={dataSet[1]?.data}
                             data3={dataSet[2]?.data}
-                            data4={dataSet[3]?.data}
-                            data5={dataSet[4]?.data}
                             color1={selectColors[0]?.color}
                             color2={selectColors[1]?.color}
                             color3={selectColors[2]?.color}
-                            color4={selectColors[3]?.color}
-                            color5={selectColors[4]?.color}
                             thickness={2}
-                            width={maxWidth * 0.52}
+                            // width={maxWidth * 1}
                             height={320}
                             yAxisColor={"transparent"}
                             // maxValue={100}
@@ -670,7 +701,7 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
                               },
                             }}
                           ></LineChart>
-                        </>
+                        </ReactNativeZoomableView>
                       )}
 
                       {dataSet.length === 0 && <EmptyLineChart />}

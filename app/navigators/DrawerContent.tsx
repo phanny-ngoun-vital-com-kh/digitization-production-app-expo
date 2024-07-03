@@ -46,19 +46,21 @@ const Drawers: React.FC<DrawersProps> = ({ navigation, username, ...props }) => 
               fcm_token: "",
               // authorities: authoritie
             })
-            await closeDb()
+
             authStore.clearLogout()
             await authStore
               .saveUser(data)
               .saveMobileUser()
               .then()
               .catch((e) => console.log(e))
+   
             await logout(), await navigation.dispatch(DrawerActions.closeDrawer)
-          } else {
             await closeDb()
+          } else {
             authStore.clearLogout()
 
             await logout(), await navigation.dispatch(DrawerActions.closeDrawer)
+            await closeDb()
           }
 
           // await logout(),

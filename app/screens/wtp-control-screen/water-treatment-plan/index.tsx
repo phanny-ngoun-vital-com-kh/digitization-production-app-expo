@@ -1,3 +1,4 @@
+import * as SQLite from "expo-sqlite"
 import React, { FC, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { observer } from "mobx-react-lite"
 import moment from "moment"
@@ -37,7 +38,6 @@ import ActivityModal from "app/components/v2/ActivitylogModal"
 import { getDBConnection } from "app/lib/offline-db"
 import networkStore from "app/models/network"
 import { Text } from "app/components/v2"
-import { useSQLiteContext } from "expo-sqlite"
 import { saveAssignTreatment } from "app/lib/offline-db/wtp"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
@@ -56,6 +56,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     const [schedules, setSchedules] = useState<Treatment[]>()
     const [scheduleSnapshot, setScheduleSnapshot] = useState<Treatment[]>()
     const [isloading, setLoading] = useState(false)
+    const [roleLoading, setRoleLoading] = useState(false)
     const [roles, setRoles] = useState<string[]>([])
     const [cancelDate, setCancelDate] = useState(false)
     const [datePicker, setDatePicker] = useState({
@@ -115,27 +116,34 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       getCurrentTime().localeCompare(
         cleanTimeString(!time.includes("(") ? time : time?.split(" ")[1]),
       )
-    console.log("user is", assignUser)
 
     const handleAssignTask = async () => {
       try {
-        console.log("users", wtpUsers)
+        let modifyUser: string[] = []
 
-        let users: string[] = []
-
-        const isExisted = wtpUsers.includes(authStore?.userLogin ?? "")
+        setRoleLoading(true)
+        const isExisted = wtpUsers?.includes(authStore?.userLogin ?? "")
 
         if (isExisted) {
           //exist = remove user
-          users = wtpUsers.filter((user) => user !== authStore?.userLogin)
+
+          modifyUser = wtpUsers?.filter((user) => user !== authStore?.userLogin)
+        } else {
+          if (wtpUsers?.length === 0) {
+            console.log("Current user is ", authStore?.userLogin)
+            modifyUser.push(authStore?.userLogin ?? "")
+          } else {
+            modifyUser = wtpUsers
+          }
         }
         //notexist = assign user
-        const strUser = users.toString()
+
+        console.log("array of modify user", modifyUser)
+        const strUser = modifyUser.toString()
         const newStrUser = strUser.replace(",", " ")
 
         // Prod1,User1,Ware1
 
-        setVisible(false)
         if (networkStore.isConnected) {
           await waterTreatmentStore.assignMachine(
             assignUser!.id?.toString() || "",
@@ -144,27 +152,39 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               : "has self assign this machine",
             assignUser!.treatment_id,
           )
+          await saveAssignTreatment(+assignUser?.id ?? 0, newStrUser, assignUser!.treatment_id)
+          refresh()
         } else {
           //user assign task in offline-mode
 
           //prod1 admin1 ware1
 
-          console.log("New User assign is ",newStrUser)
+          const db = await saveAssignTreatment(
+            +assignUser?.id ?? 0,
+            newStrUser,
+            assignUser!.treatment_id,
+          )
 
-          await saveAssignTreatment(+assignUser?.id ?? 0, newStrUser, assignUser!.treatment_id)
+          if (db?.success === 200) {
+        
+            fetchScehdules()
+          } else {
+            console.log("ERROR _ WTP - 400")
+          }
         }
-
+        setVisible(false)
         // console.log("full finished", payload)
       } catch (error) {
         // console.log(error.message)
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "បរាជ័យ",
-          textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
-          button: "បិទ",
-        })
+        // Dialog.show({
+        //   type: ALERT_TYPE.DANGER,
+        //   title: "បរាជ័យ",
+        //   textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
+        //   button: "បិទ",
+        // })
       } finally {
-        refresh()
+        setRoleLoading(false)
+        // refresh()
       }
     }
 
@@ -186,17 +206,19 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           <View key={index.toString()}>
             <MachinePanel
               handleAssigntask={(id: number, assign_to_user: string, users?: string[]) => {
-                setWtpUsers(users!)
+                if (users?.length ? users[0] === "" : true) {
+                  setWtpUsers([])
+                } else {
+                  setWtpUsers(users!)
+                }
+
                 setVisible(true)
                 setTaskAssignTo(assign_to_user)
                 setAssignUser((pre) => ({ ...pre, id, treatment_id: item?.treatment_id ?? "" }))
               }}
               handleShowdialog={(users) => {
                 setShowActivitylog(true)
-                const strUser = users.toString()
-                const newStrUser = strUser.replace(",", " ")
-                // Prod1,User1,Ware1
-                console.log("New User", newStrUser)
+
                 if (users.includes("")) {
                   return
                 }
@@ -223,7 +245,12 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                   isValidShift: shift === -1 ? true : false,
                   isvalidDate:
                     moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
-                  isEdit: subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? ""),
+                  isEdit:
+                    subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? "") &&
+                    shift === -1
+                      ? true
+                      : false &&
+                        moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
                 })
               }}
             />
@@ -322,6 +349,8 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }
     const fetchScehdules = async () => {
       try {
+
+        console.log("pull refresh ")
         setLoading(true)
         setRefreshing(true)
         getCurrentUserName()
@@ -337,6 +366,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               selectedShift || "",
             )) as []
           } else {
+            console.log("Fetch fromlocal wtp ")
             results = (await waterTreatmentStore.getOfflineWtp(
               assign_date?.toString() || "",
               selectedShift || "",
@@ -344,12 +374,12 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           }
 
           // console.log("done fetching", results.length)
-          flatListRef?.current?.scrollToOffset({
-            animated: true,
-            offset: 0,
-          })
-          setWtp2(results)
+          // flatListRef?.current?.scrollToOffset({
+          //   animated: true,
+          //   offset: 0,
+          // })
 
+          setWtp2(results)
           const schedules = results.map((item) => item?.treatmentlist)[0]
           setSchedules(schedules)
           setScheduleSnapshot(schedules)
@@ -415,95 +445,6 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       return currShift
     })
 
-    // const loadAllTreatments = async () => {
-    //   try {
-    //     const db? = useSQLiteContext
-
-    //     const query = `SELECT t.*, tl.*
-    //     FROM treatments t
-    //     LEFT JOIN treatment_list tl
-    //     ON t.treatment_id = tl.treatment_id;`
-
-    //     db?.withTransactionAsync(async () => {
-    //       const result = await db?.getAllAsync<any>(query)
-
-    //       console.log("water treatment data length", result?.length)
-    //     })
-    //   } catch (error) {
-    //     console.error(error)
-    //   }
-    // }
-
-    const BindingServertoLocal = async () => {
-      try {
-        const db = await getDBConnection()
-        await db?.runAsync(`DELETE FROM treatments;`)
-        await db?.runAsync(`DELETE FROM treatment_list;`)
-        const result = await waterTreatmentStore.loadWtp()
-
-        result.forEach(async (element: WaterTreatment) => {
-          await db?.runAsync(
-            `
-          INSERT OR REPLACE INTO treatments 
-          (assign_to, shift, treatment_id, remark, createdBy, createdDate, lastModifiedBy, lastModifiedDate, assign_date) 
-          VALUES 
-          (?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `,
-            [
-              element?.assign_to,
-              element?.shift,
-              element?.treatment_id,
-              element?.remark,
-              element?.createdBy,
-              element?.createdDate,
-              element?.lastModifiedBy,
-              element?.lastModifiedDate,
-              element?.assign_date,
-            ],
-          )
-
-          element.treatmentlist.forEach(async (treatment) => {
-            await db?.runAsync(
-              `INSERT OR REPLACE INTO treatment_list 
-            (id, machine, treatment_id, tds, ph, temperature, pressure, air_release, press_inlet, press_treat, press_drain, check_by, status, warning_count, odor, taste, other, assign_to_user, createdBy, createdDate, lastModifiedBy, lastModifiedDate) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-          `,
-              [
-                treatment?.id,
-                treatment?.machine,
-                treatment?.treatment_id,
-                treatment?.tds,
-                treatment?.ph,
-                treatment?.temperature,
-                treatment?.pressure,
-                treatment?.air_release,
-                treatment?.press_inlet,
-                treatment?.press_treat,
-                treatment?.press_drain,
-                treatment?.check_by,
-                treatment?.status,
-                treatment?.warning_count,
-                treatment?.odor,
-                treatment?.taste,
-                treatment?.other,
-                treatment?.assign_to_user,
-                treatment?.createdBy,
-                treatment?.createdDate,
-                treatment?.lastModifiedBy,
-                treatment?.lastModifiedDate,
-              ],
-            )
-          })
-        })
-
-        const mapData = await waterTreatmentStore.loadTreatmentLocal()
-      } catch (error) {
-        console.error("Error local", error)
-      } finally {
-        console.log("First load data from server to local")
-      }
-    }
-
     // const logSqlInfo = async () => {
     //   const db? = await getDBConnection()
 
@@ -524,17 +465,16 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }, [query])
 
     useEffect(() => {
-      console.log("Network is", networkStore.isConnected)
       if (networkStore.isConnected == false) {
         setShowoffline(true)
 
         return
       } else {
         setShowoffline(false)
-        BindingServertoLocal()
+
         //when internet or first open this bind
       }
-    }, [networkStore])
+    }, [networkStore, navigation])
 
     return (
       <Provider>
@@ -601,6 +541,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                             if (`${item.name} (${subitem.time})` === selectedShift) {
                               return
                             }
+                            flatListRef?.current?.scrollToOffset({
+                              animated: true,
+                              offset: 0,
+                            })
                             setSelectProgess(0)
                             setSelectedShift(`${item.name} (${subitem.time})`)
                           }}
@@ -634,7 +578,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                       errormessage={""}
                     />
                   </View>
-                  {!networkStore.isConnected && (
+                  {showOffline && (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                       <IconSecondary name="cloud-offline" size={19} color={"red"} />
                       <Text style={{ marginRight: 5 }} errorColor caption1 semibold>
@@ -677,8 +621,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                 </View>
                 <AlertDialog
                   visible={visible}
+                  isLoading={roleLoading}
                   content="Are you sure about that?"
                   hideDialog={hideDialog}
+                  wtpUsers={wtpUsers}
                   onPositive={handleAssignTask}
                   onNegative={() => setVisible(false)}
                 />

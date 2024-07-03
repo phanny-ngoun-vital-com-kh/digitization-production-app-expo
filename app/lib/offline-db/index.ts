@@ -1,21 +1,30 @@
-import { Treatment } from "app/models"
-import * as SQLite from "expo-sqlite"
+import * as SQLite from "expo-sqlite/next"
+
+export const DATABASE_NAME = "dbtest"
 export const openConnection = async () => {
-  const db = await SQLite.openDatabaseAsync("dbtest")
+  const db = await SQLite.openDatabaseAsync(DATABASE_NAME, {
+    useNewConnection: true,
+  })
   await db.execAsync("PRAGMA journal_mode = WAL")
   await db.execAsync("PRAGMA foreign_keys = OFF")
   return db
 }
 export const getDBConnection = async () => {
   try {
-    const db = await SQLite.openDatabaseAsync("dbtest")
+    const db = await SQLite.openDatabaseAsync(DATABASE_NAME, {
+      useNewConnection: true,
+    })
     return db
   } catch (error) {
     console.error("getDBConnection", error)
   }
 }
 export const closeDb = async () => {
-  const db = await SQLite.openDatabaseAsync("dbtest")
+  const db = await SQLite.openDatabaseAsync(DATABASE_NAME, {
+    useNewConnection: true,
+  })
+
+  
   await db.closeAsync()
 }
 // Function to create the treatments table

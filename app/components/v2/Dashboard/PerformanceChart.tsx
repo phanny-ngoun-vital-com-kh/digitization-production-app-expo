@@ -6,12 +6,12 @@ import { Text } from "app/components/v2"
 import styles from "./styles"
 import { PieChart } from "react-native-gifted-charts"
 import { getStatusPerformance } from "app/utils-v2/dashboard/getPerformance"
-import { translate } from "../../../i18n/translate"
 export default function PerformanceChart({
   pieData,
   showPopup,
   setPopupdata,
   setShowPopup,
+  isEmpyline = false,
   popupData,
   percentages,
   isloading,
@@ -28,7 +28,7 @@ export default function PerformanceChart({
       ]}
     >
       <Text semibold body1 textAlign={"center"}>
-        {translate("dashboard.PerformanceStatistic")}
+        Machine Performance
       </Text>
 
       <View style={{ paddingHorizontal: 20, paddingVertical: 0, zIndex: 0 }}>
@@ -42,7 +42,7 @@ export default function PerformanceChart({
           <PieChart
             data={pieData}
             innerRadius={64}
-            showText={!isloading && machineLength > 0 ? true : false}
+            showText={!isloading && machineLength > 0 && !isEmpyline ? true : false}
             // textBackgroundColor="#EEEEEE"
             // textColor="#"
 

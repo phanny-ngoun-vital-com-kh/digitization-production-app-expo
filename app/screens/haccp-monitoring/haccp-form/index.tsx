@@ -10,11 +10,11 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   ActivityIndicator,
+  ScrollView
 } from "react-native"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
 import { Badge, Checkbox, Divider, Portal, Provider } from "react-native-paper"
-import { ScrollView } from "react-native-gesture-handler"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import InstructionList from "app/components/v2/HACCP/InstructionList"
@@ -23,7 +23,7 @@ import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 import { HaccpActionType, LinesItemModel } from "app/models/haccp-monitoring/haccp-lines-model"
 import { styles } from "./styles"
-import {translate} from "../../../i18n/translate"
+import { translate } from "../../../i18n/translate"
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
@@ -469,7 +469,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       }
 
       if ([4, 5, 6]?.includes(+route?.line)) {
-  
         const [side_wall] = numberic.filter(
           (item) =>
             (parseInt(item) >= 100 && parseInt(item) <= 110) ||
@@ -629,7 +628,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
-               {translate("wtpcommon.save")}
+                {translate("wtpcommon.save")}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -739,6 +738,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <ActivityBar
                         direction="end"
                         showInfo
+                        disable
                         onAttachment={onlaunchGallery}
                         onScanCamera={onlaunchCamera}
                         onClickinfo={() => {
@@ -756,7 +756,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <View style={$containerHorizon}>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             keyboardType="decimal-pad"
                             hintLimit="100 - 110%"
                             showIcon={false}
@@ -783,7 +783,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         </View>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             keyboardType="decimal-pad"
                             hintLimit="> 1.5 Bar"
                             warning={formLineA.air_pressure && +formLineA?.air_pressure < 1.5}
@@ -809,7 +809,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         </View>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             keyboardType="decimal-pad"
                             hintLimit="100 - 110%"
                             warning={
@@ -840,7 +840,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <View style={$containerHorizon}>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             keyboardType="decimal-pad"
                             value={formLineA.tw_pressure?.toString() || ""}
                             warning={formLineA.tw_pressure && +formLineA?.tw_pressure < 1.5}
@@ -866,7 +866,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         </View>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             keyboardType="decimal-pad"
                             showIcon={false}
                             warning={
@@ -909,7 +909,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                   style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
                                 >
                                   <TouchableOpacity
-                                    disabled={!route?.assign}
+                                    disabled={!(route?.assign && route?.isvalidDate)}
                                     style={$containerHorizon}
                                     onPress={() => {
                                       setErrorsLineA((pre) => ({ ...pre, activity_control: false }))
@@ -920,7 +920,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                     }}
                                   >
                                     <Checkbox
-                                      disabled={!route?.assign}
+                                      disabled={!(route?.assign && route?.isvalidDate)}
                                       status={
                                         formLineA?.activity_control === null
                                           ? "unchecked"
@@ -947,7 +947,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                   style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
                                 >
                                   <TouchableOpacity
-                                    disabled={!route?.assign}
+                                    disabled={!(route?.assign && route?.isvalidDate)}
                                     style={$containerHorizon}
                                     onPress={() => {
                                       setErrorsLineA((pre) => ({ ...pre, activity_control: false }))
@@ -958,7 +958,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                     }}
                                   >
                                     <Checkbox
-                                      disabled={!route?.assign}
+                                      disabled={!(route?.assign && route?.isvalidDate)}
                                       status={
                                         formLineA?.activity_control === null
                                           ? "unchecked"
@@ -995,7 +995,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <View style={$containerHorizon}>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             value={formLineA?.instruction}
                             onBlur={() => {
                               formLineA.instruction !== ""
@@ -1032,6 +1032,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
 
                       {route?.isvalidDate && route?.assign && (
                         <ActivityBar
+                          disable
                           direction="end"
                           showInfo
                           onAttachment={onlaunchGallery}
@@ -1050,7 +1051,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <View style={$containerHorizon}>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             showIcon={false}
                             keyboardType="decimal-pad"
                             warning={formLineB.water_pressure && +formLineB?.water_pressure < 1}
@@ -1076,7 +1077,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         </View>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             showIcon={false}
                             warning={
                               formLineB.nozzie_rinser &&
@@ -1112,7 +1113,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <View style={[$containerHorizon, { gap: 0 }]}>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             hintLimit="0.05 - 0.4 ppm"
                             showIcon={false}
                             warning={
@@ -1231,7 +1232,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                   style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
                                 >
                                   <TouchableOpacity
-                                    disabled={!route?.assign}
+                                    disabled={!(route?.assign && route?.isvalidDate)}
                                     style={$containerHorizon}
                                     onPress={() => {
                                       setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
@@ -1242,7 +1243,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                     }}
                                   >
                                     <Checkbox
-                                      disabled={!route?.assign}
+                                      disabled={!(route?.assign && route?.isvalidDate)}
                                       status={
                                         formLineB?.activity_control === null
                                           ? "unchecked"
@@ -1269,7 +1270,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                   style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
                                 >
                                   <TouchableOpacity
-                                    disabled={!route?.assign}
+                                    disabled={!(route?.assign && route?.isvalidDate)}
                                     style={$containerHorizon}
                                     onPress={() => {
                                       setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
@@ -1280,7 +1281,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                     }}
                                   >
                                     <Checkbox
-                                      disabled={!route?.assign}
+                                      disabled={!(route?.assign && route?.isvalidDate)}
                                       status={
                                         formLineB?.activity_control === null
                                           ? "unchecked"
@@ -1318,7 +1319,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <View style={$containerHorizon}>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             showIcon={false}
                             onBlur={() => {
                               formLineB.instruction !== ""
@@ -1340,7 +1341,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         </View>
                         <View style={$width}>
                           <CustomInput
-                            disabled={route?.assign}
+                            disabled={route?.assign && route?.isvalidDate}
                             value={formLineB.other}
                             showIcon={false}
                             showAsterick={false}

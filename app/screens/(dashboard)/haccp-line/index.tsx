@@ -28,6 +28,7 @@ interface LineDsScreenProps extends AppStackScreenProps<"LineDs"> {}
 
 export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScreen() {
   const data = [
+    { label: "All", value: "All" },
     { label: "Water Line 2", value: "Line 2" },
     { label: "Water Line 3", value: "Line 3" },
     { label: "Water Line 4", value: "Line 4" },
@@ -35,19 +36,19 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
     { label: "Water Line 6", value: "Line 6" },
   ]
   const machineColors = [
-    { label: data[0].value, color: "#071952" },
-    { label: data[1].value, color: "#059212" },
-    { label: data[2].value, color: "#D10363" },
-    { label: data[3].value, color: "#DC5F00" },
-    { label: data[4].value, color: "#604CC3" },
+    { label: data[0 + 1].value, color: "#071952" },
+    { label: data[1 + 1].value, color: "#059212" },
+    { label: data[2 + 1].value, color: "#D10363" },
+    { label: data[3 + 1].value, color: "#DC5F00" },
+    { label: data[4 + 1].value, color: "#604CC3" },
   ]
+  const [selectAll, setSelectAll] = useState(false)
   const { width: maxWidth } = useWindowDimensions()
   const [modalVisible, setModalVisible] = useState(false)
   const [percentages, setPercentages] = useState(-1)
   const [isLoading, setLoading] = useState(false)
   const { dashboardStore } = useStores()
-  const [fakeScrollIndicator, setFakeScrollIndicator] = useState(true)
-
+  const [emptyLine, setEmptyLine] = useState(false)
   const [selectionDate, setSelectionDate] = useState({
     start: null,
     end: null,
@@ -70,7 +71,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
     value: Date | null
     range: number
   }>({
-    value: null,
+    value: new Date(Date.now()),
     range: 0,
   })
   const onSelectRangeDate = (inDay: number) => {
@@ -117,7 +118,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
     const startdate = new Date(year, month - 1, day)
     const enddate = new Date(eyear, emonth - 1, eday)
     setSelectDate({
-      range: 0,
+      range: -1,
       value: null,
     })
     setSelectionDate({
@@ -127,21 +128,26 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
 
     setModalVisible(false)
   }
+
   const onLineChartData = () => {
+    // let total_warning_count = 0
+    // let total_normal_count = 0
+    // let total_pending_count = 0
     if (dashboard?.length > 0 && selectedMachine.length > 0) {
       let total_warning_count = 0
       let total_normal_count = 0
       let total_pending_count = 0
-
       const newDatasets = selectedMachine.map((machine) => {
         const temporary = dashboard.map((item) => {
           const machineData = item?.machines.find((m) => m.machine === machine)
 
           const warningCount = machineData ? machineData.warning_count : 0
           const pendingCount = machineData ? machineData.pending_count : 0
+          const normalCount = machineData ? machineData.normal_count : 0
 
           total_warning_count += warningCount
-          total_normal_count += warningCount <= 0 ? 1 : 0
+
+          total_normal_count += normalCount //check status 1 more
           total_pending_count += pendingCount
 
           const machineColor =
@@ -167,14 +173,35 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
 
       setDataSet(newDatasets)
 
+      // console.log("Warning count is ",
+
+      // total_warning_count,
+      // "Pending Count",
+      // total_pending_count,
+      // "Total Normal Count",
+      // total_normal_count
+      // )
       const totalMachines = total_warning_count + total_normal_count + total_pending_count
 
-      const warning_percentages = ((total_warning_count / totalMachines) * 100).toFixed(2)
-      const normal_percentage = ((total_normal_count / totalMachines) * 100).toFixed(2)
-      const pending_percentages = 100 - (+warning_percentages + +normal_percentage)
+      let warning_percentages
+      let normal_percentage
+      let pending_percentages
+      if (!totalMachines) {
+        setEmptyLine(true)
+        setDashboard([])
 
-      // console.log("pending count: ", pending_percentages)
+        warning_percentages = 0
+        normal_percentage = 0
+        pending_percentages = 0
 
+        return
+      }
+
+      warning_percentages = ((total_warning_count / totalMachines) * 100).toFixed(2)
+      normal_percentage = ((total_normal_count / totalMachines) * 100).toFixed(2)
+      pending_percentages = 100 - (+warning_percentages + +normal_percentage)
+
+      setEmptyLine(false)
       setPercentages(+normal_percentage)
 
       setPieData([
@@ -234,7 +261,15 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
   const aggregateWarningCountsByDateAndMachine = (data: HACCPResponse[]): AggregatedData[] => {
     const warningCountsByDateAndMachine: Record<
       string,
-      Record<string, { warning_count: number; pending_count: number; status: string | null }>
+      Record<
+        string,
+        {
+          warning_count: number
+          pending_count: number
+          status: string | null
+          normal_count: number
+        }
+      >
     > = {}
 
     data.forEach((entry) => {
@@ -247,14 +282,26 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
         if (!warningCountsByDateAndMachine[date][item?.line]) {
           warningCountsByDateAndMachine[date][item?.line] = {
             warning_count: 0,
-            pending_count: 0, // Initialize pending count
+            pending_count: 0,
+            normal_count: 0,
             status: null,
           }
         }
-        warningCountsByDateAndMachine[date][item?.line].warning_count += item.warning_count || 0
+
+        console.log("item is ", item.status)
+
+        // warningCountsByDateAndMachine[date][item?.line].warning_count += item.warning_count || 0
+
+        if (item.status?.toLowerCase() === "normal") {
+          warningCountsByDateAndMachine[date][item?.line].normal_count += 1 // Increment normal count if status is pending
+        }
+        if (item.status?.toLowerCase() === "warning") {
+          warningCountsByDateAndMachine[date][item?.line].warning_count += 1
+        }
         if (item.status?.toLowerCase() === "pending" || item.status === undefined) {
           warningCountsByDateAndMachine[date][item?.line].pending_count += 1 // Increment pending count if status is pending
         }
+
         warningCountsByDateAndMachine[date][item?.line].status = item.status // Add status
       })
     })
@@ -264,6 +311,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
       machines: Object.keys(warningCountsByDateAndMachine[date]).map((machine) => ({
         machine,
         warning_count: warningCountsByDateAndMachine[date][machine].warning_count,
+        normal_count: warningCountsByDateAndMachine[date][machine].normal_count,
         pending_count: warningCountsByDateAndMachine[date][machine].pending_count, // Include pending count
         status: warningCountsByDateAndMachine[date][machine].status, // Include status
       })),
@@ -277,7 +325,6 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
 
       if (type === "period") {
         const result = await dashboardStore.getLine("day", selectDate.range?.toString())
-        console.log(result.length)
 
         treatments = result?.map((item: any) => ({
           createdDate: item?.createdDate,
@@ -384,27 +431,29 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                   <FlatList
                     horizontal
                     scrollEnabled={false}
+                    style={{ marginTop: 10 }}
                     renderItem={({ item, index }) => {
                       return (
                         <TouchableOpacity
                           // disabled={selectedMachine?.length >= 4}
                           onPress={() => {
-                            if (selectedMachine?.length >= 5) {
-                              if (selectedMachine.includes(item.value)) {
-                                setSelectedMachine((pre) =>
-                                  pre.filter((machine) => machine !== item.value),
-                                )
-                                return
-                              }
+                            if (index === 0) {
+                              const Allmachines = data
+                                .filter((machine) => machine!.label !== "All")
+                                .map((item) => item.value)
+
+                              selectAll ? setSelectedMachine([]) : setSelectedMachine(Allmachines)
+                              setSelectAll((pre) => !pre)
+                              return
+                            }
+                            setSelectAll(false)
+                            if (selectedMachine.includes(item.value)) {
+                              setSelectedMachine((pre) =>
+                                pre.filter((machine) => machine !== item.value),
+                              )
+                              return
                             } else {
-                              if (selectedMachine.includes(item.value)) {
-                                setSelectedMachine((pre) =>
-                                  pre.filter((machine) => machine !== item.value),
-                                )
-                                return
-                              } else {
-                                setSelectedMachine((pre) => pre.concat(item.value))
-                              }
+                              setSelectedMachine((pre) => pre.concat(item.value))
                             }
                           }}
                         >
@@ -416,9 +465,10 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                                 alignItems: "center",
                                 borderRadius: 10,
 
-                                backgroundColor: selectedMachine.includes(item.value)
-                                  ? "#0081F8"
-                                  : "#DFDFDE",
+                                backgroundColor:
+                                  selectedMachine.includes(item.value) || selectAll
+                                    ? "#0081F8"
+                                    : "#DFDFDE",
 
                                 gap: 10,
                                 marginTop: 8,
@@ -436,7 +486,10 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                             <Text
                               style={{
                                 fontSize: 13,
-                                color: selectedMachine.includes(item.value) ? "white" : "gray",
+                                color:
+                                  selectedMachine.includes(item.value) || selectAll
+                                    ? "white"
+                                    : "gray",
                               }}
                             >
                               {item.label}
@@ -461,78 +514,87 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                         }}
                       >
                         <Text body1 semibold>
-                          {translate("dashboard.machineActivity")}
+                          Machine Status
                         </Text>
-                        <View
-                          style={[
-                            $horiContainer,
-                            { justifyContent: "space-between", marginBottom: 10 },
-                          ]}
-                        >
-                          <View style={$horiContainer}>
-                            <Button
-                              style={[
-                                styles.dateAgo,
-                                selectDate.range === 7 && { backgroundColor: "#0081F8" },
-                              ]}
-                              outline
-                              onPress={() => onSelectRangeDate(7)}
-                              styleText={{
-                                fontWeight: "bold",
-                              }}
-                            >
-                              <Text caption1 primaryColor whiteColor={selectDate.range === 7}>
-                                7 days
-                              </Text>
-                            </Button>
-                            <Button
-                              style={[
-                                styles.dateAgo,
-                                selectDate.range === 14 && { backgroundColor: "#0081F8" },
-                              ]}
-                              outline
-                              onPress={() => onSelectRangeDate(14)}
-                              styleText={{
-                                fontWeight: "bold",
-                              }}
-                            >
-                              <Text caption1 primaryColor whiteColor={selectDate.range === 14}>
-                                14 days
-                              </Text>
-                            </Button>
-                            <Button
-                              style={[
-                                styles.dateAgo,
-                                selectDate.range === 21 && { backgroundColor: "#0081F8" },
-                              ]}
-                              outline
-                              styleText={{
-                                fontWeight: "bold",
-                              }}
-                              onPress={() => onSelectRangeDate(21)}
-                            >
-                              <Text caption1 primaryColor whiteColor={selectDate.range === 21}>
-                                21 days
-                              </Text>
-                            </Button>
-                            <Button
-                              style={[
-                                styles.dateAgo,
-                                selectionDate?.end && { backgroundColor: "#0081F8" },
-                              ]}
-                              outline
-                              onPress={() => setModalVisible(true)}
-                              styleText={{
-                                fontWeight: "bold",
-                              }}
-                            >
-                              <Text caption1 primaryColor whiteColor={!!selectionDate?.end}>
-                                {!selectionDate.start
-                                  ? "Date Range"
-                                  : selectionDate.start + "-" + selectionDate.end}
-                              </Text>
-                            </Button>
-                          </View>
+                        <View style={$horiContainer}>
+                          <Button
+                            style={[
+                              styles.dateAgo,
+                              selectDate.range === 0 && { backgroundColor: "#0081F8" },
+                            ]}
+                            outline
+                            onPress={() => onSelectRangeDate(0)}
+                            styleText={{
+                              fontWeight: "bold",
+                            }}
+                          >
+                            <Text caption1 primaryColor whiteColor={selectDate.range === 0}>
+                              Today
+                            </Text>
+                          </Button>
+
+                          <Button
+                            style={[
+                              styles.dateAgo,
+                              selectDate.range === 7 && { backgroundColor: "#0081F8" },
+                            ]}
+                            outline
+                            onPress={() => onSelectRangeDate(7)}
+                            styleText={{
+                              fontWeight: "bold",
+                            }}
+                          >
+                            <Text caption1 primaryColor whiteColor={selectDate.range === 7}>
+                              7 days
+                            </Text>
+                          </Button>
+                          <Button
+                            style={[
+                              styles.dateAgo,
+                              selectDate.range === 14 && { backgroundColor: "#0081F8" },
+                            ]}
+                            outline
+                            onPress={() => onSelectRangeDate(14)}
+                            styleText={{
+                              fontWeight: "bold",
+                            }}
+                          >
+                            <Text caption1 primaryColor whiteColor={selectDate.range === 14}>
+                              14 days
+                            </Text>
+                          </Button>
+                          <Button
+                            style={[
+                              styles.dateAgo,
+                              selectDate.range === 21 && { backgroundColor: "#0081F8" },
+                            ]}
+                            outline
+                            styleText={{
+                              fontWeight: "bold",
+                            }}
+                            onPress={() => onSelectRangeDate(21)}
+                          >
+                            <Text caption1 primaryColor whiteColor={selectDate.range === 21}>
+                              21 days
+                            </Text>
+                          </Button>
+                          <Button
+                            style={[
+                              styles.dateAgo,
+                              selectionDate?.end && { backgroundColor: "#0081F8" },
+                            ]}
+                            outline
+                            onPress={() => setModalVisible(true)}
+                            styleText={{
+                              fontWeight: "bold",
+                            }}
+                          >
+                            <Text caption1 primaryColor whiteColor={!!selectionDate?.end}>
+                              {!selectionDate.start
+                                ? "Date Range"
+                                : selectionDate.start + "-" + selectionDate.end}
+                            </Text>
+                          </Button>
                         </View>
                       </View>
 
@@ -594,9 +656,8 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                                 width={maxWidth * 0.52}
                                 height={320}
                                 yAxisColor={"transparent"}
-                                // maxValue={100}
+                                maxValue={20}
                                 noOfSections={4}
-                                onStartReached={() => setFakeScrollIndicator(true)}
                                 isAnimated={true}
                                 rulesType="dashed"
                                 endOpacity={0.1}
@@ -620,7 +681,6 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
                                   fontWeight: "bold",
                                 }}
                                 textFontSize={12}
-                                onScroll={() => setFakeScrollIndicator(false)}
                                 curved={false}
                                 // yAxisLabelSuffix="%"
                                 xAxisColor={"gray"}
@@ -677,6 +737,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
 
                   <View style={styles.activityPieChart}>
                     <PerformanceChart
+                      isEmpyline={emptyLine}
                       pieData={pieData}
                       isloading={isLoading}
                       popupData={popupData}

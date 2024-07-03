@@ -1,5 +1,6 @@
 import { Treatment } from "app/models"
 import { getDBConnection } from "."
+import * as SQLite from "expo-sqlite"
 
 // Function to get a database connection
 
@@ -14,6 +15,7 @@ export const loadAllTreatments = async () => {
     ON t.treatment_id = tl.treatment_id;
     END TRANSACTION;
     `)
+
     return result
   } catch (error) {
     console.error("loadAllTreatments", error)
@@ -70,22 +72,26 @@ export const saveTreatment = async (treatment) => {
 }
 
 export const saveAssignTreatment = async (
-  id = 149,
-  action = "prod1",
-  treatment_id = "a3b61efe-8909-425a-94ac-576946854655",
-) => {
+  id: string,
+  action: string,
+  treatment_id: string,
+): Promise<{ success: number } | undefined> => {
   try {
+    // console.log("Updating assignment treatment", id, action, treatment_id)
     const db = await getDBConnection()
-    const query = `UPDATE treatment_list
-    SET assign_to_user = ?
-    WHERE id = ? AND treatment_id = ?;
-    `
+    console.log("Update action", action)
     db?.withExclusiveTransactionAsync(async () => {
-      await db?.runAsync(query, [action, id, treatment_id])
+      const data = await db?.runAsync(
+        `UPDATE treatment_list
+      SET assign_to_user = ?
+      WHERE id = ? AND treatment_id = ?;`,
+        [action, id, treatment_id],
+      )
+      // console.log(data.lastInsertRowId,data.changes);
       await db?.runAsync(
         `
       INSERT OR REPLACE INTO assignself 
-      (id, action, treatment_id,is_synced)) 
+      (id, action, treatment_id,is_synced) 
       VALUES 
       (?, ?, ?, ?);
     `,
@@ -93,9 +99,12 @@ export const saveAssignTreatment = async (
       )
     })
   } catch (error) {
-    console.error(error)
+    console.error("error Assign self", error)
+  } finally {
+    console.log("Assignment treatment updated successfully")
+
     return {
-      error: error,
+      success: 200,
     }
   }
 }
