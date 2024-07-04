@@ -8,23 +8,25 @@ import {
   Icon,
   ModelItem
 } from "../../components/v2"
-import { AppStackScreenProps, goBack } from "app/navigators"
+import { AppStackScreenProps, goBack } from "../../navigators"
 import styles from "./styles"
 import { useNavigation } from "@react-navigation/native"
 import DatePicker from '@react-native-community/datetimepicker';
 import { DataTable } from "react-native-paper"
-import { useTheme } from "app/theme-v2"
-import { useStores } from "app/models"
+import { useTheme } from "../../theme-v2"
+import { useStores } from "../../models"
 // import { ActivitiesModel, ItemList, Warehouse } from "app/models/inventory-transfer-request/inventory-transfer-request-model"
-import { TransferRequestModel } from "app/models/inventory-transfer-request/inventory-transfer-request-store"
-import ModalSubmit from "app/components/v2/ModalSubmit"
+import { TransferRequestModel } from "../../models/inventory-transfer-request/inventory-transfer-request-store"
+import ModalSubmit from "../../components/v2/ModalSubmit"
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
-import { Warehouse } from "app/models/warehouse/warehouse-model"
-import { ItemList } from "app/models/item/item-model"
+import { Warehouse } from "../../models/warehouse/warehouse-model"
+import { ItemList } from "../../models/item/item-model"
 import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
 import { Dropdown } from 'react-native-element-dropdown';
-import sendPushNotification from "app/utils-v2/push-notification-helper"
+import sendPushNotification from "../../utils-v2/push-notification-helper"
+import NotificSoundModal from "../../components/v2/NotificSoundModal"
+import PushNotificationComponent from "../../utils-v2/push-notification-helper"
 
 interface AddTransferRequestFormProps extends AppStackScreenProps<"AddTransferRequestForm"> { }
 
@@ -63,7 +65,9 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
   const [getToWarehouseCode, setGetToWarehouseCode] = useState('')
   const [isLoading, setIsLoading] = useState(false);
   const [allFcm, setAllFcm] = useState([])
-  const [isNotiVisible, setNotiVisible] = useState(false);
+  const [line,setLine] = useState([])
+
+  const [message, setMessage] = useState({})
   const [act, setAct] = useState([{
     activities_name: 'Start',
     action: 'Start Request',
@@ -122,7 +126,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
       toWarehouse: getToWarehouseCode
     })))
   }, [listItem, getfromWarehouseCode, getToWarehouseCode])
-
+console.log(getLine)
   useEffect(() => {
     const getToken = async () => {
       const data = (await inventoryRequestStore.getMobileUserList())
@@ -133,6 +137,8 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
       // Extract fcm_token from the filtered user object
       const fcmTokens = usersWithRole.map(user => user.fcm_token);
       setAllFcm(fcmTokens)
+      const listLine = (await inventoryRequestStore.getline())
+      setLine(listLine)
     }
     getToken()
 
@@ -166,56 +172,48 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
     { id: '2', name: 'S2' }
   ]
 
-  const line = [
-    { id: '1', name: 'Line 1' },
-    { id: '2', name: 'Line 2' },
-    { id: '3', name: 'Line 3' },
-    { id: '4', name: 'Line 4' },
-    { id: '5', name: 'Line 5' },
-    { id: '6', name: 'Line 6' }
-  ]
+  // const line = [
+  //   { id: '1', name: 'Line 1' },
+  //   { id: '2', name: 'Line 2' },
+  //   { id: '3', name: 'Line 3' },
+  //   { id: '4', name: 'Line 4' },
+  //   { id: '5', name: 'Line 5' },
+  //   { id: '6', name: 'Line 6' }
+  // ]
 
-  async function sendNotification(recipientTokens, title, body) {
-    // const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+  async function sendNotification(title, body, deviceTokens, sound = 'default') {
+    const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
 
-    // try {
-    //   const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'Authorization': `key=${SERVER_KEY}`
-    //     },
-    //     body: JSON.stringify({
-    //       registration_ids: deviceTokens,
-    //       notification: {
-    //         title: title,
-    //         body: body,
-    //         sound: sound,
-    //       },
-    //       android: {
-    //         notification: {
-    //           sound: sound,
-    //           priority: 'high',
-    //           vibrate: true,
-    //         }
-    //       }
+    try {
+      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `key=${SERVER_KEY}`
+        },
+        body: JSON.stringify({
+          registration_ids: deviceTokens,
+          notification: {
+            title: title,
+            body: body,
+            sound: sound,
+          },
+          android: {
+            notification: {
+              sound: sound,
+              priority: 'high',
+              vibrate: true,
+            }
+          }
 
-    //     }),
-    //   });
-
-    //   const responseData = await response.json();
-    //   console.log('Notification sent successfully:', responseData);
-    // } catch (error) {
-    //   console.error('Error sending notification:', error);
-    // }
-    await sendPushNotification(recipientTokens, title, body)
-      .then(() => {
-        console.log('Push notifications sent successfully!');
-      })
-      .catch((error) => {
-        console.error('Error sending push notifications:', error);
+        }),
       });
 
+      const responseData = await response.json();
+      console.log('Notification sent successfully:', responseData);
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
   }
 
 
@@ -282,8 +280,9 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         .then()
         .catch((e) => console.log(e)))
       {
-        sendNotification(allFcm, 'New Transfer Request', 'You have new transfer request from ' + getLine);
-        // sendNotification('New Transfer Request','You have new transfer request from '+getLine, allFcm)
+        // setNotiVisible(true)
+        // sendNotification(allFcm, 'New Transfer Request', 'You have new transfer request from ' + getLine);
+        sendNotification('New Transfer Request','You have new transfer request from '+getLine, allFcm)
         // droplineRef.current.reset();
         // droptypeRef.current.reset();
         // dropshiftRef.current.reset();
@@ -292,7 +291,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         setIsSubmit(true)
         setModalSubmitVisible(false)
         setTansferType('PM/RM')
-        setGetLine('')
+        // setGetLine('')
         setGetShift('')
         setPostingDate(new Date(Date.now()))
         setDueDate(new Date)
@@ -304,7 +303,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         setRemark('')
         setNewItem([])
         setListItem([])
-        setAllFcm([])
+        // setAllFcm([])
         // navigation.goBack()
 
         Dialog.show({
@@ -360,15 +359,15 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
               </View>
               <Dropdown style={styles.dropdown}
                 data={line}
-                labelField="name"
-                valueField="name"
+                labelField="prdname"
+                valueField="prdname"
                 placeholder="Select Line"
                 // onSelect={setSelected}
 
                 value={getLine}
                 onChange={item => {
                   setGetLine(
-                    item.name
+                    item.prdname
                   );
                 }} />
               {!getLine && !isSubmit && (

@@ -87,7 +87,7 @@ export class InventoryTransferApi extends BaseApi{
         }
     }
 
-    async closeTransfer(id:number,items:any,transfer_type:string,business_unit:string,transfer_request:number,posting_date:string,due_date:string,from_warehouse:number,to_warehouse:number,line:string,shift:string,status:string,statusChange:string,state:string,docEntry:number):Promise<any>{
+    async closeTransfer(id:number,items:any,transfer_type:string,business_unit:string,transfer_request:number,posting_date:string,due_date:string,from_warehouse:number,to_warehouse:number,line:string,shift:string,status:string,statusChange:string,state:string,docEntry:number,activities_name:string,action:string,transfer_request_id:string,remark:string,):Promise<any>{
         try{
             const rs = await this.requestService.exec(ApiEndpoint.closeSapTransfer,{
                 id,
@@ -104,7 +104,11 @@ export class InventoryTransferApi extends BaseApi{
                 status,
                 statusChange,
                 state,
-                docEntry
+                docEntry,
+                activities_name,
+                action,
+                transfer_request_id,
+                remark
             })
             return DataResponse(rs)
         }catch(e:any){

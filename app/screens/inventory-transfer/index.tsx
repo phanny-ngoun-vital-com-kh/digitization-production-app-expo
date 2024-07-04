@@ -1,18 +1,18 @@
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import { Image, ImageStyle, TextStyle, View, ViewStyle, FlatList, RefreshControl, TouchableOpacity, ScrollView } from "react-native"
-import { AppStackScreenProps } from "app/navigators"
-import { useStores } from "app/models"
-import { showErrorMessage } from "app/utils-v2"
-import ListInventoryTransfer from "app/components/v2/ListInventoryTransfer"
-import { InventoryTransfer } from "app/models/inventory-transfer/inventory-transfer-model"
+import { AppStackScreenProps } from "../../navigators"
+import { useStores } from "../../models"
+import { showErrorMessage } from "../../utils-v2"
+import ListInventoryTransfer from "../../components/v2/ListInventoryTransfer"
+import { InventoryTransfer } from "../../models/inventory-transfer/inventory-transfer-model"
 import { DataTable } from "react-native-paper"
 import styles from "./styles"
-import { BaseStyle, useTheme } from "app/theme-v2"
-import { TextInput, Text } from "app/components/v2"
+import { BaseStyle, useTheme } from "../../theme-v2"
+import { TextInput, Text } from "../../components/v2"
 import Icon from "react-native-vector-icons/FontAwesome"
-import ModalInventoryTransfer from "app/components/v2/ModalInventoryTransfer"
-import RightSlideModal from "app/components/v2/RightSlideModal"
+import ModalInventoryTransfer from "../../components/v2/ModalInventoryTransfer"
+import RightSlideModal from "../../components/v2/RightSlideModal"
 // import styles from "./styles"
 
 interface InventoryTransferScreenProps extends AppStackScreenProps<"InventoryTransfer"> { }
@@ -99,7 +99,6 @@ export const InventoryTransferScreen: FC<InventoryTransferScreenProps> = observe
     getTransfer()
 
   }, [])
-
 
   const refresh = async (showLoading = false) => {
     try {
@@ -229,11 +228,11 @@ export const InventoryTransferScreen: FC<InventoryTransferScreenProps> = observe
             code: '',
             total: 0
           })
-          // ,refresh()
+          ,refresh()
         }}
         isVisible={showModal}
         data={getEachItem}
-        // total={gettotal}
+        total={gettotal}
         isLoading={isLoading}
         sapDoc={sapDocEntry}
         />

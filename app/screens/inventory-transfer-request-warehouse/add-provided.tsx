@@ -1,28 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
-import { BaseStyle, useTheme } from 'app/theme-v2';
+import { BaseStyle, useTheme } from '../../theme-v2';
 import styles from './styles';
 import { Text, TextInput, Button } from '../../components/v2';
 import IconAntDesign from 'react-native-vector-icons/AntDesign';
-import { useStores } from 'app/models';
+import { useStores } from '../../models';
 import { DataTable } from 'react-native-paper';
-import { Item } from 'app/models/inventory-transfer-request/inventory-transfer-request-model';
+import { Item } from '../../models/inventory-transfer-request/inventory-transfer-request-model';
 import { Dropdown } from 'react-native-element-dropdown';
-import { ProvidedModel } from 'app/models/inventory-transfer-request/inventory-transfer-request-store';
+import { ProvidedModel } from '../../models/inventory-transfer-request/inventory-transfer-request-store';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import PushNotificationComponent from '../../utils-v2/push-notification-helper';
 
 interface ModalProps {
     data: Item[]
     isVisible: boolean;
     onClose: () => void;
     tenden: string;
-    id: number
+    id: number;
+    Fcm: string[];
+    transferIndex: number
+    transfer_request: any
+    transfer_type: string
     // provided: string
     //   textChange: (text: string) => void;
     //   onSubmit:()=>void
 }
 
-const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tenden, id }) => {
+const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tenden, id, Fcm, transferIndex, transfer_request, transfer_type }) => {
     const { inventoryRequestStore, inventoryTransferStore } = useStores()
     const [suppilerSearch, setSupplierSearch] = useState('')
     const [supplier, setSupplier] = useState([])
@@ -31,7 +36,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
     const [newItem, setNewItem] = useState([])
     const [isSubmit, setIsSubmit] = useState(true)
     const [loading, setLoading] = useState(false)
-    const [received, setReceived] = useState(false)
+    const [isNotiVisible, setNotiVisible] = useState(false);
 
     useEffect(() => {
         const getsupplier = async () => {
@@ -62,7 +67,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
             remark: it.remark == null ? "" : it.remark,
             transfer_request: it.transfer_request,
             uom: it.uom,
-            supplier: it.supplier,
+            supplier: selectedSupplier,
             total: (totalProvidedValues[it.item_code] == undefined ? '0' : totalProvidedValues[it.item_code].toString()),
             is_receive: '',
             itemReceive: 0
@@ -92,6 +97,41 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
         calculateAndStoreTotalValues();
     }, [isVisible == true]);
 
+    async function sendNotification(title, body, deviceTokens, sound = 'default') {
+        const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+
+        try {
+            const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `key=${SERVER_KEY}`
+                },
+                body: JSON.stringify({
+                    registration_ids: deviceTokens,
+                    notification: {
+                        title: title,
+                        body: body,
+                        sound: sound,
+                    },
+                    android: {
+                        notification: {
+                            sound: sound,
+                            priority: 'high',
+                            vibrate: true,
+                        }
+                    }
+
+                }),
+            });
+
+            const responseData = await response.json();
+            console.log('Notification sent successfully:', responseData);
+        } catch (error) {
+            console.error('Error sending notification:', error);
+        }
+    }
+
     const submit = async () => {
         setLoading(true)
         if (isSubmit == false) {
@@ -119,9 +159,18 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
             const data = ProvidedModel.create({
                 item: newItem,
                 status: '',
-                transfer_request_id: id
+                transfer_request_id: id,
+                transfer_request: transfer_request,
+                activities_name: 'Transfer',
+                action: `Add Transfer ${transferIndex + 1}`
             })
             await inventoryRequestStore.addProvided(data).saveprovided().then().catch((e) => console.log(e))
+            // setNotiVisible(true)
+            {
+                transfer_type == 'PM/RM' ?
+                sendNotification('Transfer', 'Warehouse Tranfer the Item', Fcm)
+                : ''
+            }
             onClose()
             setNewItem([])
             Dialog.show({
@@ -264,6 +313,13 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
                     </View>
                 </View>
             </View>
+            {/* <PushNotificationComponent
+                isVisible={isNotiVisible}
+                recipientTokens={Fcm}
+                title={'Transfer'}
+                body={'Warehouse Tranfer the Item'}
+                close={() => (setNotiVisible(false))}
+            /> */}
         </Modal>
     );
 };

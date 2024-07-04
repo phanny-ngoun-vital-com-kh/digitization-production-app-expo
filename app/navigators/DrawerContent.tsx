@@ -3,9 +3,9 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { Avatar, Title, Caption, Paragraph, Drawer, TouchableRipple, Switch } from 'react-native-paper';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { Icon } from 'react-native-elements'
-import { useStores } from "app/models";
+import { useStores } from "../models";
 import { DrawerActions } from "@react-navigation/native";
-import { MobileUserModel } from "app/models/auth/AuthStore";
+import { MobileUserModel } from "../models/auth/AuthStore";
 import { nativeApplicationVersion } from 'expo-application'
 import { Text } from "../components/v2"
 interface DrawersProps {

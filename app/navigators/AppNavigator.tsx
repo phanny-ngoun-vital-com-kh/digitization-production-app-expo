@@ -14,9 +14,8 @@ import {
 } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 import { observer } from "mobx-react-lite"
-import React, { useState } from "react"
-import { TouchableOpacity, useColorScheme } from "react-native"
-import * as Screens from "app/screens"
+import React, { useEffect, useState } from "react"
+import { Platform, StatusBar, TouchableOpacity, useColorScheme } from "react-native"
 import Config from "../config"
 import { useStores } from "../models"
 import DrawerContent from "./DrawerContent"
@@ -24,18 +23,19 @@ import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import Icon from "react-native-vector-icons/Entypo"
-import { Text } from "app/components/v2"
-import { colors } from "app/theme"
-import { AuthScreen } from "app/screens/auth"
-import { HomeScreen } from "app/screens/home"
-import { AddTransferRequestFormScreen } from "app/screens/inventory-transfer-request-production/add-transfer-request-form"
-import { InventoryTransferRequestProductionScreen } from "app/screens/inventory-transfer-request-production"
-import { InventoryTransferRequestWarehouseScreen } from "app/screens/inventory-transfer-request-warehouse"
-import { InventoryTransferScreen } from "app/screens/inventory-transfer"
-import { api } from "app/services/api"
-import { AddTransferScreen } from "app/screens/inventory-transfer-request-warehouse/add-transfer"
+import { Text } from "../components/v2"
+import { colors } from "../theme"
+import { AuthScreen } from "../screens/auth"
+import { HomeScreen } from "../screens/home"
+import { AddTransferRequestFormScreen } from "../screens/inventory-transfer-request-production/add-transfer-request-form"
+import { InventoryTransferRequestProductionScreen } from "../screens/inventory-transfer-request-production"
+import { InventoryTransferRequestWarehouseScreen } from "../screens/inventory-transfer-request-warehouse"
+import { InventoryTransferScreen } from "../screens/inventory-transfer"
+import { api } from "../services/api"
+import { AddTransferScreen } from "../screens/inventory-transfer-request-warehouse/add-transfer"
 import * as Notifications from 'expo-notifications';
-import NotificSoundModal from "app/components/v2/NotificSoundModal"
+import NotificSoundModal from "../components/v2/NotificSoundModal/index"
+import sendPushNotification from "app/utils-v2/push-notification-helper"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -103,60 +103,82 @@ const AppStack = observer(function AppStack(props: { setUsername: React.Dispatch
     authStore: { getUserInfo }
   } = useStores();
   const navigation = useNavigation();
+  // const [message, setMessage] = useState()
+  // const [isNotiVisible, setNotiVisible] = useState(false);
 
+  // try {
+  //   Notifications.setNotificationHandler({
+  //     handleNotification: async (notification) => {
+  //       const { title, body } = notification.request.content.data;
+  //       setMessage(notification)
+
+  //       console.log("Received notification with title:", title);
+  //       console.log("Received notification with message:", body);
+  //       setNotiVisible(true);
+  //       return {
+  //         shouldShowAlert: true,
+  //         shouldPlaySound: true,
+  //         shouldSetBadge: false,
+  //       };
+  //     },
+  //   });
+  // } catch (e) {
+  //   console.log(e)
+  // }
+
+  // console.log('hii11')
   return (
+      <Stack.Navigator
+        screenOptions={{ headerShown: false, navigationBarColor: colors.background }}
+        initialRouteName={isAuthenticated ? "Welcome" : "login"}
+      >
+        {isAuthenticated ? (
+          <>
+            {/* <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} /> */}
 
-    <Stack.Navigator
-      screenOptions={{ headerShown: false, navigationBarColor: colors.background }}
-      initialRouteName={isAuthenticated ? "Welcome" : "login"}
-    >
-      {isAuthenticated ? (
-        <>
-          {/* <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} /> */}
+            <Stack.Screen name="Home" component={HomeScreen} options={{
+              headerShown: true,
+              headerLeft: () => {
+                return (
+                  <Icon
+                    name="menu"
+                    color={'#2292EE'}
+                    size={30}
+                    style={{ marginRight: 20 }}
+                    onPress={() => {
+                      const getName = async () => {
+                        try {
+                          const rs = await getUserInfo();
+                          props.setUsername(rs.data.firstName + ' ' + rs.data.lastName)
+                        } catch (e) {
+                          console.log(e);
+                        }
+                      };
+                      getName();
+                      // props.setUsername('updatedUsername'); // Set the username here
+                      navigation.dispatch(DrawerActions.openDrawer());
+                    }}
+                  />
+                )
+              },
+            }} />
+            <Stack.Screen name="InventoryTransferRequestProduction" component={InventoryTransferRequestProductionScreen} options={{ headerShown: true, title: 'Inventory Transfer Request', headerRight: () => <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { navigation.navigate('AddTransferRequestForm' as never) }}><Icon name='plus' size={25} /><Text style={{ fontSize: 18 }}> Add New</Text></TouchableOpacity> }} />
+            <Stack.Screen name="AddTransferRequestForm" component={AddTransferRequestFormScreen} options={{ headerShown: true }} />
+            <Stack.Screen name="InventoryTransferRequestWarehouse" component={InventoryTransferRequestWarehouseScreen} options={{ headerShown: true, title: 'Inventory Transfer Request' }} />
+            <Stack.Screen name="InventoryTransfer" component={InventoryTransferScreen} options={{ headerShown: true, title: 'Inventory Transfer' }} />
+            <Stack.Screen name="AddTransfer" component={AddTransferScreen} options={{ headerShown: true }} />
 
-          <Stack.Screen name="Home" component={HomeScreen} options={{
-            headerShown: true,
-            headerLeft: () => {
-              return (
-                <Icon
-                  name="menu"
-                  color={'#2292EE'}
-                  size={30}
-                  style={{ marginRight: 20 }}
-                  onPress={() => {
-                    const getName = async () => {
-                      try {
-                        const rs = await getUserInfo();
-                        props.setUsername(rs.data.firstName + ' ' + rs.data.lastName)
-                      } catch (e) {
-                        console.log(e);
-                      }
-                    };
-                    getName();
-                    // props.setUsername('updatedUsername'); // Set the username here
-                    navigation.dispatch(DrawerActions.openDrawer());
-                  }}
-                />
-              )
-            },
-          }} />
-          <Stack.Screen name="InventoryTransferRequestProduction" component={InventoryTransferRequestProductionScreen} options={{ headerShown: true, title: 'Inventory Transfer Request', headerRight: () => <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { navigation.navigate('AddTransferRequestForm' as never) }}><Icon name='plus' size={25} /><Text style={{ fontSize: 18 }}> Add New</Text></TouchableOpacity> }} />
-          <Stack.Screen name="AddTransferRequestForm" component={AddTransferRequestFormScreen} options={{ headerShown: true }} />
-          <Stack.Screen name="InventoryTransferRequestWarehouse" component={InventoryTransferRequestWarehouseScreen} options={{ headerShown: true, title: 'Inventory Transfer Request' }} />
-          <Stack.Screen name="InventoryTransfer" component={InventoryTransferScreen} options={{ headerShown: true, title: 'Inventory Transfer' }} />
-          <Stack.Screen name="AddTransfer" component={AddTransferScreen} options={{ headerShown: true }} />
+            {/* <Stack.Screen name="Demo" component={DemoNavigator} /> */}
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="login" component={AuthScreen} options={{ headerShown: false}} />
+          </>
+        )}
 
-          {/* <Stack.Screen name="Demo" component={DemoNavigator} /> */}
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="login" component={AuthScreen} options={{ headerShown: false }} />
-        </>
-      )}
-
-      {/** 🔥 Your screens go here */}
-      {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
-    </Stack.Navigator>
+        {/** 🔥 Your screens go here */}
+        {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
+      </Stack.Navigator>
   )
 })
 
@@ -170,8 +192,6 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
     authenticationStore: { authToken, setTimeout, logout, username, password },
     authStore: { doLogin },
   } = useStores()
-  const [isNotiVisible, setNotiVisible] = useState(false);
-  const [message,setMessage] = useState()
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   api.setAppInitConfig({
@@ -187,21 +207,36 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
     },
   })
 
-  Notifications.setNotificationHandler({
-    handleNotification: async (notification) => {
-      const { title, body } = notification.request.content.data;
-      setMessage(notification)
+  const isDarkMode = colorScheme === "dark"
 
-      console.log("Received notification with title:", title);
-      console.log("Received notification with message:", body);
-      setNotiVisible(true);
-      return {
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      };
-    },
-  });
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      StatusBar.setBackgroundColor(isDarkMode ? "black" : "white", true)
+    }
+    StatusBar.setBarStyle(isDarkMode ? "light-content" : "dark-content", true)
+    // setForceDark(isDarkMode)
+  }, [isDarkMode])
+
+
+  // try{
+  //   Notifications.setNotificationHandler({
+  //     handleNotification: async (notification) => {
+  //       const { title, body } = notification.request.content.data;
+  //       setMessage(notification)
+
+  //       console.log("Received notification with title:", title);
+  //       console.log("Received notification with message:", body);
+  //       setNotiVisible(true);
+  //       return {
+  //         shouldShowAlert: true,
+  //         shouldPlaySound: true,
+  //         shouldSetBadge: false,
+  //       };
+  //     },
+  //   });
+  // }catch(e){
+  //   console.log(e)
+  // }
 
   return (
     <NavigationContainer
@@ -210,13 +245,13 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
       {...props}
     >
       <DrawerScreen />
-      <NotificSoundModal
+      {/* <NotificSoundModal
         color={message?.request.content.title == 'New Transfer Request' || message?.request.content.title == 'Rejected' ? "red" : 'green'}
         title={message?.request.content.title}
         message={message?.request.content.body}
         onClose={() => setNotiVisible(false)}
         isVisible={isNotiVisible}
-      />
+      /> */}
     </NavigationContainer>
   )
 })

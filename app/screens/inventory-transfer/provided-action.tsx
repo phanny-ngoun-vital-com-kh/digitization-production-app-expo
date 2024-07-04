@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, FlatList, TouchableOpacity } from 'react-native';
-import { BaseStyle, useTheme } from 'app/theme-v2';
+import { BaseStyle, useTheme } from '../../theme-v2';
 import styles from './styles';
 import { Text, TextInput, Button } from '../../components/v2';
 import IconAntDesign from 'react-native-vector-icons/AntDesign';
-import { useStores } from 'app/models';
+import { useStores } from '../../models';
 import { DataTable } from 'react-native-paper';
-import { InventoryTransfer } from 'app/models/inventory-transfer/inventory-transfer-model';
-import { ReceiveStatusChangeModel, TransferModel } from 'app/models/inventory-transfer/inventory-transfer-store';
-import ConfirmDialog from 'app/components/v2/Dialog';
+import { InventoryTransfer } from '../../models/inventory-transfer/inventory-transfer-model';
+import { ReceiveStatusChangeModel, TransferModel } from '../../models/inventory-transfer/inventory-transfer-store';
+import ConfirmDialog from '../../components/v2/Dialog';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
-import { ProvidedListModel } from 'app/models/inventory-transfer-request/inventory-transfer-request-model';
+import { ProvidedListModel } from '../../models/inventory-transfer-request/inventory-transfer-request-model';
+import PushNotificationComponent from '../../utils-v2/push-notification-helper';
+import ModalApprove from 'app/components/v2/ModalApprove';
+import ModalReject from 'app/components/v2/ModalReject';
 
 interface ModalProps {
     isVisible: boolean;
@@ -19,11 +22,13 @@ interface ModalProps {
     transferItem: InventoryTransfer,
     provided_status: string,
     onSuccess: (t: boolean) => void;
+    main_provided: any,
+    transferIndex:number
     //   textChange: (text: string) => void;
     //   onSubmit:()=>void
 }
 
-const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, transferItem, provided_status, onSuccess }) => {
+const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, transferItem, provided_status, onSuccess, main_provided,transferIndex }) => {
     const { colors } = useTheme()
     const { inventoryRequestStore, inventoryTransferStore, authStore } = useStores()
     const [item, setItem] = useState(null)
@@ -34,9 +39,13 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
     const [state, setState] = useState('')
     const [totalProvidedValues, setTotalProvidedValues] = useState({});
     const [newItem, setNewItem] = useState(null)
-    const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
     const [loading, setLoading] = useState(false)
     const [isRejectConfirmationVisible, setIsRejectConfirmationVisible] = useState(false);
+    const [Fcm, setFcm] = useState([])
+    const [isModalApproveVisible, setModalApproveVisible] = useState(false);
+    const [isModalRejectVisible, setModalRejectVisible] = useState(false);
+    const [getRemarkReject, setGetRemarkReject] = useState('')
+    const [getRemarkApprove, setGetRemarkApprove] = useState('')
 
 
     useEffect(() => {
@@ -62,9 +71,9 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
         }
         get()
     }, [])
-
     useEffect(() => {
         const calculateAndStoreTotalValues = async () => {
+            // console.log(transferItem)
             // Assuming items is an array containing item objects with itemcode and id properties
             for (const items of transferItem.item) {
                 const receive = await inventoryRequestStore.getprovideitemforclose(transferItem.id, 'done', items.item_code);
@@ -82,6 +91,15 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                 }));
             }
         };
+
+        const getToken = async () => {
+            const data = (await inventoryRequestStore.getMobileUserList())
+            const createdByValues = data
+                .filter(item => item.login === main_provided?.createdBy)
+                .map(item => item.fcm_token);
+            setFcm(createdByValues);
+        }
+        getToken()
 
         calculateAndStoreTotalValues();
     }, [isVisible == true]);
@@ -119,6 +137,41 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
         setState(state)
     }, [isVisible == true]);
 
+    async function sendNotification(title, body, deviceTokens, sound = 'default') {
+        const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+
+        try {
+            const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `key=${SERVER_KEY}`
+                },
+                body: JSON.stringify({
+                    registration_ids: deviceTokens,
+                    notification: {
+                        title: title,
+                        body: body,
+                        sound: sound,
+                    },
+                    android: {
+                        notification: {
+                            sound: sound,
+                            priority: 'high',
+                            vibrate: true,
+                        }
+                    }
+
+                }),
+            });
+
+            const responseData = await response.json();
+            console.log('Notification sent successfully:', responseData);
+        } catch (error) {
+            console.error('Error sending notification:', error);
+        }
+    }
+
     const onReceive = async () => {
         try {
             const it = TransferModel.create({
@@ -141,16 +194,23 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
             })
             const providedstatus = ProvidedListModel.create({
                 provided: provided,
-                remark: '',
-                status: "done"
+                remark: getRemarkApprove,
+                status: "done",
+                transfer_request: transferItem?.transfer_id,
+                activities_name: 'Receive',
+                action: `Receive Transfer ${transferIndex}`
             })
-            // await inventoryTransferStore.addTransfer(it).savetransfer();
-            // await inventoryTransferStore.addReceiveChange(da).receivestatuschange();
-            // await inventoryRequestStore.upstatus(providedstatus).updatestatus()
+            await inventoryTransferStore.addTransfer(it).savetransfer();
+            await inventoryTransferStore.addReceiveChange(da).receivestatuschange();
+            await inventoryRequestStore.upstatus(providedstatus).updatestatus()
             onSuccess(true)
+            // setNotiVisible(true)
+            sendNotification('Received', 'Your Transfer has been receive', Fcm)
             setNewItem(null)
-            setIsConfirmationVisible(false)
-            onClose()
+            setModalApproveVisible(false)
+            setGetRemarkApprove('')
+            transferIndex=0
+            // onClose()
             Dialog.show({
                 type: ALERT_TYPE.SUCCESS,
                 title: 'ជោគជ័យ',
@@ -174,13 +234,21 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
         try {
             const providedstatus = ProvidedListModel.create({
                 provided: provided,
-                remark: '',
-                status: "cancel"
+                remark: getRemarkReject,
+                status: "cancel",
+                transfer_request: transferItem?.transfer_id,
+                activities_name: 'Receive',
+                action: `Rejected Transfer ${transferIndex}`
+
             })
-            // await inventoryRequestStore.upstatus(providedstatus).updatestatus()
+            await inventoryRequestStore.upstatus(providedstatus).updatestatus()
+            // setRejectNotiVisible(true)
+            sendNotification('Rejected', 'Your Transfer has been reject', Fcm)
             onSuccess(true)
             setNewItem(null)
-            setIsRejectConfirmationVisible(false)
+            setModalRejectVisible(false)
+            setGetRemarkReject('')
+            transferIndex=0
             onClose()
             Dialog.show({
                 type: ALERT_TYPE.SUCCESS,
@@ -189,12 +257,12 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                 // button: 'close',
                 autoClose: 100
             })
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             Dialog.show({
                 type: ALERT_TYPE.DANGER,
                 title: 'បរាជ័យ',
-                textBody: 'បរាជ័យ',
+                textBody: e,
                 button: 'បិទ',
             })
         }
@@ -238,14 +306,14 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                     {transferItem?.transfer_type == 'PM/RM' && (isProdAdm || isProdUser) && (provided_status !== "done" && provided_status !== "cancel") ?
                         < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>
                             <Button style={{ width: '13%', backgroundColor: '#fff', borderColor: 'gray', borderWidth: 1 }} styleText={{ color: '#000', fontSize: 15 }} onPress={onClose}>Cancel</Button>
-                            <Button style={{ width: '13%', marginLeft: 20, backgroundColor: '#fff', borderColor: 'red', borderWidth: 1 }} styleText={{ color: 'red', fontSize: 15 }} onPress={() => setIsRejectConfirmationVisible(true)}>Reject</Button>
-                            <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => setIsConfirmationVisible(true)}>Receive</Button>
+                            <Button style={{ width: '13%', marginLeft: 20, backgroundColor: '#fff', borderColor: 'red', borderWidth: 1 }} styleText={{ color: 'red', fontSize: 15 }} onPress={() => setModalRejectVisible(true)}>Reject</Button>
+                            <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => setModalApproveVisible(true)}>Receive</Button>
                         </View>
                         : transferItem?.transfer_type == 'FG' && (isWareAdm || isWareUser) && (provided_status !== "done" && provided_status !== "cancel") ?
                             < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>
                                 <Button style={{ width: '13%', backgroundColor: '#fff', borderColor: 'gray', borderWidth: 1 }} styleText={{ color: '#000', fontSize: 15 }} onPress={onClose}>Cancel</Button>
-                                <Button style={{ width: '13%', marginLeft: 20, backgroundColor: '#fff', borderColor: 'red', borderWidth: 1 }} styleText={{ color: 'red', fontSize: 15 }} onPress={() => setIsRejectConfirmationVisible(true)}>Reject</Button>
-                                <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => { setIsConfirmationVisible(true) }}>Receive</Button>
+                                <Button style={{ width: '13%', marginLeft: 20, backgroundColor: '#fff', borderColor: 'red', borderWidth: 1 }} styleText={{ color: 'red', fontSize: 15 }} onPress={() => setModalRejectVisible(true)}>Reject</Button>
+                                <Button style={{ width: '13%', marginLeft: 20 }} styleText={{ fontSize: 15 }} onPress={() => { setModalApproveVisible(true) }}>Receive</Button>
                             </View> :
                             < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>
                                 <Button style={{ width: '13%', backgroundColor: '#fff', borderColor: 'gray', borderWidth: 1 }} styleText={{ color: '#000', fontSize: 15 }} onPress={onClose}>Cancel</Button>
@@ -256,7 +324,7 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                     </View> */}
                 </View>
             </View>
-            {isConfirmationVisible && (
+            {/* {isConfirmationVisible && (
                 <ConfirmDialog
                     title="Receive"
                     message="Are you sure ?"
@@ -275,7 +343,33 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                         { text: 'បាទ', onPress: onReject, backgroundColor: colors.primary, color: 'white', isLoading: loading }
                     ]}
                 />
-            }
+            } */}
+            <ModalApprove
+                onClose={() => setModalApproveVisible(false)}
+                isVisible={isModalApproveVisible}
+                textChange={(text) => setGetRemarkApprove(text)}
+                onSubmit={onReceive}
+            />
+            <ModalReject
+                onClose={() => setModalRejectVisible(false)}
+                isVisible={isModalRejectVisible}
+                textChange={(text) => setGetRemarkReject(text)}
+                onSubmit={onReject}
+            />
+            {/* <PushNotificationComponent
+                isVisible={isRejectNotiVisible}
+                recipientTokens={Fcm}
+                title={'Rejected'}
+                body={'Your Transfer has been reject'}
+                close={() => (setRejectNotiVisible(false))}
+            />
+            <PushNotificationComponent
+                isVisible={isNotiVisible}
+                recipientTokens={Fcm}
+                title={'Received'}
+                body={'Your Transfer has been receive'}
+                close={() => (setNotiVisible(false))}
+            /> */}
         </Modal>
     );
 };

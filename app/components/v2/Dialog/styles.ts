@@ -1,50 +1,60 @@
-import { StyleSheet, I18nManager } from "react-native";
 
+import { StyleSheet } from "react-native";
 export default StyleSheet.create({
     container: {
-        ...StyleSheet.absoluteFillObject,
-        // flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-      },
-      dialog: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        alignItems: 'center'
+    },
+    model: {
         backgroundColor: 'white',
         padding: 20,
+        marginTop: '5%',
         borderRadius: 10,
-        alignItems: 'center',
-        width: '70%',
-        maxWidth: 400,
-        height:210
-      },
-      title: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginEnd:'auto',
-        marginLeft:15
-        // marginBottom: 10,
-      },
-      message: {
-        marginTop: 30,
-        textAlign: 'center',
-        // marginEnd:'auto'
-      },
-      buttonContainer: {
-        marginTop:'auto',
+        width: '45%',
+        // height: '40%',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+
+    },
+    divider: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: '#d3d3d3',
+        marginTop: 10,
+        marginBottom: 10
+    },
+
+    button: {
+        width: '25%',
+        marginLeft: 'auto',
+    },
+    button_cancel: {
+        marginLeft: '48%',
+        width: '25%',
+        backgroundColor: 'white',
+        borderColor: 'gray',
+        borderWidth: 1
+    },
+    butuon_view: {
+        marginTop: '5%',
         flexDirection: 'row',
-        justifyContent: 'center',
-        marginStart:'auto'
-      },
-      button: {
-        marginHorizontal: 5,
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        width:100,
-      },
-      buttonText: {
-        color: 'white',
-        fontSize: 16,
-        textAlign:'center'
-      },
+        width: '100%'
+    },
+    input: {
+        borderWidth: 1,
+        backgroundColor: '#fff',
+        borderColor: '#696969',
+        marginLeft: '7%',
+        width: '93%',
+        height: 47,
+        marginTop: '2%',
+        borderRadius: 10,
+    }
+
 });

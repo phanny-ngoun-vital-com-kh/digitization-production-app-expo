@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, FlatList, TouchableOpacity } from 'react-native';
-import { BaseStyle, useTheme } from 'app/theme-v2';
+import { BaseStyle, useTheme } from '../../theme-v2';
 import styles from './styles';
 import { Text, TextInput, Button } from '../../components/v2';
 import IconAntDesign from 'react-native-vector-icons/AntDesign';
-import { useStores } from 'app/models';
+import { useStores } from '../../models';
 import { DataTable } from 'react-native-paper';
 
 interface ModalProps {

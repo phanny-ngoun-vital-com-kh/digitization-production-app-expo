@@ -6,11 +6,11 @@ import {
     Text,
     TextInput,
 } from "../../components/v2"
-import { AppStackScreenProps } from "app/navigators"
+import { AppStackScreenProps } from "../../navigators"
 import styles from "./styles"
 import { DataTable } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { BaseStyle } from "app/theme-v2"
+import { BaseStyle } from "../../theme-v2"
 import {
     Menu,
     MenuProvider,
@@ -18,20 +18,18 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
-import { useStores } from "app/models"
-import { InventoryTransferRequest, InventoryTransferRequestModel } from "app/models/inventory-transfer-request/inventory-transfer-request-store"
+import { useStores } from "../../models"
+import { InventoryTransferRequest, InventoryTransferRequestModel } from "../../models/inventory-transfer-request/inventory-transfer-request-store"
 import moment from 'moment'
-import { useTheme } from "app/theme-v2"
-import { showErrorMessage } from "app/utils-v2"
-import ModalApprove from "app/components/v2/ModalApprove"
-import { ActivitiesModel, ItemModel } from "app/models/inventory-transfer-request/inventory-transfer-request-model"
+import { useTheme } from "../../theme-v2"
+import { showErrorMessage } from "../../utils-v2"
+import ModalApprove from "../../components/v2/ModalApprove"
+import { ActivitiesModel, ItemModel } from "../../models/inventory-transfer-request/inventory-transfer-request-model"
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
-import ModalReject from "app/components/v2/ModalReject"
+import ModalReject from "../../components/v2/ModalReject"
 import IconFontisto from 'react-native-vector-icons/Fontisto';
-import ModalWarehouseApprove from "app/components/v2/ModalWarehouseApprove"
+import ModalWarehouseApprove from "../../components/v2/ModalWarehouseApprove"
 import { useNavigation } from "@react-navigation/native"
-import sendPushNotification from "app/utils-v2/push-notification-helper"
-
 
 interface InventoryTransferRequestWarehouseScreenProps extends AppStackScreenProps<"InventoryTransferRequestWarehouse"> { }
 
@@ -54,6 +52,9 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
     const [prodAdmFcm, setProdAdmFcm] = useState([])
     const [isLoading, setIsLoading] = useState(false);
     const [getRemark, setGetRemark] = useState('')
+    const [isNotiVisible, setNotiVisible] = useState(false);
+    const [isRejectNotiVisible, setRejectNotiVisible] = useState(false);
+    const [type, setType] = useState('')
 
     useEffect(() => {
 
@@ -103,64 +104,96 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
 
     }, [selectedItem])
 
-    const updateSupplier = (index, supplier) => {
-        const updatedList = [...selectedItem.item];
-        updatedList[index].supplier = supplier;
-        console.log(updatedList)
-        setNewItem(updatedList);
-    };
+    // const updateSupplier = (index, supplier) => {
+    //     const updatedList = [...selectedItem.item];
+    //     updatedList[index].supplier = supplier;
+    //     console.log(updatedList)
+    //     setNewItem(updatedList);
+    // };
 
-    const updateRemark = (index, remark) => {
-        const updatedList = [...selectedItem.item];
-        updatedList[index].remark = remark;
-        console.log(updatedList)
-        setNewItem(updatedList);
-    };
+    // const updateRemark = (index, remark) => {
+    //     const updatedList = [...selectedItem.item];
+    //     updatedList[index].remark = remark;
+    //     console.log(updatedList)
+    //     setNewItem(updatedList);
+    // };
 
-    async function sendNotification(recipientTokens, title, body) {
-        await sendPushNotification(recipientTokens, title, body)
-          .then(() => {
-            console.log('Push notifications sent successfully!');
-          })
-          .catch((error) => {
-            console.error('Error sending push notifications:', error);
-          });
-    
-      }
+    async function sendNotification(title, body, deviceTokens, sound = 'default') {
+        const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+
+        try {
+            const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `key=${SERVER_KEY}`
+                },
+                body: JSON.stringify({
+                    registration_ids: deviceTokens,
+                    notification: {
+                        title: title,
+                        body: body,
+                        sound: sound,
+                    },
+                    android: {
+                        notification: {
+                            sound: sound,
+                            priority: 'high',
+                            vibrate: true,
+                        }
+                    }
+
+                }),
+            });
+
+            const responseData = await response.json();
+            console.log('Notification sent successfully:', responseData);
+        } catch (error) {
+            console.error('Error sending notification:', error);
+        }
+    }
 
     const reject = async () => {
         const data = InventoryTransferRequestModel.create({
             id: selectedItem.id,
             remark: getRemarkReject,
             state: "rejected",
-            statusChange: "transfer-request-warehouse-reject"
-        })
-        const activities = ActivitiesModel.create({
+            statusChange: "transfer-request-warehouse-reject",
             action: "Rejected",
             activities_name: "Warehouse Approval",
-            remark: getRemarkReject,
-            transfer_request: selectedItem.transfer_id
+            transfer_request: selectedItem.transfer_id,
+            docEntry : selectedItem.sapDocEntry
         })
-        if (inventoryRequestStore
-            .approveReq(data)
-            .approverequest()
-            .then()
-            .catch((e) => console.log(e)) &&
+        // const activities = ActivitiesModel.create({
+        //     action: "Rejected",
+        //     activities_name: "Warehouse Approval",
+        //     remark: getRemarkReject,
+        //     transfer_request: selectedItem.transfer_id
+        // })
+        if (
+            // inventoryRequestStore
+            //     .approveReq(data)
+            //     .approverequest()
+            //     .then()
+            //     .catch((e) => console.log(e)) &&
 
-            inventoryRequestStore
-                .addActivites(activities)
-                .addactivities()
-                .then()
-                .catch((e) => console.log(e))) {
+            // inventoryRequestStore
+            //     .addActivites(activities)
+            //     .addactivities()
+            //     .then()
+            //     .catch((e) => console.log(e))
+            inventoryRequestStore.approveReq(data).closerequest().then().catch((e) => console.log(e))
+        ) {
             setModalRejectVisible(false)
             setSelectedItem(null)
             setSeletedStatus(null)
             setGetRemarkReject('')
             refresh()
-            sendNotification(prodAdmFcm,'Rejected', 'Your transfer request has been rejected')
-            sendNotification(requesterFcm,'Rejected', 'Warehouse rejected your transfer request')
-            setProdAdmFcm([])
-            setRequesterFcm([])
+            setRejectNotiVisible(true)
+            sendNotification('Rejected', 'Your transfer request has been rejected', prodAdmFcm)
+            sendNotification('Rejected', 'Warehouse rejected your transfer request', requesterFcm)
+            // setProdAdmFcm([])
+            // setRequesterFcm([])
             Dialog.show({
                 type: ALERT_TYPE.SUCCESS,
                 title: 'ជោគជ័យ',
@@ -168,6 +201,67 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                 // button: 'close',
                 autoClose: 100
             })
+        }
+    }
+
+    const getSap = async () => {
+        try {
+            setIsLoading(true)
+            if(selectedItem.sapDocEntry == null ){
+                Dialog.show({
+                    type: ALERT_TYPE.DANGER,
+                    title: 'Error',
+                    textBody: `Error`,
+                    button: 'Close',
+                    // autoClose: 200
+                })
+                return
+            }
+            const detail_sap = await inventoryRequestStore.findsaprequest(selectedItem.sapDocEntry)
+
+            if (detail_sap?.transferRequests[0].transferRequestDetails && selectedItem?.item) {
+                // Convert the second list to a map for easy lookup
+                const detailMap = new Map(selectedItem.item.map(item => [item.item_code, item]));
+
+                for (const sapItem of detail_sap?.transferRequests[0].transferRequestDetails) {
+                    const detailItem = detailMap.get(sapItem.itemCode);
+                    if (detailItem) {
+                        // Compare quantity
+                        if (sapItem.quantity !== parseInt(detailItem.quantity)) {
+                            Dialog.show({
+                                type: ALERT_TYPE.DANGER,
+                                title: 'Error',
+                                textBody: `Mismatch found for item code ${sapItem.itemCode} in IES ${detailItem.quantity} in SAP ${sapItem.quantity}!`,
+                                button: 'Close',
+                                // autoClose: 200
+                            })
+                            return
+                        }
+                        setModalApproveVisible(true)
+                    } else {
+                        Dialog.show({
+                            type: ALERT_TYPE.DANGER,
+                            title: 'Error',
+                            textBody: `Item code ${sapItem.itemCode} not found in the sap list!`,
+                            button: 'Close',
+                            // autoClose: 200
+                        })
+                    }
+                }
+            } else {
+                console.error("One of the lists is undefined or empty.");
+            }
+        } catch (error: any) {
+            console.error('An error occurred:', error);
+            Dialog.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'Error',
+                textBody: error,
+                // button: 'close',
+                autoClose: 200
+            })
+        } finally {
+            setIsLoading(false); // Reset loading state regardless of success or failure
         }
     }
 
@@ -196,10 +290,11 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
             setNewItem([])
             // setGetRemarkReject('')
             refresh()
-            sendNotification(prodAdmFcm,'Accepted', 'Your transfer request has been accept')
-            sendNotification(requesterFcm,'Accepted', 'Warehouse accepted your transfer request')
-            setProdAdmFcm([])
-            setRequesterFcm([])
+            setNotiVisible(true)
+            sendNotification('Accepted', 'Your transfer request has been accept', prodAdmFcm)
+            sendNotification('Accepted', 'Warehouse accepted your transfer request', requesterFcm)
+            // setProdAdmFcm([])
+            // setRequesterFcm([])
             Dialog.show({
                 type: ALERT_TYPE.SUCCESS,
                 title: 'ជោគជ័យ',
@@ -221,9 +316,10 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
 
     }
 
-    const handleItemPress = (itemId, itemStatus) => {
+    const handleItemPress = (itemId, itemStatus,itemType) => {
         setSelectedItem(list.find((v) => v.id === itemId));
         setSeletedStatus(itemStatus)
+        setType(itemType)
     };
 
     //   useEffect(()=>{
@@ -271,7 +367,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                             }
                             renderItem={({ item }) => (
                                 <View style={{ borderBottomWidth: 0.4, borderColor: '#d3d3d3' }}>
-                                    <TouchableOpacity onPress={() => handleItemPress(item.id, item.status)} >
+                                    <TouchableOpacity onPress={() => handleItemPress(item.id, item.status,item.transfer_type)} >
                                         <View style={[styles.itemContainer, selectedItem != null ? selectedItem.id === item.id && styles.selectedItemContainer : []]}>
                                             <Icon name={'file-text-o'} size={20} color="gray" style={{ marginRight: 10, marginLeft: 5 }} />
                                             <Text style={[styles.item, selectedItem === item.id, item.state === 'completed' ? { color: 'green' } : item.state === 'rejected' ? { color: 'red' } : item.state === 'in-progress' ? { color: '#E69B00' } : { color: '#000' }]}>
@@ -342,8 +438,16 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                                         </DataTable.Row>
                                         <DataTable.Row style={styles.row}>
                                             <DataTable.Cell textStyle={styles.item}>
+                                                <Text style={styles.textTitle}>Remark: </Text>
+                                                <Text style={styles.textBody}>{selectedItem.remark ? selectedItem.remark : '-'}</Text>
+                                            </DataTable.Cell>
+                                            <DataTable.Cell textStyle={styles.item}>
                                                 <Text style={styles.textTitle}>Sap Doc No: </Text>
                                                 <Text style={styles.textBody}>{selectedItem.sapDocNo}</Text>
+                                            </DataTable.Cell>
+                                            <DataTable.Cell textStyle={styles.item}>
+                                                <Text style={styles.textTitle}> </Text>
+                                                <Text style={styles.textBody}> </Text>
                                             </DataTable.Cell>
                                         </DataTable.Row>
                                     </DataTable>
@@ -375,24 +479,31 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
 
                         ) : (
                             <View style={{}}>
-                                <Text >No item seleted</Text>
+                                <Text style={{}}>No item seleted</Text>
                             </View>
                         )}
                     </ScrollView>
                     {selectedStatus == 'request-production-approve' ?
                         <>
                             <View style={styles.divider} />
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%' }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%', marginBottom: 25 }}>
 
-                                <Button style={{ width: '20%', }} onPress={() => { setModalApproveVisible(true) }} loading={loading}>Approve</Button>
+                                <Button style={{ width: '20%', }} onPress={() => { getSap() }}>
+                                    {/* Approve */}
+                                    {isLoading ? (
+                                        <View style={{ flexDirection: 'row', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 17 }}>Approve</Text><ActivityIndicator color="white" /></View>
+                                    ) : (
+                                        <Text style={{ color: '#fff' }}>Approve</Text>
+                                    )}
+                                </Button>
                                 <Button style={{ width: '20%', backgroundColor: 'red', marginLeft: 20 }} onPress={() => { setModalRejectVisible(true) }}>Reject</Button>
                             </View>
                             {/* <View style={styles.divider} /> */}
                         </>
-                        : selectedStatus == 'request-warehouse-approve' ?
+                        : selectedStatus == 'request-warehouse-approve' && type == 'PM/RM'?
                             <>
                                 <View style={styles.divider} />
-                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%' }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%', marginBottom: 25 }}>
 
                                     <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer', { id: selectedItem.id }) }}>Transfer</Button>
                                 </View>

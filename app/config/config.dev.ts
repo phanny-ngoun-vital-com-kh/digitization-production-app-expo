@@ -9,13 +9,16 @@
 export const IP = '10.0.12.247'
 const PORT = '85'
 
+// Prodution
+// export const IP = 'ies.vital.com.kh'
+// const PORT = '80'
 
 // Local-t
 // export const IP = '10.0.20.111'
 // const PORT = '8080'
 
 // Local
-// export const IP = '192.168.1.103'
+// export const IP = '192.168.1.104'
 // const PORT = '8080'
 
 const PROTOCOL = 'http'

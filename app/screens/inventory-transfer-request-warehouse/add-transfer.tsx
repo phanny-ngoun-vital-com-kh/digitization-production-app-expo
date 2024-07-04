@@ -1,20 +1,21 @@
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
-import { Image, ImageStyle, TextStyle, View, ViewStyle, FlatList, RefreshControl, TouchableOpacity, ScrollView } from "react-native"
-import { AppStackScreenProps } from "app/navigators"
-import { useStores } from "app/models"
-import { showErrorMessage } from "app/utils-v2"
-import ListInventoryTransfer from "app/components/v2/ListInventoryTransfer"
-import { InventoryTransfer } from "app/models/inventory-transfer/inventory-transfer-model"
+import { Image, ImageStyle, TextStyle, View, ViewStyle, FlatList, RefreshControl, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
+import { AppStackScreenProps } from "../../navigators"
+import { useStores } from "../../models"
+import { showErrorMessage } from "../../utils-v2"
+import ListInventoryTransfer from "../../components/v2/ListInventoryTransfer"
+import { InventoryTransfer } from "../../models/inventory-transfer/inventory-transfer-model"
 import { DataTable } from "react-native-paper"
 import styles from "./styles"
-import { BaseStyle, useTheme } from "app/theme-v2"
-import { TextInput, Text } from "app/components/v2"
+import { BaseStyle, useTheme } from "../../theme-v2"
+import { TextInput, Text } from "../../components/v2"
 import Icon from "react-native-vector-icons/MaterialCommunityIcons"
 import moment from "moment"
 import ProvidedListView from "./provided-list"
 import ModalAddProvided from "./add-provided"
-// import styles from "./styles"
+import ActivitiesListView from "./activities-list"
+import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
 
 interface AddTransferScreenProps extends AppStackScreenProps<"AddTransfer"> { }
 
@@ -27,14 +28,17 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
     const [selectedAct, setSelectedAct] = useState<{ id: string; name: string }>({ id: '1', name: 'Info' });
     const { inventoryRequestStore } = useStores()
     const [item, setItem] = useState(null);
+    const [acti, setActi] = useState([])
     const [provide, setProvide] = useState(null);
+    const [requesterFcm, setRequesterFcm] = useState([])
+    const [count, setCount] = useState(0)
+    const [isLoading, setIsLoading] = useState(false);
     const [isAddModalVisible, setAddModalVisible] = useState(false)
     const act = [
         { id: '1', name: 'Info' },
         { id: '2', name: 'Transfer' },
         { id: '3', name: 'Activities' },
     ]
-
     const handleActSelection = async (act: { id: string; name: string }) => {
         setSelectedAct(act);
         // You can perform different actions based on the selected act here
@@ -42,6 +46,7 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
             case '1':
                 const data = (await inventoryRequestStore.getdetail(id))
                 setItem(data)
+                console.log(data)
                 // Code for handling selection of "Info" act
                 break;
             case '2':
@@ -50,6 +55,8 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
                 // Code for handling selection of "Transfer" act
                 break;
             case '3':
+                const act = (await inventoryRequestStore.getdetail(id))
+                setActi(act.activities)
                 // Code for handling selection of "Activities" act
                 break;
             default:
@@ -61,6 +68,11 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
         const get = async () => {
             const data = (await inventoryRequestStore.getdetail(id))
             setItem(data)
+            const inv = (await inventoryRequestStore.getMobileUserList())
+            const createdByValues = inv
+                .filter(itm => itm.login === data.createdBy)
+                .map(itm => itm.fcm_token);
+            setRequesterFcm(createdByValues);
         }
         get()
     }, [])
@@ -76,6 +88,57 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
             showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', e.message)
         } finally {
             showLoading ? setLoading(false) : setRefreshing(false)
+        }
+    }
+
+    const getSap = async () => {
+        try {
+            setIsLoading(true)
+            const detail_sap = await inventoryRequestStore.findsaprequest(item?.sapDocEntry)
+
+            if (detail_sap?.transferRequests[0].transferRequestDetails && item?.item) {
+                // Convert the second list to a map for easy lookup
+                const detailMap = new Map(item?.item.map(item => [item.item_code, item]));
+
+                for (const sapItem of detail_sap?.transferRequests[0].transferRequestDetails) {
+                    const detailItem = detailMap.get(sapItem.itemCode);
+                    if (detailItem) {
+                        // Compare quantity
+                        if (sapItem.quantity !== parseInt(detailItem.quantity)) {
+                            Dialog.show({
+                                type: ALERT_TYPE.DANGER,
+                                title: 'Error',
+                                textBody: `Mismatch found for item code ${sapItem.itemCode} in IES ${detailItem.quantity} in SAP ${sapItem.quantity}!`,
+                                button: 'Close',
+                                // autoClose: 200
+                            })
+                            return
+                        }
+                        setAddModalVisible(true)
+                    } else {
+                        Dialog.show({
+                            type: ALERT_TYPE.DANGER,
+                            title: 'Error',
+                            textBody: `Item code ${sapItem.itemCode} not found in the sap list!`,
+                            button: 'Close',
+                            // autoClose: 200
+                        })
+                    }
+                }
+            } else {
+                console.error("One of the lists is undefined or empty.");
+            }
+        } catch (error: any) {
+            console.error('An error occurred:', error);
+            Dialog.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'Error',
+                textBody: error,
+                // button: 'close',
+                autoClose: 200
+            })
+        } finally {
+            setIsLoading(false); // Reset loading state regardless of success or failure
         }
     }
 
@@ -199,9 +262,16 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
                     ) :
                     selectedAct.id === '2' ?
                         <>
+
                             <View style={{ flexDirection: 'row', width: '80%', justifyContent: 'flex-end', margin: 20 }}>
                                 <Icon name="plus" size={30} />
-                                <TouchableOpacity onPress={() => (setAddModalVisible(true), console.log(item))}><Text style={{ fontSize: 18 }}>Add Transfer</Text></TouchableOpacity>
+                                <TouchableOpacity onPress={() => (getSap())}>
+                                    {isLoading ? (
+                                        <View style={{ flexDirection: 'row', justifyContent: 'center' }}><Text style={{ fontSize: 18 }}>Add Transfer  </Text><ActivityIndicator color="black" /></View>
+                                    ) : (
+                                        <Text style={{ fontSize: 18,marginLeft:5 }}>Add Transfer</Text>
+                                    )}
+                                </TouchableOpacity>
                             </View>
                             <View style={styles.divider}></View>
                             <FlatList
@@ -214,18 +284,42 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
                                         onRefresh={refresh}
                                     />
                                 }
-                                renderItem={({ item, index }) =>
-                                    <ProvidedListView data={item} index={index + 1} />}
-                            />
+                                renderItem={({ item, index }) => {
+                                    setCount(index + 1);
+                                    return <ProvidedListView data={item} index={index + 1} />
+                                }} />
+
                             <ModalAddProvided
                                 data={item?.item}
-                                onClose={() => {setAddModalVisible(false),refresh()}}
+                                onClose={() => { setAddModalVisible(false), refresh() }}
                                 isVisible={isAddModalVisible}
                                 tenden={item != null ? item.business_unit : ''}
                                 id={item?.id}
+                                Fcm={requesterFcm}
+                                transferIndex={count}
+                                transfer_request={item?.transfer_id}
+                                transfer_type={item?.transfer_type}
                             />
                         </>
-                        : <></>}
+                        : selectedAct.id === '3' ?
+                            <>
+                                <FlatList
+                                    data={acti}
+                                    refreshControl={
+                                        <RefreshControl
+                                            colors={[colors.primary]}
+                                            tintColor={colors.primary}
+                                            refreshing={refreshing}
+                                            onRefresh={refresh}
+                                        />
+                                    }
+                                    renderItem={({ item, index }) =>
+                                        <ActivitiesListView data={item} index={index + 1} />}
+                                />
+                            </>
+
+
+                            : <></>}
                 {/* </ScrollView> */}
 
             </View>

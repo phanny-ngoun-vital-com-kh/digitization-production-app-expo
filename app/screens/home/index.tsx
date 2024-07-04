@@ -1,14 +1,18 @@
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import { Button, Text, Dimensions, FlatList, Image, ImageStyle, Platform, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "app/navigators"
+import { AppStackScreenProps } from "../../navigators"
 import IconFontisto from 'react-native-vector-icons/Fontisto';
 import IconMaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import style from "./style"
-import { useStores } from "app/models"
+import { useStores } from "../../models"
 import { Avatar, Card, Title, Paragraph } from 'react-native-paper';
-import NotificSoundModal from "app/components/v2/NotificSoundModal";
-import CustomAudioPlayer from "app/components/v2/NotificSoundModal/CustomAudioPlayer";
+import sendPushNotification from "../../utils-v2/push-notification-helper";
+import PushNotificationComponent from "../../utils-v2/push-notification-helper";
+// import NotificSoundModal from "app/components/v2/NotificSoundModal";
+// import CustomAudioPlayer from "app/components/v2/NotificSoundModal/CustomAudioPlayer";
+// import sendPushNotification from "app/utils-v2/push-notification-helper";
+// import PushNotificationComponent from "app/utils-v2/push-notification-helper";
 // import HomeCard from "app/components/v2/HomeCard"
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> { }
@@ -19,10 +23,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
   const {
     authStore: { getUserInfo }
   } = useStores()
-  const { width: ScreenWidth } = Dimensions.get("screen");
-  const [isNotiVisible, setNotiVisible] = useState(false);
-  const icon1 = <IconFontisto name='arrow-swap' size={40} color='#000' />;
-  const icon2 = <IconMaterialCommunityIcons name='warehouse' size={40} />;
 
   useEffect(() => {
     const role = async () => {
@@ -76,14 +76,14 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
 
   const [list, setList] = useState([])
-
+  const [isVisible, setIsVisible] = useState(false)
   const ItemList = ({ item }) => {
     const LeftContent = props => <Avatar.Icon {...props} icon={item.iconname} style={{ backgroundColor: '#2292EE' }} />
     if (item.empty === true) {
       return <View style={[style.item, style.itemInvisible]} />;
     }
     return (
-      <View style={{ flex: 1, backgroundColor: '#fff'}}>
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
         {/* <TouchableOpacity style={{ margin: 20 }} onPress={() => { navigation.navigate(item.navigation) }}>
           <View style={{ alignItems: 'center', backgroundColor: '#fff', flex: 1, paddingTop: 40, paddingBottom: 40, height: 130, flexDirection: 'row', borderRadius: 5, borderColor: '#2292EE', borderWidth: 1 }}>
             <View style={{ alignItems: 'flex-start', width: '20%', height: '100%', marginLeft: 30 }}>
@@ -116,6 +116,40 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     )
   }
 
+  async function sendNotification(title, body, deviceTokens, sound = 'default') {
+    const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+
+    try {
+      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `key=${SERVER_KEY}`
+        },
+        body: JSON.stringify({
+          registration_ids: deviceTokens,
+          notification: {
+            title: title,
+            body: body,
+            sound: sound,
+          },
+          android: {
+            notification: {
+              sound: sound,
+              priority: 'high',
+              vibrate: true,
+            }
+          }
+
+        }),
+      });
+
+      const responseData = await response.json();
+      console.log('Notification sent successfully:', responseData);
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  }
   return (
     <>
       <FlatList
@@ -125,13 +159,17 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         numColumns={3}
         renderItem={ItemList}
       />
-      {/* <TouchableOpacity onPress={() => setNotiVisible(true)} >
+      {/* <TouchableOpacity
+
+        onPress={()=>sendNotification('New Transfer Request','You have new transfer request from ', ["eqGVmlV1SWuc8CbbyCPZht:APA91bFjAQ0uL8ZHKGlihtjxeJSYFOq7PJqtKlZ4nk-tL9NICNaExGIctKDgZgxmmrAPnwc_0ZFaqPH5D7nxJyrcxBS18qZTVxYK9K195auRWJ7PjDpgRKELtZ9SubEhnY4y32f_4Dq4"])
+        }
+      >
         <Text style={{ paddingTop: 150 }}>Test Noti</Text>
-      </TouchableOpacity>
-      <NotificSoundModal
+      </TouchableOpacity> */}
+      {/* <NotificSoundModal
       color="red"
-      title="Test"
-        message="HI"
+      title={message?.title}
+        message={message?.body}
         onClose={() => setNotiVisible(false)}
         isVisible={isNotiVisible}
       /> */}

@@ -1,12 +1,12 @@
-import Config from "app/config"
+import Config from "../../config"
 import { generalApiExHandler, generalApiRsHandler, getGeneralApiProblem } from "./apiProblem"
 import qs from "qs"
 import { GetLoginResult, GetLogoutResult } from "./auth.types"
-import { DeviceInfo } from "app/models/auth/DeviceInfo"
+import { DeviceInfo } from "../../models/auth/DeviceInfo"
 import { ApiResponse } from "apisauce"
-import { Login } from "app/models/auth/LoginModel"
+import { Login } from "../../models/auth/LoginModel"
 import { BaseApi } from "./base-api"
-import { loadString } from "app/utils/storage"
+import { loadString } from "../../utils/storage"
 import { DataResponse } from "./response-util"
 
 const ApiURL = {

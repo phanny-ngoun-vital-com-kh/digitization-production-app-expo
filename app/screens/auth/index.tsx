@@ -9,13 +9,16 @@ import { Text, TextInput, Icon } from "../../components/v2"
 import { TouchableOpacity, View, ImageBackground, ActivityIndicator } from "react-native"
 import styles from "./style"
 import { translate } from "../../i18n"
-import { useStores } from "app/models"
+import { useStores } from "../../models"
 import 'firebase/messaging';
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
-import { MobileUserModel } from "app/models/auth/AuthStore"
+import { MobileUserModel } from "../../models/auth/AuthStore"
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { nativeApplicationVersion } from 'expo-application'
+import { firebase } from "@react-native-firebase/messaging"
+import messaging from '@react-native-firebase/messaging';
+import { initializeApp } from "firebase/app";
 
 // const imageLogo = require("../../images/logo.png")
 
@@ -35,7 +38,7 @@ import { nativeApplicationVersion } from 'expo-application'
 //   databaseURL: ''
 // };
 
-// Initialize Firebase
+// // Initialize Firebase
 // if (!firebase.apps?.length) {
 //   console.log("Firebase not yet initialized. Initializing now...");
 //   firebase.initializeApp(firebaseConfig);
@@ -43,6 +46,35 @@ import { nativeApplicationVersion } from 'expo-application'
 //   console.log("Firebase is already initialized.");
 // }
 
+// const firebaseConfig = {
+//   apiKey: "AIzaSyCxUbf9hr2DhBXrVa2ihb-Z-C5QNy7DCKQ",
+//   authDomain: "digitizationproduction.firebaseapp.com",
+//   projectId: "digitizationproduction",
+//   storageBucket: "digitizationproduction.appspot.com",
+//   messagingSenderId: "244489398431",
+//   appId: "1:244489398431:web:bc0c9cbd2bfe58a2c75aaa",
+//   measurementId: "G-C2R27WBL7V"
+// };
+
+// // Initialize Firebase
+// const initializeFirebase = async () => {
+//   try {
+//     await initializeApp(firebaseConfig);
+//     console.log('Firebase initialized successfully');
+//   } catch (error) {
+//     console.error('Error initializing Firebase:', error);
+//   }
+// };
+
+// initializeFirebase();
+// console.log('---------------------')
+// if (!firebase.apps?.length) {
+  
+//   console.log("Firebase not yet initialized. Initializing now...");
+//   initializeApp(firebaseConfig);
+// } else {
+//   console.log("Firebase is already initialized.");
+// }
 export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }, "login">) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState<boolean>(false)
@@ -50,46 +82,97 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
   const [attemptsCount, setAttemptsCount] = useState(0)
   const [fcmToken, setFcmToken] = useState("")
   const [isLoading, setIsLoading] = useState(false);
+  const [finalStatus, setFinalStatus] = useState('')
 
   const {
     authenticationStore: { username, setUsername, validationError },
     authStore
   } = useStores()
 
-  useEffect(() => {
-    registerForPushNotificationsAsync();
-  }, []);
+  // useEffect(() => {
+  //   registerForPushNotificationsAsync();
+  // }, []);
 
-  useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(handleNotification);
-    return () => subscription.remove();
-  }, []);
+  // useEffect(() => {
+  //   const subscription = Notifications.addNotificationReceivedListener(handleNotification);
+  //   return () => subscription.remove();
+  // }, []);
 
-  const registerForPushNotificationsAsync = async () => {
-    let token = null;
-    if (Constants.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
+  // useEffect(() => {
+    // const gettoken= async()=>{
+    //   console.log('meee1')
+    //   console.log(firebase.messaging().getToken())
+    //   const fcmToken = await firebase.messaging().getToken()
+    //   console.log('meee')
+    //   console.log(fcmToken)
+    // }
+    useEffect(() => {
+    const gettoken = async () => {
+      try {
+        const fcmToken = await firebase.messaging().getToken()
+        setFcmToken(fcmToken)
+      } catch (error) {
+        console.error('Error fetching FCM token:', error);
       }
-      if (finalStatus === 'granted') {
-        token = (await Notifications.getExpoPushTokenAsync()).data;
-        setFcmToken(token)
-        console.log('Expo Push Token:', token);
-        // Send this token to your Firebase backend to enable Firebase notifications
-      } else {
-        console.log('Failed to get push token for Expo notifications!');
-      }
-    } else {
-      console.log('Must use physical device for push notifications');
     }
-  };
+    gettoken()
+  },[])
 
-  const handleNotification = (notification) => {
-    console.log('Received notification:', notification);
-  };
+    // const registerForPushNotificationsAsync = async () => {
+    //   if (Constants.isDevice) {
+    //     const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    //     setFinalStatus(existingStatus)
+    //     if (existingStatus !== 'granted') {
+    //       const { status } = await Notifications.requestPermissionsAsync();
+    //       setFinalStatus(status)
+    //     }
+    //   } else {
+    //     console.log('Must use physical device for push notifications');
+    //   }
+    // };
+    // registerForPushNotificationsAsync()
+    // gettoken()
+  // }, [])
+
+  // useEffect(()=>{
+  //   const getToken = async () => {
+  //     let token = null;
+  //     try {
+  //       if (finalStatus === 'granted') {
+  //       token = (await Notifications.getExpoPushTokenAsync()).data;
+  //       setFcmToken(token);
+  //       console.log('Expo Push Token:', token);
+  //       }
+  //       // Send this token to your Firebase backend to enable Firebase notifications
+  //   } catch (error) {
+  //     setFcmToken('Error getting Expo push token:' +error.message);
+  //       // setFcmToken('Failed to get push token for Expo notifications!');
+  //   }}
+  //   getToken()
+  // },[finalStatus])
+
+  // useEffect(() => {
+  //   const getToken = async () => {
+  //     let token = null;
+  //     try {
+  //       if (finalStatus === 'granted') {
+  //         token = (await Notifications.getExpoPushTokenAsync({
+  //           'projectId': Constants.expoConfig.extra.eas.projectId,
+  //           // projectId: "a304e16d-a123-4ade-810e-5a0eaaf1da15",
+  //         })).data;
+  //         setFcmToken(token);
+  //         console.log('Expo Push Token:', token);
+  //       }
+  //       // Send this token to your Firebase backend to enable Firebase notifications
+  //     } catch (error) {
+  //       console.log('Error getting Expo push token:' + error.message);
+  //       // setFcmToken('Failed to get push token for Expo notifications!');
+  //     }
+  //   }
+  //   getToken()
+  // }, [finalStatus])
+
+
 
   // const handleLogin = () => {
   //   setPassword('')
@@ -245,7 +328,8 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
                 </Text>
               </View>
             )}
-
+           {/* <Text>status :{finalStatus}</Text> */}
+            {/* <Text>{fcmToken}</Text>  */}
             <View style={{ marginTop: 20 }}>
               <Text>លេខសម្ងាត់</Text>
               <TextInput
@@ -289,7 +373,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
               )}
 
             </TouchableOpacity>
-            <View style={{marginTop:'auto'}}>
+            <View style={{ marginTop: 'auto' }}>
               <Text footnote grayColor accentColor light>
                 {`Version ${nativeApplicationVersion}`}
               </Text>

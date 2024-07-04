@@ -23,11 +23,11 @@ const ProvidedView = ({ data, index, style, transferItem,onSuccess }: Props) => 
     const uncheck = <MaterialIconsIcons name='check-box-outline-blank' size={35} color={'gray'} />;
     const cross = <AntDesignIcons name='closesquare' size={30} color={'red'} />;
     const [isModalVisible, setModalVisible] = useState(false)
-
+    const [transferIndex,setTransferIndex] = useState(0)
     return (
         <>
             <ScrollView>
-                <TouchableOpacity onPress={() => { setModalVisible(true) }}>
+                <TouchableOpacity onPress={() => { setModalVisible(true),setTransferIndex(index) }}>
                     <View style={{ flexDirection: 'row', width: '88%' }} >
                         <DataTable style={{ margin: 5 }}>
                             <DataTable.Row key={data.id}>
@@ -47,7 +47,9 @@ const ProvidedView = ({ data, index, style, transferItem,onSuccess }: Props) => 
                 isVisible={isModalVisible}
                 provided={data.provided != null ? data.provided : ''}
                 provided_status={data.status!= null ? data.status : ''}
+                main_provided={data}
                 onSuccess={(t)=>{onSuccess(t)}}
+                transferIndex={transferIndex}
             />
         </>
     )

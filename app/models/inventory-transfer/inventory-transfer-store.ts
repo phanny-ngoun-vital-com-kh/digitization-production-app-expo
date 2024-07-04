@@ -1,4 +1,4 @@
-import { inventorytransferApi } from "app/services/api/invantory-transfer-api";
+import { inventorytransferApi } from "../../services/api/invantory-transfer-api";
 import { Instance, SnapshotOut, types } from "mobx-state-tree";
 
 export const ItemTranderModel = types
@@ -10,7 +10,7 @@ export const ItemTranderModel = types
         quantity: types.string,
         received: types.string,
         itemReceive:types.number,
-        remark: types.string,
+        remark: types.maybeNull(types.string),
         total: types.string,
         // transfer_request: types.string,
         uom: types.string,
@@ -117,7 +117,11 @@ export const CloseTransfer = types
         status:types.maybeNull(types.string),
         statusChange:types.maybeNull(types.string),
         state:types.maybeNull(types.string),
-        docEntry: types.maybeNull(types.number)
+        docEntry: types.maybeNull(types.number),
+        activities_name:types.maybeNull(types.string),
+        action:types.maybeNull(types.string),
+        transfer_request_id:types.maybeNull(types.string),
+        remark:types.maybeNull(types.string),
     })
     .views((self)=>{
         return{
@@ -137,7 +141,12 @@ export const CloseTransfer = types
                     self.status,
                     self.statusChange,
                     self.state,
-                    self.docEntry
+                    self.docEntry,
+                    self.activities_name,
+                    self.action,
+                    self.transfer_request_id,
+                    self.remark,
+
                 )
                 if (rs.kind === 'ok')
                     console.log('Success')

@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, View, FlatList, TouchableOpacity, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import Icon from '../Icon';
-import { BaseStyle, useTheme } from 'app/theme-v2';
+import { BaseStyle, useTheme } from '../../../theme-v2';
 import styles from './styles';
 import { Text, TextInput, Button } from '..';
-import { Bom, ItemList } from 'app/models/item/item-model';
+import { Bom, ItemList } from '../../../models/item/item-model';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { useStores } from "app/models"
+import { useStores } from "../../../models"
 import { Dropdown } from 'react-native-element-dropdown';
 
 interface ModalProps {

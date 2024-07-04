@@ -1,6 +1,6 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
 import { Activities, ActivitiesModel, Item, ItemModel, ProvidedList, ProvidedListModel, SAPItemModel } from "./inventory-transfer-request-model"
-import { inventorytransferrequestApi } from "app/services/api/inventory-transfer-request-api"
+import { inventorytransferrequestApi } from "../../services/api/inventory-transfer-request-api"
 import { WarehouseModel } from "../warehouse/warehouse-model"
 // import { Item } from "../inventory-transfer/inventory-transfer-model"
 
@@ -25,6 +25,10 @@ export const InventoryTransferRequestModel = types.model("InventoryTransferReque
     transfer_type: types.maybeNull(types.string),
     item_count: types.maybeNull(types.number),
     statusChange: types.maybeNull(types.string),
+    docEntry: types.maybeNull(types.number),
+    transfer_request: types.maybeNull(types.string),
+    activities_name: types.maybeNull(types.string),
+    action: types.maybeNull(types.string),
 })
     .views((self) => {
         return {
@@ -34,6 +38,24 @@ export const InventoryTransferRequestModel = types.model("InventoryTransferReque
                     self.remark,
                     self.state,
                     self.statusChange
+                )
+                if (rs.kind === 'ok')
+                    console.log('Success')
+                else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            },
+            closerequest: async () => {
+                const rs = await inventorytransferrequestApi.closeRequest(
+                    self.id,
+                    self.remark,
+                    self.state,
+                    self.statusChange,
+                    self.docEntry,
+                    self.transfer_request,
+                    self.activities_name,
+                    self.action,
                 )
                 if (rs.kind === 'ok')
                     console.log('Success')
@@ -220,8 +242,11 @@ export const ProvidedModel = types
     .model('ProvideModel')
     .props({
         item: types.array(ProvidedItemModel),
-        status:(types.string),
-        transfer_request_id:(types.number),
+        status: (types.string),
+        transfer_request_id: (types.number),
+        transfer_request: types.maybeNull(types.string),
+        activities_name: types.maybeNull(types.string),
+        action: types.maybeNull(types.string)
     })
     .views((self) => {
         return {
@@ -229,7 +254,10 @@ export const ProvidedModel = types
                 const rs = await inventorytransferrequestApi.saveProvided(
                     self.item,
                     self.status,
-                    self.transfer_request_id
+                    self.transfer_request_id,
+                    self.transfer_request,
+                    self.activities_name,
+                    self.action
                 )
                 if (rs.kind === 'ok')
                     console.log('Success')
@@ -287,8 +315,8 @@ export const TransferRequestStore = types
         activities: types.optional(types.array(ActivitiesModel), []),
         item: types.optional(types.array(ItemModel), []),
         sap_tr: types.optional(types.array(SAPTransferRequestModel), []),
-        provided: types.optional(types.array(ProvidedModel),[]),
-        provide_list: types.optional(types.array(ProvidedListModel),[])
+        provided: types.optional(types.array(ProvidedModel), []),
+        provide_list: types.optional(types.array(ProvidedListModel), [])
     })
     .actions((self) => {
         return {
@@ -312,14 +340,14 @@ export const TransferRequestStore = types
                 self.sap_tr.push(tr)
                 return (tr)
             },
-            addProvided:(pro:ProvidedModel)=>{
+            addProvided: (pro: ProvidedModel) => {
                 self.provided.push(pro)
-                return(pro)
+                return (pro)
             },
-            upstatus:(li:ProvidedList)=>{
+            upstatus: (li: ProvidedList) => {
                 self.provide_list.push(li)
-                return(li)
-            }
+                return (li)
+            },
         }
     })
     .views((self) => {
@@ -371,6 +399,15 @@ export const TransferRequestStore = types
             },
             getMobileUserList: async () => {
                 const rs = await inventorytransferrequestApi.getListMobileUser()
+                if (rs.kind === 'ok') {
+                    return rs.payload
+                } else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            },
+            getline: async () => {
+                const rs = await inventorytransferrequestApi.getLine()
                 if (rs.kind === 'ok') {
                     return rs.payload
                 } else {
@@ -435,8 +472,17 @@ export const TransferRequestStore = types
                     throw Error(rs.kind)
                 }
             },
-            getprovideitemforclose:async(transfer_request_id:number,status:string,item_code: string)=>{
-                const rs = await inventorytransferrequestApi.getProvideItemForClose(transfer_request_id,status,item_code)
+            getprovideitemforclose: async (transfer_request_id: number, status: string, item_code: string) => {
+                const rs = await inventorytransferrequestApi.getProvideItemForClose(transfer_request_id, status, item_code)
+                if (rs.kind === 'ok') {
+                    return rs.payload
+                } else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            },
+            findsaprequest: async (docEntry: number) => {
+                const rs = await inventorytransferrequestApi.findSAPRequest(docEntry)
                 if (rs.kind === 'ok') {
                     return rs.payload
                 } else {

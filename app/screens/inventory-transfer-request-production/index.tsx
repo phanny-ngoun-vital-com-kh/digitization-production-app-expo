@@ -6,11 +6,11 @@ import {
   Text,
   TextInput,
 } from "../../components/v2"
-import { AppStackScreenProps } from "app/navigators"
+import { AppStackScreenProps } from "../../navigators"
 import styles from "./styles"
 import { DataTable } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { BaseStyle } from "app/theme-v2"
+import { BaseStyle } from "../../theme-v2"
 import {
   Menu,
   MenuProvider,
@@ -18,22 +18,22 @@ import {
   MenuOption,
   MenuTrigger,
 } from 'react-native-popup-menu';
-import { useStores } from "app/models"
-import { InventoryTransferRequest, InventoryTransferRequestModel, SAPTransferRequestModel } from "app/models/inventory-transfer-request/inventory-transfer-request-store"
+import { useStores } from "../../models"
+import { InventoryTransferRequest, InventoryTransferRequestModel, SAPTransferRequestModel } from "../../models/inventory-transfer-request/inventory-transfer-request-store"
 import moment from 'moment'
-import { useTheme } from "app/theme-v2"
-import { showErrorMessage } from "app/utils-v2"
-import ModalApprove from "app/components/v2/ModalApprove"
-import { ActivitiesModel } from "app/models/inventory-transfer-request/inventory-transfer-request-model"
+import { useTheme } from "../../theme-v2"
+import { showErrorMessage } from "../../utils-v2"
+import ModalApprove from "../../components/v2/ModalApprove"
+import { ActivitiesModel } from "../../models/inventory-transfer-request/inventory-transfer-request-model"
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
-import ModalReject from "app/components/v2/ModalReject"
-import sendPushNotification from "app/utils-v2/push-notification-helper"
-
+import ModalReject from "../../components/v2/ModalReject"
+import { useNavigation } from "@react-navigation/native"
 
 interface InventoryTransferRequestProductionScreenProps extends AppStackScreenProps<"InventoryTransferRequestProduction"> { }
 
 export const InventoryTransferRequestProductionScreen: FC<InventoryTransferRequestProductionScreenProps> = observer(function InventoryTransferRequestProductionScreen(
 ) {
+  const navigation = useNavigation();
   const { colors } = useTheme()
   const { inventoryRequestStore, authStore } = useStores()
   const [loading, setLoading] = useState(false);
@@ -50,6 +50,9 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
   const [itemlist, setItemList] = useState([])
   const [isModalApproveVisible, setModalApproveVisible] = useState(false);
   const [isModalRejectVisible, setModalRejectVisible] = useState(false);
+  const [isNotiVisible, setNotiVisible] = useState(false);
+  const [isRejectNotiVisible, setRejectNotiVisible] = useState(false);
+  const [type, setType] = useState('')
 
   useEffect(() => {
     const role = async () => {
@@ -154,52 +157,45 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
     }
   }
 
-  async function sendNotification(recipientTokens, title, body) {
-    // const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+  async function sendNotification(title, body, deviceTokens, sound = 'default') {
+    const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
 
-    // try {
-    //   const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'Authorization': `key=${SERVER_KEY}`
-    //     },
-    //     body: JSON.stringify({
-    //       registration_ids: deviceTokens,
-    //       notification: {
-    //         title: title,
-    //         body: body,
-    //         sound: sound,
-    //       },
-    //       android: {
-    //         notification: {
-    //           sound: sound,
-    //           priority: 'high',
-    //           vibrate: true,
-    //         }
-    //       }
+    try {
+      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `key=${SERVER_KEY}`
+        },
+        body: JSON.stringify({
+          registration_ids: deviceTokens,
+          notification: {
+            title: title,
+            body: body,
+            sound: sound,
+          },
+          android: {
+            notification: {
+              sound: sound,
+              priority: 'high',
+              vibrate: true,
+            }
+          }
 
-    //     }),
-    //   });
-
-    //   const responseData = await response.json();
-    //   console.log('Notification sent successfully:', responseData);
-    // } catch (error) {
-    //   console.error('Error sending notification:', error);
-    // }
-    await sendPushNotification(recipientTokens, title, body)
-      .then(() => {
-        console.log('Push notifications sent successfully!');
-      })
-      .catch((error) => {
-        console.error('Error sending push notifications:', error);
+        }),
       });
 
+      const responseData = await response.json();
+      console.log('Notification sent successfully:', responseData);
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
   }
 
-  const handleItemPress = (itemId, itemStatus) => {
+  const handleItemPress = (itemId, itemStatus,itemType) => {
     setSelectedItem(list.find((v) => v.id === itemId));
     setSeletedStatus(itemStatus)
+    setType(itemType)
   };
 
   const approve = async () => {
@@ -228,14 +224,15 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
       .then()
       .catch((e) => console.log(e))
     ) {
-      sendNotification(requesterFcm,'Approved', 'Prodution approved your transfer request')
-      sendNotification(wareAdmFcm,'New Transfer Request','You have new transfer reuquest')
+      setNotiVisible(true)
+      sendNotification('Approved', 'Prodution approved your transfer request',requesterFcm)
+      sendNotification('New Transfer Request','You have new transfer reuquest',wareAdmFcm)
       setModalApproveVisible(false)
       setSelectedItem(null)
       setSeletedStatus(null)
       setGetRemarkApprove('')
-      setWareAdmFcm([])
-      setRequesterFcm([])
+      // setWareAdmFcm([])
+      // setRequesterFcm([])
       refresh()
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
@@ -276,8 +273,9 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
       setSeletedStatus(null)
       setGetRemarkReject('')
       refresh()
-      sendNotification(requesterFcm,'Rejected', 'Your transfer request has been rejected')
-      setRequesterFcm([])
+      setRejectNotiVisible(true)
+      sendNotification('Rejected', 'Your transfer request has been rejected',requesterFcm)
+      // setRequesterFcm([])
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
         title: 'ជោគជ័យ',
@@ -330,7 +328,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
               }
               renderItem={({ item }) => (
                 <View style={{ borderBottomWidth: 0.4, borderColor: '#d3d3d3' }}>
-                  <TouchableOpacity onPress={() => handleItemPress(item.id, item.status)} >
+                  <TouchableOpacity onPress={() => handleItemPress(item.id, item.status,item.transfer_type)} >
                     <View style={[styles.itemContainer, selectedItem != null ? selectedItem.id === item.id && styles.selectedItemContainer : []]}>
                       <Icon name={'file-text-o'} size={20} color="gray" style={{ marginRight: 10, marginLeft: 5 }} />
                       <Text style={[styles.item, selectedItem === item.id, item.state === 'completed' ? { color: 'green' } : item.state === 'rejected' ? { color: 'red' } : item.state === 'in-progress' ? { color: '#E69B00' } : { color: '#000' }]}>
@@ -459,6 +457,15 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
               </View>
               {/* <View style={styles.divider} /> */}
             </>
+            :selectedStatus == 'request-warehouse-approve' && type == 'FG'?
+            <>
+                <View style={styles.divider} />
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%', marginBottom: 25 }}>
+
+                    <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer', { id: selectedItem.id }) }}>Transfer</Button>
+                </View>
+                {/* <View style={styles.divider} /> */}
+            </>
             : <></>
 
           }
@@ -479,4 +486,3 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
     </AlertNotificationRoot>
   )
 })
-
