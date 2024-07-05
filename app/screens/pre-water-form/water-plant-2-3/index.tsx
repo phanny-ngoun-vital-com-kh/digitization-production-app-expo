@@ -15,7 +15,7 @@ import { Text } from "app/components/v2"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
-import { Checkbox } from "react-native-paper"
+import { Checkbox, Divider } from "react-native-paper"
 import { useStores } from "app/models"
 import { PreTreatmentListItemModel } from "app/models/pre-water-treatment/pre-water-treatment-model"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
@@ -34,6 +34,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     const { preWaterTreatmentStore, authStore } = useStores()
     const [isloading, setLoading] = useState(false)
     const [isScanning, setScanning] = useState(false)
+    const [hasCompleted, setCompleted] = useState(false)
     const route = useRoute().params
     const [image, setImage] = useState(null)
     const [showLog, setShowlog] = useState<boolean>(false)
@@ -81,11 +82,18 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         delete modifedForm.resin
         delete modifedForm.acf1
         delete modifedForm.sf1
+        console.log("checking air released", route?.item?.resin)
         // delete modifedForm?.remarks
 
-        if (route?.item?.resin != null) {
+        if (hasCompleted) {
+          console.log("checking air released x2")
+
           for (const key in form.air_released) {
-            if (oldRoute?.air_released[key] != form?.air_released[key]) {
+            console.log("true ")
+
+            console.log(oldRoute?.air_released[key], form?.air_released[key])
+            if (oldRoute?.air_released[key] !== form?.air_released[key]) {
+              console.log("old route air released :  ")
               arractions.push({
                 name: key,
                 oldValue: oldRoute?.air_released[key] ? "Yes" : "No",
@@ -118,15 +126,10 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     const getActionUser = () => {
       const arrActions = checkChanges()
       const str = []
-
       for (const item of arrActions) {
         str.push("" + item.name.toUpperCase() + " from " + item.oldValue + " to " + item.value)
       }
-      return !arrActions.length
-        ? "has modified and completed this machine"
-        : route?.item?.status !== null || route?.item?.status !== "pending"
-        ? "has modified " + str.join(" , ")
-        : "has modified this machine with no changes"
+      return !hasCompleted ? "has completed this machine" : "has modified " + str.join(" , ")
     }
     const checkWarningCount = () => {
       let warning = 0
@@ -215,6 +218,8 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
           const modifiedForm = Object.assign({}, form)
 
           const actions = getActionUser()
+          console.log(actions)
+
           const payload = PreTreatmentListItemModel.create({
             pre_treatment_type: route?.item?.pre_treatment_type,
             id: route?.item?.id,
@@ -229,6 +234,8 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             warning_count: getAirStatus(),
           })
 
+          setCompleted(true)
+
           setRoute({
             remarks: modifiedForm.remarks,
             air_released: {
@@ -239,16 +246,9 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
           })
 
           await preWaterTreatmentStore.addPretreatments(payload).savePreWtp()
+          setCompleted(true)
           fetchUserActivity()
           route?.onBack()
-
-          Dialog.show({
-            type: ALERT_TYPE.SUCCESS,
-            title: "ជោគជ័យ",
-            textBody: "រក្សាទុកបានជោគជ័យ",
-            button: "close",
-            autoClose: 500,
-          })
         } else {
           setLoading(true)
           const actions = getActionUser()
@@ -267,6 +267,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             status: getWarningcount > 0 ? "warning" : "normal",
             warning_count: getWarningcount,
           })
+          setCompleted(true)
 
           setRoute({
             sf1: form.sf1 ?? null,
@@ -282,14 +283,6 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
           await preWaterTreatmentStore.addPretreatments(payload).savePreWtp()
           fetchUserActivity()
           route?.onBack()
-
-          Dialog.show({
-            type: ALERT_TYPE.SUCCESS,
-            title: "ជោគជ័យ",
-            textBody: "រក្សាទុកបានជោគជ័យ",
-            button: "close",
-            autoClose: 500,
-          })
         }
       } catch (error) {
         Dialog.show({
@@ -303,6 +296,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         setLoading(false)
       }
     }
+
     const setImageToform = (result: string[]) => {
       const blocktext = result as string[]
       const numeric = []
@@ -488,6 +482,30 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         headerShown: true,
         title: route?.type,
 
+        headerTitle: (props) => (
+          <TouchableOpacity {...props}>
+            <Text semibold body1>
+              {route?.type}
+
+              {route?.type?.toLowerCase().includes("air") ? (
+                <></>
+              ) : route?.type?.toLowerCase().includes("tds") ? (
+                <Text errorColor semibold body2>
+                  {` ( ${translate("preWaterTreatment.warningLevel")} ( > 300 ppm ) )`}
+                </Text>
+              ) : route?.type?.toLowerCase().includes("ph") ? (
+                <Text errorColor semibold body2>
+                  {` ( ${translate("preWaterTreatment.warningLevel")}( 6.5 - 8.5  ) )`}
+                </Text>
+              ) : (
+                <Text errorColor semibold body2>
+                  {` ( ${translate("preWaterTreatment.warningLevel")}( 0.1 - 0.3 Mpa ) )`}
+                </Text>
+              )}
+            </Text>
+          </TouchableOpacity>
+        ),
+
         headerRight: () =>
           route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift ? (
             <TouchableOpacity
@@ -495,6 +513,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
               onPress={() => {
                 // navigation.goBack()
                 const hasError = formvalidation()
+                console.log("error", hasError)
                 if (!hasError) {
                   handleSubmit()
                 }
@@ -524,6 +543,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
           resin: null,
         }
       } else {
+        setCompleted(true)
         airReleased = {
           sf: route?.item?.sf == 1 ? true : false,
           acf: route?.item?.acf == 1 ? true : false,
@@ -588,7 +608,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         <ScrollView>
           <View style={$outerContainer}>
             <View style={[$horizon, { justifyContent: "space-between" }]}>
-              {route?.type?.toLowerCase().includes("air") ? (
+              {/* {route?.type?.toLowerCase().includes("air") ? (
                 <></>
               ) : route?.type?.toLowerCase().includes("tds") ? (
                 <Text errorColor semibold body1>
@@ -602,7 +622,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                 <Text errorColor semibold body1>
                   {`* ${translate("preWaterTreatment.warningLevel")}( 0.1 - 0.3 Mpa ) `}
                 </Text>
-              )}
+              )} */}
 
               {route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift && (
                 <ActivityBar

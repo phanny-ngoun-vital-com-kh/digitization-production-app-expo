@@ -32,7 +32,8 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
     const route = useRoute().params
     const [isScanning, setScanning] = useState(false)
     const [image, setImage] = useState(null)
-
+    const [oldRoute, setRoute] = useState({})
+    const [hasCompleted, setCompleted] = useState(false)
     const [activities, setActivities] = useState([])
     const [showLog, setShowlog] = useState<boolean>(false)
     const [isLoading, setLoading] = useState<boolean>(false)
@@ -41,11 +42,11 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       sf2: "",
       acf1: "",
       acf2: "",
-      tenMm1: "",
-      tenMm2: "",
+      um101: "",
+      um102: "",
       raw_water: "",
       remarks: "",
-      buffer: "",
+      buffer_st002: "",
     })
 
     const [isEditable, setEditable] = useState(false)
@@ -54,11 +55,11 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       sf2: true,
       acf1: true,
       acf2: true,
-      tenMm1: true,
-      tenMm2: true,
+      um101: true,
+      um102: true,
       remarks: true,
       raw_water: true,
-      buffer: true,
+      buffer_st002: true,
     })
 
     const getWarningcount = () => {
@@ -70,12 +71,12 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
 
       const restrictAf2 = +form.acf2 < 0.2 || +form.acf2 > 0.5
 
-      const restricttenMm1 = +form?.tenMm1 > 2.5 || +form?.tenMm1 < 1
+      const restricttenMm1 = +form?.um101 > 2.5 || +form?.um101 < 1
 
-      const restrictenMm2 = +form?.tenMm2 > 2.5 || +form?.tenMm2 < 1
+      const restrictenMm2 = +form?.um102 > 2.5 || +form?.um102 < 1
 
       const restrictRawater = +form?.raw_water > 8.5 || +form?.raw_water < 6.5
-      const restrictBuffer = +form?.buffer > 8.5 || +form?.buffer < 6.5
+      const restrictBuffer = +form?.buffer_st002 > 8.5 || +form?.buffer_st002 < 6.5
 
       let warningcount = 0
       if (route?.type?.toLowerCase()?.startsWith("pressure")) {
@@ -98,7 +99,30 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
 
       return warningcount
     }
+    const getUserActivities = () => {
+      const modifedForm = form
+      const arrActions = []
+      delete modifedForm.remarks
+      if (route?.type?.includes("Pressure Drop")) {
+        delete modifedForm.raw_water
+        delete modifedForm.buffer_st002
+      }
 
+      for (const key in modifedForm) {
+        if (+oldRoute[key] !== +form[key]) {
+          arrActions.push({
+            name: key,
+            oldValue: oldRoute[key],
+            value: form[key],
+          })
+        }
+      }
+      const str = []
+      for (const item of arrActions) {
+        str.push("" + item.name.toUpperCase() + " from " + item.oldValue + " to " + item.value)
+      }
+      return "has modified " + str.join(" , ")
+    }
     const handleSubmitting = async () => {
       try {
         const payload = PreTreatmentListItemModel.create({
@@ -106,35 +130,38 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
           control: route?.type,
           pre_treatment_id: route?.item?.pre_treatment_id ?? "",
           pre_treatment_type: route?.item?.pre_treatment_type ?? "",
-          action:
-            route.item?.status === "pending" ? " has created the form" : " has modified the form",
+          action: !hasCompleted ? "has completed the form" : getUserActivities(),
           sf1: form.sf1,
           sf2: form.sf2,
           acf1: form.acf2,
 
           acf2: form.acf2,
-          um101: form.tenMm1,
+          um101: form.um101,
 
-          um102: form.tenMm2,
+          um102: form.um102,
           raw_water: form.raw_water,
-          buffer_st002: form.buffer,
+          buffer_st002: form.buffer_st002,
           status: getWarningcount() > 0 ? "warning" : "normal",
           warning_count: getWarningcount(),
           remark: form.remarks,
         })
+        setRoute({
+          sf1: form.sf1,
+          sf2: form.sf2,
+          acf1: form.acf2,
+          acf2: form.acf2,
+          um101: form.um101,
+          um102: form.um102,
+          raw_water: form.raw_water,
+          buffer_st002: form.buffer_st002,
+          remark: form.remarks,
+        })
         setLoading(true)
+        setCompleted(true)
 
         await preWaterTreatmentStore.addPretreatments(payload).savePreWtp4()
         fetchUserActivity()
         route?.onBack()
-
-        Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "ជោគជ័យ",
-          textBody: "រក្សាទុកបានជោគជ័យ",
-          button: "close",
-          autoClose: 500,
-        })
       } catch (error) {
         console.log(error.message)
         Dialog.show({
@@ -171,35 +198,35 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         setForm({
           acf1: acf1 ?? "",
           acf2: acf2 ?? "",
-          tenMm1: mM101 ?? "",
-          tenMm2: mM102 ?? "",
+          um101: mM101 ?? "",
+          um102: mM102 ?? "",
           sf1: sf1 ?? "",
           sf2: sf2 ?? "",
         })
         setErrors({
           acf1: !!acf1,
           acf2: !!acf2,
-          tenMm1: !!mM101,
-          tenMm2: !!mM102,
+          um101: !!mM101,
+          um102: !!mM102,
           sf1: !!sf1,
           sf2: !!sf2,
         })
       }
 
       if (route?.type?.toLowerCase().startsWith("tds")) {
-        // const [sf1, sf2, acf1, acf2, mM101, mM102,raw_water,buffer] = numeric
+        // const [sf1, sf2, acf1, acf2, mM101, mM102,raw_water,buffer_st002] = numeric
 
         const num = numeric.filter((item) => Number(item) > 2)
-        const [sf1, acf1, sf2, acf2, mM101, mM102, raw_water, buffer] = num
+        const [sf1, acf1, sf2, acf2, mM101, mM102, raw_water, buffer_st002] = num
         setForm({
           raw_water: raw_water,
           sf1: sf1,
           sf2: sf2,
           acf1: acf1,
           acf2: acf2,
-          tenMm1: mM101,
-          tenMm2: mM102,
-          buffer: buffer,
+          um101: mM101,
+          um102: mM102,
+          buffer_st002: buffer_st002,
         })
         setErrors({
           raw_water: !!raw_water,
@@ -207,23 +234,23 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
           sf2: !!sf2,
           acf1: !!acf1,
           acf2: !!acf2,
-          tenMm1: !!mM101,
-          tenMm2: !!mM102,
-          buffer: !!buffer,
+          um101: !!mM101,
+          um102: !!mM102,
+          buffer_st002: !!buffer_st002,
         })
       }
       if (route?.type?.toLowerCase().startsWith("ph")) {
         const num = numeric.filter((item) => Number(item) > 2)
-        const [sf1, sf2, acf1, acf2, mM101, mM102, raw_water, buffer] = num
+        const [sf1, sf2, acf1, acf2, mM101, mM102, raw_water, buffer_st002] = num
         setForm({
           raw_water: raw_water,
           sf1: sf1,
           sf2: sf2,
           acf1: acf1,
           acf2: acf2,
-          tenMm1: mM101,
-          tenMm2: mM102,
-          buffer: buffer,
+          um101: mM101,
+          um102: mM102,
+          buffer_st002: buffer_st002,
         })
         setErrors({
           raw_water: !!raw_water,
@@ -231,9 +258,9 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
           sf2: !!sf2,
           acf1: !!acf1,
           acf2: !!acf2,
-          tenMm1: !!mM101,
-          tenMm2: !!mM102,
-          buffer: !!buffer,
+          um101: !!mM101,
+          um102: !!mM102,
+          buffer_st002: !!buffer_st002,
         })
       }
       setScanning(false)
@@ -387,13 +414,10 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         route?.item?.id,
         route?.item?.pre_treatment_type,
       )
+
       setActivities(result.sort((a, b) => new Date(b.actionDate) - new Date(a.actionDate)))
     }
-    const getCurrentUserName = async () => {
-      const userinfo = await authStore.getUserInfo()
-      const { login } = userinfo.data
-      return login
-    }
+
     const checkUserRole = async () => {
       // console.log("machine user assign to", route?.items?.assign_to_user)
       setEditable(route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift)
@@ -412,10 +436,11 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                 if (route?.type?.toLowerCase()?.startsWith("pressure")) {
                   let errorslist = errors
                   delete errorslist.raw_water
-                  delete errorslist.buffer
+                  delete errorslist.buffer_st002
                   delete errorslist.remarks
 
                   const isvalid = Object.values(errorslist).every((error) => error === false)
+
                   if (!isvalid) {
                     return
                   }
@@ -424,6 +449,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                   delete errorslist.remarks
 
                   const isvalid = Object.values(errorslist).every((error) => error === false)
+
                   if (!isvalid) {
                     return
                   }
@@ -445,18 +471,37 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       })
     }, [navigation, route, errors, form, isEditable, isScanning])
 
+    console.log('old route',oldRoute)
+    console.log('new route',form)
     useEffect(() => {
       checkUserRole()
+      if (route?.item?.sf1 !== null) {
+        setCompleted(true)
+      } else {
+        setCompleted(false)
+      }
+
       setForm({
-        sf1: route?.item?.sf1,
-        sf2: route?.item?.sf2,
-        acf1: route?.item?.acf1,
-        acf2: route?.item?.acf2,
-        tenMm1: route?.item?.um101,
-        tenMm2: route?.item?.um102,
-        raw_water: route?.item?.raw_water,
-        remarks: route?.item?.remark,
-        buffer: route?.item?.buffer_st002,
+        sf1: route?.item?.sf1 ?? "",
+        sf2: route?.item?.sf2 ?? "",
+        acf1: route?.item?.acf1 ?? "",
+        acf2: route?.item?.acf2 ?? "",
+        um101: route?.item?.um101 ?? "",
+        um102: route?.item?.um102 ?? "",
+        raw_water: route?.item?.raw_water ?? "",
+        remarks: route?.item?.remark ?? "",
+        buffer_st002: route?.item?.buffer_st002 ?? "",
+      })
+      setRoute({
+        sf1: route?.item?.sf1 ?? "",
+        sf2: route?.item?.sf2 ?? "",
+        acf1: route?.item?.acf1 ?? "",
+        acf2: route?.item?.acf2 ?? "",
+        um101: route?.item?.um101 ?? "",
+        um102: route?.item?.um102 ?? "",
+        raw_water: route?.item?.raw_water ?? "",
+        remarks: route?.item?.remark ?? "",
+        buffer_st002: route?.item?.buffer_st002 ?? "",
       })
       fetchUserActivity()
       setErrors({
@@ -464,11 +509,11 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         sf2: !route?.item?.sf2,
         acf1: !route?.item?.acf1,
         acf2: !route?.item?.acf2,
-        tenMm1: !route?.item?.um101,
-        tenMm2: !route?.item?.um102,
+        um101: !route?.item?.um101,
+        um102: !route?.item?.um102,
         raw_water: !route?.item?.raw_water,
         remarks: !route?.item?.remark,
-        buffer: !route?.item?.buffer_st002,
+        buffer_st002: !route?.item?.buffer_st002,
       })
     }, [route])
     return (
@@ -487,7 +532,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
             <ActivityIndicator color="#8CC8FF" size={35} />
             <View style={{ marginVertical: 15 }}></View>
             <Text whiteColor textAlign={"center"}>
-              Saving record ...
+              {translate("wtpcommon.savingRecord")} ...
             </Text>
           </View>
         )}
@@ -524,7 +569,13 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                   disabled={isEditable}
                   keyboardType="decimal-pad"
                   showIcon={false}
-                  warning={(form.sf1 && +form.sf1 < 0.2) || +form.sf1 > 0.5}
+                  warning={
+                    route?.type?.toLowerCase().includes("ph")
+                      ? (form.sf1 && +form.sf1 < 6.5) || +form.sf1 > 8.5
+                      : route?.type?.toLowerCase().includes("tds")
+                      ? form.sf1 && +form.sf1 < 300
+                      : (form.sf1 && +form.sf1 < 0.2) || +form.sf1 > 0.5
+                  }
                   value={form.sf1?.toString() || ""}
                   onBlur={() => {
                     form.sf1 !== ""
@@ -548,7 +599,13 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                   disabled={isEditable}
                   keyboardType="decimal-pad"
                   showIcon={false}
-                  warning={(form.sf2 && +form.sf2 < 0.2) || +form.sf2 > 0.5}
+                  warning={
+                    route?.type?.toLowerCase().includes("ph")
+                      ? (form.sf2 && +form.sf2 < 6.5) || +form.sf2 > 8.5
+                      : route?.type?.toLowerCase().includes("tds")
+                      ? form.sf2 && +form.sf2 < 300
+                      : (form.sf2 && +form.sf2 < 0.2) || +form.sf2 > 0.5
+                  }
                   value={form.sf2?.toString() || ""}
                   onBlur={() => {
                     form.sf2 !== ""
@@ -572,7 +629,14 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               <View style={$width}>
                 <CustomInput
                   disabled={isEditable}
-                  warning={(form.acf1 && +form.acf1 < 0.2) || +form.acf1 > 0.5}
+                  // warning={(form.acf1 && +form.acf1 < 0.2) || +form.acf1 > 0.5}
+                  warning={
+                    route?.type?.toLowerCase().includes("ph")
+                      ? (form.acf1 && +form.acf1 < 6.5) || +form.acf1 > 8.5
+                      : route?.type?.toLowerCase().includes("tds")
+                      ? form.acf1 && +form.acf1 < 300
+                      : (form.acf1 && +form.acf1 < 0.2) || +form.acf1 > 0.5
+                  }
                   value={form.acf1?.toString() || ""}
                   keyboardType="decimal-pad"
                   showIcon={false}
@@ -596,7 +660,14 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               <View style={$width}>
                 <CustomInput
                   disabled={isEditable}
-                  warning={(form.acf2 && +form.acf2 < 0.2) || +form.acf2 > 0.5}
+                  // warning={(form.acf2 && +form.acf2 < 0.2) || +form.acf2 > 0.5}
+                  warning={
+                    route?.type?.toLowerCase().includes("ph")
+                      ? (form.acf2 && +form.acf2 < 6.5) || +form.acf2 > 8.5
+                      : route?.type?.toLowerCase().includes("tds")
+                      ? form.acf2 && +form.acf2 < 300
+                      : (form.acf2 && +form.acf2 < 0.2) || +form.acf2 > 0.5
+                  }
                   value={form.acf2?.toString() || ""}
                   keyboardType="decimal-pad"
                   showIcon={false}
@@ -622,49 +693,63 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
               <View style={$width}>
                 <CustomInput
                   disabled={isEditable}
-                  warning={(form?.tenMm1 && +form.tenMm1 < 1) || +form?.tenMm1 > 2.5}
-                  value={form.tenMm1?.toString() || ""}
+                  // warning={(form?.um101 && +form.um101 < 1) || +form?.um101 > 2.5}
+                  warning={
+                    route?.type?.toLowerCase().includes("ph")
+                      ? (form.um101 && +form.um101 < 6.5) || +form.um101 > 8.5
+                      : route?.type?.toLowerCase().includes("tds")
+                      ? form.um101 && +form.um101 < 300
+                      : (form.um101 && +form.um101 < 0.2) || +form.um101 > 0.5
+                  }
+                  value={form.um101?.toString() || ""}
                   keyboardType="decimal-pad"
                   showIcon={false}
                   onBlur={() => {
-                    form.tenMm1 !== ""
-                      ? setErrors((pre) => ({ ...pre, acf1: false }))
-                      : setErrors((pre) => ({ ...pre, acf1: true }))
+                    form.um101 !== ""
+                      ? setErrors((pre) => ({ ...pre, um101: false }))
+                      : setErrors((pre) => ({ ...pre, um101: true }))
                   }}
                   onChangeText={(text) => {
-                    form.tenMm1 !== ""
-                      ? setErrors((pre) => ({ ...pre, tenMm1: false }))
-                      : setErrors((pre) => ({ ...pre, tenMm1: true }))
+                    form.um101 !== ""
+                      ? setErrors((pre) => ({ ...pre, um101: false }))
+                      : setErrors((pre) => ({ ...pre, um101: true }))
 
-                    setForm((pre) => ({ ...pre, tenMm1: text.trim() }))
+                    setForm((pre) => ({ ...pre, um101: text.trim() }))
                   }}
                   label="10Mm 1"
                   hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "1 < 2.5 bar"}
-                  errormessage={errors?.tenMm1 ? "សូមជ្រើសរើស 10Mm1" : ""}
+                  errormessage={errors?.um101 ? "សូមជ្រើសរើស 10Mm1" : ""}
                 />
               </View>
               <View style={$width}>
                 <CustomInput
                   disabled={isEditable}
-                  value={form.tenMm2?.toString() || ""}
-                  warning={(form?.tenMm2 && +form.tenMm2 < 1) || +form?.tenMm2 > 2.5}
+                  value={form.um102?.toString() || ""}
+                  // warning={(form?.um102 && +form.um102 < 1) || +form?.um102 > 2.5}
+                  warning={
+                    route?.type?.toLowerCase().includes("ph")
+                      ? (form.um102 && +form.um102 < 6.5) || +form.um102 > 8.5
+                      : route?.type?.toLowerCase().includes("tds")
+                      ? form.um102 && +form.um102 < 300
+                      : (form.um102 && +form.um102 < 0.2) || +form.um102 > 0.5
+                  }
                   keyboardType="decimal-pad"
                   showIcon={false}
                   onBlur={() => {
-                    form.tenMm2 !== ""
-                      ? setErrors((pre) => ({ ...pre, tenMm2: false }))
-                      : setErrors((pre) => ({ ...pre, tenMm2: true }))
+                    form.um102 !== ""
+                      ? setErrors((pre) => ({ ...pre, um102: false }))
+                      : setErrors((pre) => ({ ...pre, um102: true }))
                   }}
                   onChangeText={(text) => {
-                    form.tenMm2 !== ""
-                      ? setErrors((pre) => ({ ...pre, tenMm2: false }))
-                      : setErrors((pre) => ({ ...pre, tenMm2: true }))
+                    form.um102 !== ""
+                      ? setErrors((pre) => ({ ...pre, um102: false }))
+                      : setErrors((pre) => ({ ...pre, um102: true }))
 
-                    setForm((pre) => ({ ...pre, tenMm2: text.trim() }))
+                    setForm((pre) => ({ ...pre, um102: text.trim() }))
                   }}
                   label="10Mm 2"
                   hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "1 < 2.5 bar"}
-                  errormessage={errors?.tenMm2 ? "សូមជ្រើសរើស 10Mm2" : ""}
+                  errormessage={errors?.um102 ? "សូមជ្រើសរើស 10Mm2" : ""}
                 />
               </View>
             </View>
@@ -691,7 +776,14 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                     }}
                     label="Raw Water"
                     hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "6.5 - 8.5"}
-                    warning={(form?.raw_water && +form.raw_water < 6.5) || +form?.raw_water > 8.5}
+                    // warning={(form?.raw_water && +form.raw_water < 6.5) || +form?.raw_water > 8.5}
+                    warning={
+                      route?.type?.toLowerCase().includes("ph")
+                        ? (form.raw_water && +form.raw_water < 6.5) || +form.raw_water > 8.5
+                        : route?.type?.toLowerCase().includes("tds")
+                        ? form.raw_water && +form.raw_water < 300
+                        : (form.raw_water && +form.raw_water < 0.2) || +form.raw_water > 0.5
+                    }
                     errormessage={errors?.raw_water ? "សូមជ្រើសរើស Raw Water" : ""}
                   />
                 </View>
@@ -699,31 +791,42 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                   <CustomInput
                     disabled={isEditable}
                     keyboardType="decimal-pad"
-                    value={form?.buffer ?? ""}
+                    value={form?.buffer_st002 ?? ""}
                     showIcon={false}
                     onBlur={() => {
-                      form.buffer !== ""
-                        ? setErrors((pre) => ({ ...pre, buffer: false }))
-                        : setErrors((pre) => ({ ...pre, buffer: true }))
+                      form.buffer_st002 !== ""
+                        ? setErrors((pre) => ({ ...pre, buffer_st002: false }))
+                        : setErrors((pre) => ({ ...pre, buffer_st002: true }))
                     }}
                     onChangeText={(text) => {
-                      form.buffer !== ""
-                        ? setErrors((pre) => ({ ...pre, buffer: false }))
-                        : setErrors((pre) => ({ ...pre, buffer: true }))
+                      form.buffer_st002 !== ""
+                        ? setErrors((pre) => ({ ...pre, buffer_st002: false }))
+                        : setErrors((pre) => ({ ...pre, buffer_st002: true }))
 
-                      setForm((pre) => ({ ...pre, buffer: text.trim() }))
+                      setForm((pre) => ({ ...pre, buffer_st002: text.trim() }))
                     }}
                     label="Buffer ST0002"
                     hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "6.5 - 8.5"}
-                    warning={(form?.buffer && +form.buffer < 6.5) || +form?.buffer > 8.5}
-                    errormessage={errors?.buffer ? "សូមជ្រើសរើស Buffer" : ""}
+                    // warning={
+                    //   (form?.buffer_st002 && +form.buffer_st002 < 6.5) || +form?.buffer_st002 > 8.5
+                    // }
+                    warning={
+                      route?.type?.toLowerCase().includes("ph")
+                        ? (form.buffer_st002 && +form.buffer_st002 < 6.5) ||
+                          +form.buffer_st002 > 8.5
+                        : route?.type?.toLowerCase().includes("tds")
+                        ? form.buffer_st002 && +form.buffer_st002 < 300
+                        : (form.buffer_st002 && +form.buffer_st002 < 0.2) ||
+                          +form.buffer_st002 > 0.5
+                    }
+                    errormessage={errors?.buffer_st002 ? "សូមជ្រើសរើស Buffer" : ""}
                   />
                 </View>
               </View>
             )}
           </View>
         </ScrollView>
-        <ActivityModal log={[]} onClose={() => setShowlog(false)} isVisible={showLog} />
+        <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} />
       </KeyboardAvoidingView>
     )
   },

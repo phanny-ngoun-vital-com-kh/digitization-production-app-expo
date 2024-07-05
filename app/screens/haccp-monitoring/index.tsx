@@ -77,6 +77,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
       const result = await haccpLinesStore.getHaccpLineDate(
         moment(datePicker.value).format("YYYY-MM-DD"),
       )
+      console.log("result line",result.length)
       setWaterLine(result!)
     } catch (error) {
       Dialog.show({
@@ -154,13 +155,14 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
 
         <Divider style={styles.divider_space} />
 
-        <View style={{ marginTop: 15, alignItems: "center", justifyContent: "center" }}>
+        <View style={{ marginTop: 15, alignItems: "center", justifyContent: "center"}}>
           <FlatList
-            columnWrapperStyle={{
-              gap: 10,
-            }}
+            // columnWrapperStyle={{
+            //   gap: 10,
+            // }}
             numColumns={3}
             key={1}
+       
             contentContainerStyle={{
               gap: 0,
               justifyContent: "center",
@@ -177,6 +179,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
                 <EmptyFallback placeholder={translate("wtpcommon.noScheduleYet")} />
               </View>
             }
+        
             keyExtractor={(item, index) => index.toString()}
             renderItem={renderItem}
             data={waterLines}

@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
 } from "react-native"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
@@ -286,7 +286,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       const notvalid = Object.values(errorlists).some((err) => err === true)
       const actions = getActions("A")
       const warning_count = getWarningCount("A")
-
       if (notvalid) {
         return
       }
@@ -328,14 +327,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
         })
         await haccpLinesStore.addHaccpLines(payload).saveHaccpLine456()
         getActivities()
-
-        Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "ជោគជ័យ",
-          textBody: "រក្សាទុកបានជោគជ័យ",
-          // button: 'close',
-          autoClose: 200,
-        })
       } catch (error) {
         console.log(error)
         Dialog.show({
@@ -351,6 +342,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       }
     }
 
+    console.log(formLineB)
     const validateLineB = async (errorsLineB) => {
       const errorlists = errorsLineB
       delete errorlists.instruction
@@ -380,7 +372,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           activity_control: formLineB.activity_control ? 1 : 0,
           done_by: currUser,
           fg: formLineB.FG,
-          smell: formLineB?.smell ? 1 : 0,
+          smell: formLineB?.smell === true ? 1 : 0,
           haccp_id: route?.haccp_id,
           nozzles_rinser: formLineB.nozzie_rinser,
           take_action: formLineB.instruction,
@@ -391,7 +383,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
         })
 
         await haccpLinesStore.addHaccpLines(payload).saveHaccpLine23()
-
+        getActivities()
         setoldFormLineB({
           activity_control: formLineB?.activity_control ?? null,
           FG: formLineB?.FG ?? "",
@@ -402,14 +394,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           water_pressure: formLineB?.water_pressure ?? "",
         })
         // console.log(payload)
-        getActivities()
-        Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "ជោគជ័យ",
-          textBody: "រក្សាទុកបានជោគជ័យ",
-          // button: 'close',
-          autoClose: 200,
-        })
       } catch (error) {
         console.log(error)
         Dialog.show({
@@ -592,8 +576,10 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
     const getActivities = async () => {
       try {
         const rs = await haccpLinesStore.getActivitiesLog(route?.haccp_id, route?.item?.id)
+
         setActivityLogs(rs.sort((a, b) => b.id - a.id))
       } catch (error) {
+        // setActivityLogs([])
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "បរាជ័យ",
@@ -601,7 +587,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           // button: 'close',
           autoClose: 100,
         })
-        setActivityLogs([])
       }
     }
     useLayoutEffect(() => {
@@ -700,10 +685,6 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             water_pressure: route?.item?.water_pressure ?? "",
           })
         }
-      }
-
-      return () => {
-        setActivityLogs([])
       }
     }, [route, navigation])
 
@@ -890,21 +871,28 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                             errormessage={errorsLineA?.FG ? "សូមជ្រើសរើស FG [ O3 ]" : ""}
                           />
                         </View>
-                        <View style={[$width, { marginTop: 20 }]}>
-                          <View style={$containerHorizon}>
-                            <Text style={{ margin: 0, fontSize: 18 }} semibold>
-                              Activity Control
-                            </Text>
+                        <View style={[$width, { marginTop: 1 }]}>
+                          <View style={{ paddingBottom: 38 }}>
+                            <Text style={{ margin: 0, fontSize: 15 }} semibold>
+                              <Text errorColor style={{ fontSize: 20 }}>
+                                *
+                              </Text>
+                              Activity Control     <View style={$containerHorizon}>
                             {formLineA?.activity_control != null && !formLineA?.activity_control ? (
-                              <Badge size={22} style={{ backgroundColor: "#D32600" }}>
+                              <Badge size={22} style={{ backgroundColor: "#D32600",marginLeft:10,marginBottom:5 }}>
                                 !
                               </Badge>
                             ) : null}
                           </View>
+                          
+                            </Text>
+                        
+                          </View>
+                   
 
-                          <View style={$containerHorizon}>
+                          <View style={[$containerHorizon]}>
                             <View>
-                              <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                              <View style={[$containerHorizon, { marginTop: 0, gap: 0 }]}>
                                 <View
                                   style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
                                 >
@@ -1110,7 +1098,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       <Text title3>Filling and Capping</Text>
                       <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
 
-                      <View style={[$containerHorizon, { gap: 0 }]}>
+                      <View style={[$containerHorizon, { gap: 30 }]}>
                         <View style={$width}>
                           <CustomInput
                             disabled={route?.assign && route?.isvalidDate}
@@ -1136,17 +1124,33 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                             label="FG [ O3 ] "
                             errormessage={errorsLineB?.FG ? "សូមជ្រើសរើស FG" : ""}
                           />
-                          <View>
-                            <Text style={{ marginTop: 10 }} semibold body2>
-                              <Text errorColor>*</Text> Smell
-                            </Text>
-                            <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
-                              <View
-                                style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
+                        </View>
+                        <View style={$width}>
+                          <Text style={{ marginTop: -10 }} semibold body2>
+                            <Text errorColor>*</Text> Smell
+                          </Text>
+                          <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                            <View style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}>
+                              <TouchableOpacity
+                                disabled={!route?.assign}
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setErrorsLineB((pre) => ({ ...pre, smell: false }))
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    smell: true,
+                                  }))
+                                }}
                               >
-                                <TouchableOpacity
+                                <Checkbox
                                   disabled={!route?.assign}
-                                  style={$containerHorizon}
+                                  status={
+                                    formLineB?.smell === null
+                                      ? "unchecked"
+                                      : formLineB?.smell
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
                                   onPress={() => {
                                     setErrorsLineB((pre) => ({ ...pre, smell: false }))
                                     setFormLineB((pre) => ({
@@ -1154,82 +1158,69 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                       smell: true,
                                     }))
                                   }}
-                                >
-                                  <Checkbox
-                                    disabled={!route?.assign}
-                                    status={
-                                      formLineB?.smell === null
-                                        ? "unchecked"
-                                        : formLineB?.smell
-                                        ? "checked"
-                                        : "unchecked"
-                                    }
-                                    onPress={() => {
-                                      setErrorsLineB((pre) => ({ ...pre, smell: false }))
-                                      setFormLineB((pre) => ({
-                                        ...pre,
-                                        smell: true,
-                                      }))
-                                    }}
-                                    color="#0081F8"
-                                  />
-                                  <Text>Yes </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
+                                  color="#0081F8"
+                                />
+                                <Text>Yes </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                disabled={!route?.assign}
+                                style={$containerHorizon}
+                                onPress={() => {
+                                  setFormLineB((pre) => ({
+                                    ...pre,
+                                    smell: false,
+                                  }))
+                                }}
+                              >
+                                <Checkbox
                                   disabled={!route?.assign}
-                                  style={$containerHorizon}
+                                  status={
+                                    formLineB?.smell === null
+                                      ? "unchecked"
+                                      : !formLineB?.smell
+                                      ? "checked"
+                                      : "unchecked"
+                                  }
                                   onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, smell: false }))
                                     setFormLineB((pre) => ({
                                       ...pre,
                                       smell: false,
                                     }))
                                   }}
-                                >
-                                  <Checkbox
-                                    disabled={!route?.assign}
-                                    status={
-                                      formLineB?.smell === null
-                                        ? "unchecked"
-                                        : !formLineB?.smell
-                                        ? "checked"
-                                        : "unchecked"
-                                    }
-                                    onPress={() => {
-                                      setErrorsLineB((pre) => ({ ...pre, smell: false }))
-                                      setFormLineB((pre) => ({
-                                        ...pre,
-                                        smell: false,
-                                      }))
-                                    }}
-                                    color="#0081F8"
-                                  />
-                                  <Text>No</Text>
-                                </TouchableOpacity>
-                              </View>
+                                  color="#0081F8"
+                                />
+                                <Text>No</Text>
+                              </TouchableOpacity>
                             </View>
-                            <Text errorColor caption1 style={{ marginTop: 10 }}>
-                              {errorsLineB?.smell && errorsLineB?.smell ? "*សូម​ត្រួតពិនិត្យ" : ""}
-                            </Text>
                           </View>
+                          <Text errorColor caption1 style={{ marginTop: 10 }}>
+                            {formLineB.smell=== null && "*សូម​ត្រួតពិនិត្យ"}
+                          </Text>
                         </View>
+                        <View style={$width}>
+                          <View style={[{ marginBottom: 5 }]}>
+                            <View style={[$containerHorizon, { marginBottom: 20 }]}>
+                              <View style={{ paddingBottom: 0 }}>
+                                <Text style={{ margin: 0, fontSize: 15 }} semibold>
+                                  <Text errorColor style={{ fontSize: 20 }}>
+                                    *
+                                  </Text>
+                                  Activity Control
+                                </Text>
+                              </View>
+                              {formLineB?.activity_control != null &&
+                              !formLineB?.activity_control ? (
+                                <Badge size={22} style={{ backgroundColor: "#D32600" }}>
+                                  !
+                                </Badge>
+                              ) : null}
+                            </View>
 
-                        <View style={[$width, { marginBottom: 80 }]}>
-                          <View style={$containerHorizon}>
-                            <Text style={{ margin: 0, fontSize: 18 }} semibold>
-                              Activity Control
-                            </Text>
-                            {formLineB?.activity_control != null && !formLineB?.activity_control ? (
-                              <Badge size={22} style={{ backgroundColor: "#D32600" }}>
-                                !
-                              </Badge>
-                            ) : null}
-                          </View>
-
-                          <View style={$containerHorizon}>
-                            <View>
-                              <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
+                            <View style={$containerHorizon}>
+                              <View style={[$containerHorizon, { paddingBottom: 20, gap: 0 }]}>
                                 <View
-                                  style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
+                                  style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
                                 >
                                   <TouchableOpacity
                                     disabled={!(route?.assign && route?.isvalidDate)}
@@ -1265,9 +1256,11 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                     />
                                     <Text>Under Control </Text>
                                   </TouchableOpacity>
+                                  
                                 </View>
+                                
                                 <View
-                                  style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
+                                  style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
                                 >
                                   <TouchableOpacity
                                     disabled={!(route?.assign && route?.isvalidDate)}
@@ -1304,16 +1297,128 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                                     <Text>Over Control </Text>
                                   </TouchableOpacity>
                                 </View>
+                                
+                                {/* <Text errorColor caption1 style={{ marginTop: 0 }}>
+                                  {errorsLineB?.activity_control && errorsLineB?.activity_control
+                                    ? "*សូម​ត្រួតពិនិត្យ"
+                                    : ""}
+                                </Text> */}
                               </View>
+                      
                             </View>
+                            <Text errorColor caption1 style={{ marginTop: 0 }}>
+                                {errorsLineB?.activity_control && errorsLineB?.activity_control
+                                  ? "*សូម​ត្រួតពិនិត្យ"
+                                  : ""}
+                              </Text>
+                          </View>
+                        </View>
+
+                        {/* <View style={[$width, { marginBottom: 0 }]}>
+                          <View style={[$containerHorizon, { marginBottom: 80 }]}>
+                            <View style={{ paddingBottom: 0 }}>
+                              <Text style={{ margin: 0, fontSize: 15 }} semibold>
+                                <Text errorColor style={{ fontSize: 20 }}>
+                                  *
+                                </Text>
+                                Activity Control
+                              </Text>
+                            </View>
+                            {formLineB?.activity_control != null && !formLineB?.activity_control ? (
+                              <Badge size={22} style={{ backgroundColor: "#D32600" }}>
+                                !
+                              </Badge>
+                            ) : null}
                           </View>
 
-                          <Text errorColor caption1 style={{ marginTop: 10 }}>
-                            {errorsLineB?.activity_control && errorsLineB?.activity_control
-                              ? "*សូម​ត្រួតពិនិត្យ"
-                              : ""}
-                          </Text>
-                        </View>
+                          <View style={$containerHorizon}>
+                            <View style={[$containerHorizon, { paddingBottom: 20, gap: 0 }]}>
+                              <View
+                                style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
+                              >
+                                <TouchableOpacity
+                                  disabled={!(route?.assign && route?.isvalidDate)}
+                                  style={$containerHorizon}
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      activity_control: true,
+                                    }))
+                                  }}
+                                >
+                                  <Checkbox
+                                    disabled={!(route?.assign && route?.isvalidDate)}
+                                    status={
+                                      formLineB?.activity_control === null
+                                        ? "unchecked"
+                                        : formLineB?.activity_control
+                                          ? "checked"
+                                          : "unchecked"
+                                    }
+                                    onPress={() => {
+                                      setErrorsLineB((pre) => ({
+                                        ...pre,
+                                        activity_control: false,
+                                      }))
+                                      setFormLineB((pre) => ({
+                                        ...pre,
+                                        activity_control: true,
+                                      }))
+                                    }}
+                                    color="#0081F8"
+                                  />
+                                  <Text>Under Control </Text>
+                                </TouchableOpacity>
+                              </View>
+                              <View
+                                style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
+                              >
+                                <TouchableOpacity
+                                  disabled={!(route?.assign && route?.isvalidDate)}
+                                  style={$containerHorizon}
+                                  onPress={() => {
+                                    setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
+                                    setFormLineB((pre) => ({
+                                      ...pre,
+                                      activity_control: false,
+                                    }))
+                                  }}
+                                >
+                                  <Checkbox
+                                    disabled={!(route?.assign && route?.isvalidDate)}
+                                    status={
+                                      formLineB?.activity_control === null
+                                        ? "unchecked"
+                                        : !formLineB?.activity_control
+                                          ? "checked"
+                                          : "unchecked"
+                                    }
+                                    onPress={() => {
+                                      setErrorsLineB((pre) => ({
+                                        ...pre,
+                                        activity_control: false,
+                                      }))
+                                      setFormLineB((pre) => ({
+                                        ...pre,
+                                        activity_control: false,
+                                      }))
+                                    }}
+                                    color="#0081F8"
+                                  />
+                                  <Text>Over Control </Text>
+                                </TouchableOpacity>
+                              </View>
+                              <Text errorColor caption1 style={{ marginTop: 0 }}>
+                                {errorsLineB?.activity_control && errorsLineB?.activity_control
+                                  ? "*សូម​ត្រួតពិនិត្យ"
+                                  : ""}
+                              </Text>
+                            </View>
+
+                          </View>
+
+                        </View> */}
                       </View>
 
                       <View style={$containerHorizon}>

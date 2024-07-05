@@ -1,26 +1,22 @@
-import { useFocusEffect, useIsFocused } from "@react-navigation/native"
+import { useIsFocused } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import { Dimensions, FlatList, View } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
-import NetInfo from "@react-native-community/netinfo"
+// import NetInfo from "@react-native-community/netinfo"
 import IconFontisto from "react-native-vector-icons/Fontisto"
 import IconMaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card } from "react-native-paper"
-import { createTables, getDBConnection, openConnection } from "app/lib/offline-db"
-import * as TaskManager from "expo-task-manager"
-import * as BackgroundFetch from "expo-background-fetch"
+import { getDBConnection } from "app/lib/offline-db"
 import { WaterTreatment } from "app/models/water-treatment/water-treatment-model"
-import networkStore from "app/models/network"
+// import networkStore from "app/models/network"
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 const BACKGROUND_SYNC_TASK = "background-sync-task"
 
-async function unregisterBackgroundFetchAsync() {
-  return BackgroundFetch.unregisterTaskAsync(BACKGROUND_SYNC_TASK)
-}
+
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const {
@@ -92,40 +88,9 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     ]
     setList(updatedList)
   }
-  const registerBackgroundSyncTask = async () => {
-    try {
-      //Handle case when user get out of app without internet we want to sync in abckground
-      await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-        minimumInterval: 15 * 60, // Run every 15 minutes
-        stopOnTerminate: false, // Continue running even if the app is terminated
-        startOnBoot: true, // Start task when the device is booted
-      })
-      console.log("Background sync task registered")
-    } catch (error) {
-      console.error("Error registering background sync task:", error)
-    }
-  }
 
-  TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
-    try {
-      console.log("Running background sync task")
 
-      // Call all Sync to Server here
-      await waterTreatmentStore.syncDataToserver()
-      return BackgroundFetch.BackgroundFetchResult.NewData
-    } catch (error) {
-      console.error("Error in background sync task:", error)
-      return BackgroundFetch.BackgroundFetchResult.Failed
-    }
-  })
 
-  async function initDb() {
-    await openConnection()
-    await createTables()
-    // await waterTreatmentStore.loadWtp()
-    // await waterTreatmentStore.syncDataToserver()
-    // console.log("SQL is running")
-  }
 
   // TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   //   try {
@@ -373,6 +338,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     }
 
     role()
+    // remoteWork()
   }, [])
 
   // useEffect(() => {
@@ -384,22 +350,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
   // }, [isWareAdm, isProdAdm, role])
 
-  const checkStatusAsync = async () => {
-    const status = await BackgroundFetch.getStatusAsync()
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK)
-    setStatus(status)
-    setIsRegistered(isRegistered)
-  }
 
-  const toggleFetchTask = async () => {
-    if (isRegistered) {
-      await unregisterBackgroundFetchAsync()
-    } else {
-      await unregisterBackgroundFetchAsync()
-    }
-
-    checkStatusAsync()
-  }
 
   // const handleNetworkChanges = () => {
   //   NetInfo.addEventListener((state) => {
@@ -473,36 +424,39 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
   }
   // handleNetworkChanges()
 
-  React.useEffect(() => {
-    let unsubscribe: () => void
-    const handleNetworkChanges = () => {
-      unsubscribe = NetInfo.addEventListener(async (state) => {
-        if (state.isConnected) {
-          console.log("Internet connection restored, triggering background sync task")
-          // Trigger the background sync task when the internet connection is restored
-          await initDb()
-          await waterTreatmentStore.syncDataToserver()
+  // React.useEffect(() => {
+  //   let unsubscribe: () => void
+  //   const handleNetworkChanges = () => {
+  //     unsubscribe = NetInfo.addEventListener(async (state) => {
+  //       if (state.isConnected) {
+  //         console.log("Internet connection restored, triggering background sync task")
+  //         // Trigger the background sync task when the internet connection is restored
 
-          registerBackgroundSyncTask()
-        } else {
-          console.log("Wifi or Internet has disconnected, switch to offline mode")
-        }
-      })
-    }
+  //         await waterTreatmentStore.syncDataToserver()
 
-    handleNetworkChanges()
-    checkStatusAsync()
+  //       } else {
+  //         console.log("Wifi or Internet has disconnected, switch to offline mode")
+  //       }
+  //     })
+  //   }
 
-    return () => {
-      unsubscribe()
-    }
-  }, [])
+  //   handleNetworkChanges()
+
+  //   return () => {
+  //     unsubscribe()
+  //   }
+  // }, [])
 
   useEffect(() => {
-    if (networkStore.isConnected) {
+    // console.log(networkStore.isConnected) 
+    if (false) {
+      // console.log(networkStore.isConnected) 
       BindingWaterTreatment()
     }
-  }, [isFocused])
+  }, [isFocused,
+    // networkStore.isConnected
+  
+  ])
   return (
     <>
       <FlatList

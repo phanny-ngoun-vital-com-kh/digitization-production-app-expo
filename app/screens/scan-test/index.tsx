@@ -16,7 +16,7 @@ import ContainerRejection from "app/components/v2/Scan/ContainerRejection"
 // import { useNavigation } from "@react-navigation/native"
 // import { useStores } from "app/models"
 
-interface ScanMachineScreenProps extends AppStackScreenProps<"ScanMachine"> {}
+interface ScanMachineScreenProps extends AppStackScreenProps<"ScanMachine"> { }
 
 export const ScanMachineScreen: FC<ScanMachineScreenProps> = observer(function ScanMachineScreen() {
   const [isScanning, setScanning] = useState(false)
@@ -407,35 +407,7 @@ export const ScanMachineScreen: FC<ScanMachineScreenProps> = observer(function S
               hideActivityLog
             />
 
-            {/* <View>
-            <SectionList
-              sections={imageResult}
-              ListEmptyComponent={<EmptyFallback placeholder="Please Scan your machine" />}
-              keyExtractor={(item, index) => item + index}
-              renderItem={({ item }) => {
-                const key = Object.keys(item)[0] // Get the key of the item
-                const value = item[key] // Get the value of the item
-                return (
-                  <View style={{ flexDirection: "row", gap: 10, marginVertical: 10 }}>
-                    <Text regular body2>
-                      {key}
-                    </Text>
-                    <Text semibold body2>
-                      {value !== undefined ? value : <Text errorColor>unknown</Text>}
-                    </Text>
-                  </View>
-                )
-              }}
-              renderSectionHeader={({ section: { title } }) => (
-                <View style={{ marginVertical: 20 }}>
-                  <Text title3 semibold style={{ marginBottom: 10 }}>
-                    {title}
-                  </Text>
-                  <Divider />
-                </View>
-              )}
-            />
-          </View> */}
+
 
             <TotalSection headerTitle={"Total"} data={form?.total} />
 

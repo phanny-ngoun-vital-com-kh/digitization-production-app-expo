@@ -5,7 +5,7 @@ import { Text } from "app/components/v2"
 
 export default function AutomaticSection({ headerTitle, data }: AutomaticProps) {
   return (
-    <View style={{ marginVertical: 15,backgroundColor:"#EEE" }}>
+    <View style={{ marginVertical: 15, backgroundColor: "#EEE" }}>
       <View style={{ backgroundColor: "#8B322C", paddingVertical: 15 }}>
         <Text body1 textAlign={"center"} whiteColor semibold>
           {headerTitle}
@@ -16,21 +16,23 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
         <View style={{ flex: 1 }}>
           <CustomInput
             showIcon={false}
+
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToTempTooHighLow?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to Temperature High/Low"
             errormessage={""}
+
           />
         </View>
         <View style={{ flex: 1 }}>
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToTempTooHighLow?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to Temperature High/Low"
             errormessage={""}
           />
@@ -41,9 +43,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToLackOfBlowAirPres?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to lack of blow air pressure"
             errormessage={""}
           />
@@ -52,9 +54,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToMachineMalfunctionWhileInOperation?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to machine malfunction while operation"
             errormessage={""}
           />
@@ -65,9 +67,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToFaultOnNextMachine?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to fault on the next machine"
             errormessage={""}
           />
@@ -76,9 +78,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToMachineStop?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to Machine Stop"
             errormessage={""}
           />
@@ -89,9 +91,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.atStartEndOfGap?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="At Start/End of gap"
             errormessage={""}
           />
@@ -100,9 +102,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToDangerousGap?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to Dangerous Gap"
             errormessage={""}
           />
@@ -114,9 +116,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.throughContainerGap?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Through a container gap"
             errormessage={""}
           />
@@ -125,9 +127,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToLabelFault?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to a label Fault"
             errormessage={""}
           />
@@ -138,9 +140,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.dueToIncorrectFillLevel?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Due to in correct fit level"
             errormessage={""}
           />
@@ -151,9 +153,9 @@ export default function AutomaticSection({ headerTitle, data }: AutomaticProps) 
           <CustomInput
             showIcon={false}
             keyboardType="decimal-pad"
-            onBlur={() => {}}
+            onBlur={() => { }}
             value={data?.totalRejectedContainers?.toString() || "0"}
-            onChangeText={(text) => {}}
+            onChangeText={(text) => { }}
             label="Total Rejected Containers"
             errormessage={""}
           />

@@ -230,6 +230,33 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                 time={item.time}
                 onPress={(shift: any) => {
                   setLoading(false)
+                  // navigation.navigate(
+                  //   item?.pre_treatment_type?.toString() == "Water Treatment Plant 2" ||
+                  //     item?.pre_treatment_type.toString() == "Water Treatment Plant 3"
+                  //     ? "PreWaterForm1"
+                  //     : "PreWaterForm2",
+                  //   {
+                  //     type: subitem?.control,
+                  //     onBack: onSendback,
+                  //     isValidShift: isValidShift(item?.time) === -1 ? true : false,
+
+                  //     isvalidDate:
+                  //       moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+
+                  //     item: {
+                  //       ...subitem,
+                  //       pre_treatment_type: item?.pre_treatment_type,
+                  //       pre_treatment_id: item?.pre_treatment_id,
+                  //     },
+                  //     isEdit:
+                  //       isValidShift(item?.time) === -1
+                  //         ? true
+                  //         : false &&
+                  //           moment(Date.now()).format("LL") ===
+                  //             moment(item?.createdDate).format("LL"),
+                  //   },
+                  // )
+                  
                   navigation.navigate(
                     item?.pre_treatment_type?.toString() == "Water Treatment Plant 2" ||
                       item?.pre_treatment_type.toString() == "Water Treatment Plant 3"
@@ -238,22 +265,16 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                     {
                       type: subitem?.control,
                       onBack: onSendback,
-                      isValidShift: isValidShift(item?.time) === -1 ? true : false,
+                      isValidShift: true,
 
-                      isvalidDate:
-                        moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                      isvalidDate: true,
 
                       item: {
                         ...subitem,
                         pre_treatment_type: item?.pre_treatment_type,
                         pre_treatment_id: item?.pre_treatment_id,
                       },
-                      isEdit:
-                        isValidShift(item?.time) === -1
-                          ? true
-                          : false &&
-                            moment(Date.now()).format("LL") ===
-                              moment(item?.createdDate).format("LL"),
+                      isEdit: true,
                     },
                   )
                 }}

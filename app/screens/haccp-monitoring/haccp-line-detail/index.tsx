@@ -27,7 +27,7 @@ import ActivityModal from "app/components/v2/ActivitylogModal"
 import { translate } from "../../../i18n"
 import BadgeWarning from "app/components/v2/Badgewarn"
 
-interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> {}
+interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> { }
 
 export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = observer(
   function DailyHaccpLineDetailScreen() {
@@ -56,12 +56,23 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       navigation.setOptions({
         title: route?.title,
         headerRight: () =>
-          !route?.isvalidDate ? (
+          !route?.isvalidDate || !isAssign ? (
             <View style={[$containerHorizon, { gap: 5 }]}>
-              <Icon name="close" size={20} color={"#FF0000"} />
+              {
+                !route?.isvalidDate && <Icon name="close" size={20} color={"#FF0000"} />
+
+              }
 
               <Text errorColor semibold>
-                {translate("haccpMonitoring.shiftEnded")}
+
+                {
+                  !route?.isvalidDate && translate("haccpMonitoring.shiftEnded")
+
+
+
+
+                }
+
               </Text>
             </View>
           ) : (
@@ -78,9 +89,14 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 })
               }}
             >
-              <Icon name="plus" size={22} color={"#0081F8"} />
-              <Text style={{ fontSize: 14 }} primaryColor semibold>
-                {translate("haccpMonitoring.addNew")}
+              <Icon name="plus" size={25} color={"#0081F8"} />
+              <Text style={{ fontSize: 16, color: "#0081F8" }} semibold >
+
+
+                {
+                  translate("haccpMonitoring.addNew")
+                }
+
               </Text>
             </TouchableOpacity>
           ),
@@ -139,13 +155,13 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           ],
         )
         setVisible(false)
-        Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "ជោគជ័យ",
-          textBody: "រក្សាទុកបានជោគជ័យ",
+        // Dialog.show({
+        //   type: ALERT_TYPE.SUCCESS,
+        //   title: "ជោគជ័យ",
+        //   textBody: "រក្សាទុកបានជោគជ័យ",
 
-          autoClose: 100,
-        })
+        //   autoClose: 100,
+        // })
         route?.onRefresh()
       } catch (error) {
         Dialog.show({
@@ -217,6 +233,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
             line: route?.line?.line?.split(" ")[1],
             haccp_id: item?.haccp_id,
             item: item,
+
             assign: isAssign,
             isvalidDate: moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
             onRefresh: handleRefresh,
@@ -261,8 +278,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                   {item?.status === "normal"
                     ? "Normal"
                     : item?.status === "warning"
-                    ? item?.warning_count + " warnings"
-                    : "Pending"}
+                      ? item?.warning_count + " warnings"
+                      : "Pending"}
                 </Text>
               </View>
             </DataTable.Cell>
@@ -307,7 +324,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 <DataTable.Cell style={{ flex: 0.5 }}>
                   <Text style={{ marginLeft: 40 }}>{item?.fg ?? "N/A"}</Text>
                 </DataTable.Cell>
-         <DataTable.Cell style={{ flex: 0.5 }}>
+                <DataTable.Cell style={{ flex: 0.5 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     <View
                       style={{
@@ -317,7 +334,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                         borderRadius: 100,
                       }}
                     >
-                          
+
 
                     </View>
                     <Text
@@ -330,12 +347,12 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                       {item?.status === "normal"
                         ? "Normal"
                         : item?.status === "warning"
-                        ? item?.warning_count + " warnings"
-                        : "Pending"}
+                          ? item?.warning_count + " warnings"
+                          : "Pending"}
                     </Text>
-     
+
                   </View>
-                </DataTable.Cell> 
+                </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
                   <Text style={{ marginLeft: 8 }}>{item?.done_by ?? "N/A"}</Text>
                 </DataTable.Cell>
@@ -380,8 +397,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                             item === "pending"
                               ? "#777777"
                               : item === "warning"
-                              ? "#FF0000"
-                              : colors.primary
+                                ? "#FF0000"
+                                : colors.primary
                           }
                         />
                       </View>
@@ -519,8 +536,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                           item === "pending"
                             ? "#777777"
                             : item === "warning"
-                            ? "#FF0000"
-                            : colors.primary
+                              ? "#FF0000"
+                              : colors.primary
                         }
                       />
                     </View>
@@ -533,6 +550,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                     <StateButton
                       onPress={showModal}
                       isSelected={selectedStatus?.toLowerCase() === "all"}
+
                       placeholder={
                         isAssign
                           ? translate("wtpcommon.unassignMyTask")

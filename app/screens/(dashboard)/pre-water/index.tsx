@@ -20,6 +20,7 @@ import { TouchableWithoutFeedback } from "react-native"
 import BadgeChart from "app/components/v2/Chart/BadgeChart"
 import { translate } from "../../../i18n/translate"
 import PointerItem from "app/components/v2/PointerItem"
+import { PinchGestureHandler } from "react-native-gesture-handler"
 
 interface PreWaterDsScreenProps extends AppStackScreenProps<"PreWaterDs"> {}
 
@@ -122,7 +123,8 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
       />
     )
   }
-
+  const [scale, setScale] = useState(1)
+  const [zoomEnabled, setZoomEnabled] = useState(false)
   const onLineChartData = () => {
     if (dashboard?.length > 0 && selectedMachine.length > 0) {
       let total_warning_count = 0
@@ -269,6 +271,17 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
         status: warningCountsByDateAndMachine[date][machine].status, // Include status
       })),
     }))
+  }
+  const onPinchEvent = (event) => {
+    if (event.nativeEvent.scale > 1) {
+      setScale(event.nativeEvent.scale)
+    }
+  }
+
+  const onPinchStateChange = (event) => {
+    if (event.nativeEvent.oldState === State.ACTIVE) {
+      setZoomEnabled(event.nativeEvent.scale > 1)
+    }
   }
 
   const fetchChart = async (type = "period") => {
@@ -601,107 +614,94 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
 
                     <View style={{ marginBottom: 0, flex: 1, zIndex: 0 }}>
                       {dataSet && dataSet.length > 0 && (
-                        <ReactNativeZoomableView
-                        pinchToZoomInSensitivity ={10}
-                          zoomStep={1}
-                          minZoom={100}
-                          maxZoom={100}
-                          initialZoom={0.75}
-                          // Give these to the zoomable view so it can apply the boundaries around the actual content.
-                          // Need to make sure the content is actually centered and the width and height are
-                          // dimensions when it's rendered naturally. Not the intrinsic size.
-                          // For example, an image with an intrinsic size of 400x200 will be rendered as 300x150 in this case.
-                          // Therefore, we'll feed the zoomable view the 300x150 size.
-                        >
-                          <LineChart
-                            overflowTop={15}
-                            overflowBottom={50}
-                            disableScroll={false}
-                            dataSet={dataSet}
-                            data={dataSet[0]?.data}
-                            data2={dataSet[1]?.data}
-                            data3={dataSet[2]?.data}
-                            color1={selectColors[0]?.color}
-                            color2={selectColors[1]?.color}
-                            color3={selectColors[2]?.color}
-                            thickness={2}
-                            // width={maxWidth * 1}
-                            height={320}
-                            yAxisColor={"transparent"}
-                            // maxValue={100}
-                            noOfSections={4}
-                            onStartReached={() => setFakeScrollIndicator(true)}
-                            isAnimated={true}
-                            rulesType="dashed"
-                            endOpacity={0.1}
-                            spacing={maxWidth / 6}
-                            endSpacing={25}
-                            indicatorColor="white"
-                            showScrollIndicator={true}
-                            initialSpacing={40}
-                            dataPointsHeight={5}
-                            dataPointsWidth={10}
-                            textShiftY={-3}
-                            adjustToWidth
-                            animateTogether
-                            textShiftX={-3}
-                            yAxisTextStyle={{
-                              fontSize: 13,
-                              fontWeight: "bold",
-                            }}
-                            xAxisLabelTextStyle={{
-                              fontSize: 10.5,
-                              fontWeight: "bold",
-                            }}
-                            textFontSize={12}
-                            onScroll={() => setFakeScrollIndicator(false)}
-                            curved={false}
-                            // yAxisLabelSuffix="%"
-                            xAxisColor={"gray"}
-                            xAxisThickness={1}
-                            hideDataPoints={false}
-                            xAxisType={"dashed"}
-                            pointerConfig={{
-                              pointerStripUptoDataPoint: false,
-                              pointerStripColor: "black",
-                              pointerStripWidth: 2,
-                              strokeDashArray: [2, 5],
-                              activatePointersDelay: 0,
-                              persistPointer: false,
-                              pointerVanishDelay: 0,
+                        <LineChart
+                          overflowTop={15}
+                          overflowBottom={50}
+                          disableScroll={false}
+                          dataSet={dataSet}
+                          data={dataSet[0]?.data}
+                          data2={dataSet[1]?.data}
+                          data3={dataSet[2]?.data}
+                          color1={selectColors[0]?.color}
+                          color2={selectColors[1]?.color}
+                          color3={selectColors[2]?.color}
+                          thickness={2}
+                          // width={maxWidth * 1}
+                          height={320}
+                          yAxisColor={"transparent"}
+                          // maxValue={100}
+                          noOfSections={4}
+                          onStartReached={() => setFakeScrollIndicator(true)}
+                          isAnimated={true}
+                          rulesType="dashed"
+                          endOpacity={0.1}
+                          spacing={maxWidth / 6}
+                          endSpacing={25}
+                          indicatorColor="white"
+                          showScrollIndicator={true}
+                          initialSpacing={40}
+                          dataPointsHeight={5}
+                          dataPointsWidth={10}
+                          textShiftY={-3}
+                          adjustToWidth
+                          animateTogether
+                          textShiftX={-3}
+                          yAxisTextStyle={{
+                            fontSize: 13,
+                            fontWeight: "bold",
+                          }}
+                          xAxisLabelTextStyle={{
+                            fontSize: 10.5,
+                            fontWeight: "bold",
+                          }}
+                          textFontSize={12}
+                          onScroll={() => setFakeScrollIndicator(false)}
+                          curved={false}
+                          // yAxisLabelSuffix="%"
+                          xAxisColor={"gray"}
+                          xAxisThickness={1}
+                          hideDataPoints={false}
+                          xAxisType={"dashed"}
+                          pointerConfig={{
+                            pointerStripUptoDataPoint: false,
+                            pointerStripColor: "black",
+                            pointerStripWidth: 2,
+                            strokeDashArray: [2, 5],
+                            activatePointersDelay: 0,
+                            persistPointer: false,
+                            pointerVanishDelay: 0,
 
-                              // barTouchable: true,
-                              resetPointerOnDataChange: true,
-                              pointerColor: "transparent",
-                              radius: 4,
+                            // barTouchable: true,
+                            resetPointerOnDataChange: true,
+                            pointerColor: "transparent",
+                            radius: 4,
 
-                              activatePointersOnLongPress: false,
+                            activatePointersOnLongPress: false,
 
-                              pointerLabelComponent: (items: any[]) => {
-                                const datatoshow = dataSet?.map((item) => item.data)[0]
+                            pointerLabelComponent: (items: any[]) => {
+                              const datatoshow = dataSet?.map((item) => item.data)[0]
 
-                                const labels = items.map((item) => item.label)[0]
-                                const indexFound = datatoshow
-                                  ?.map((item) => item.label)
-                                  .findIndex((data) => labels.includes(data))
+                              const labels = items.map((item) => item.label)[0]
+                              const indexFound = datatoshow
+                                ?.map((item) => item.label)
+                                .findIndex((data) => labels.includes(data))
 
-                                const warning_count = items?.reduce((pre, sum) => {
-                                  return pre + +sum?.dataPointText
-                                }, 0)
-                                return (
-                                  <PointerItem
-                                    dataPopup={items}
-                                    indexFound={indexFound}
-                                    length={dashboard.length}
-                                    label={items[0]?.label}
-                                    selectedColors={selectColors}
-                                    warning_count={warning_count}
-                                  />
-                                )
-                              },
-                            }}
-                          ></LineChart>
-                        </ReactNativeZoomableView>
+                              const warning_count = items?.reduce((pre, sum) => {
+                                return pre + +sum?.dataPointText
+                              }, 0)
+                              return (
+                                <PointerItem
+                                  dataPopup={items}
+                                  indexFound={indexFound}
+                                  length={dashboard.length}
+                                  label={items[0]?.label}
+                                  selectedColors={selectColors}
+                                  warning_count={warning_count}
+                                />
+                              )
+                            },
+                          }}
+                        ></LineChart>
                       )}
 
                       {dataSet.length === 0 && <EmptyLineChart />}

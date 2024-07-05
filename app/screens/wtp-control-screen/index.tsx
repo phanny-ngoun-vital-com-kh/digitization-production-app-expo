@@ -2,7 +2,6 @@ import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import { Dimensions, FlatList, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
-import NetInfo from "@react-native-community/netinfo"
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card } from "react-native-paper"
@@ -46,13 +45,12 @@ export const WaterTreatmentControlListScreen: FC<WaterTreatmentControlListScreen
 
       setList(updatedList)
 
-      // role();
+
     }, [])
 
     useEffect(() => {}, [])
     const formatData = (data, numColumns) => {
       const numberOfFullRows = Math.floor(data.length / numColumns)
-
       let numberOfElementsLastRow = data.length - numberOfFullRows * numColumns
       while (numberOfElementsLastRow !== numColumns && numberOfElementsLastRow !== 0) {
         data.push({ key: `blank-${numberOfElementsLastRow}`, empty: true })

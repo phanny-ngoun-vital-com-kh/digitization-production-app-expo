@@ -250,7 +250,7 @@ const AppStack = observer(function AppStack(props: {
             component={Screens.PrewaterTreatmentScreen}
             options={{
               headerShown: true,
-              title: "Daily Pre Water Control",
+              title: "Pre Water Treatment",
             }}
           />
           <Stack.Screen
@@ -309,7 +309,7 @@ const AppStack = observer(function AppStack(props: {
             component={Screens.PreWaterDsScreen}
             options={{
               headerShown: true,
-              title: "Pre Water",
+              title: "Pre Water Treatment",
             }}
           />
           <Stack.Screen

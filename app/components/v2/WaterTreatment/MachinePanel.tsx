@@ -172,7 +172,13 @@ const MachinePanel = ({
             </TouchableOpacity>
           </View>
         ) : (
-          <BadgeOutofdate placeholder={translate("wtpcommon.outDate")} />
+          <BadgeOutofdate placeholder={
+
+            
+            translate("wtpcommon.outDate")
+          
+          
+          } />
         )
       ) : validDate && validShift === -1 ? (
         <View

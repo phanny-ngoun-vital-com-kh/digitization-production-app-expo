@@ -1,4 +1,4 @@
-import * as SQLite from "expo-sqlite"
+
 import React, { FC, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { observer } from "mobx-react-lite"
 import moment from "moment"
@@ -36,9 +36,9 @@ import {
 import { translate } from "../../../i18n"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { getDBConnection } from "app/lib/offline-db"
-import networkStore from "app/models/network"
 import { Text } from "app/components/v2"
 import { saveAssignTreatment } from "app/lib/offline-db/wtp"
+import QuickInspectWTP from "../quickinspect"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
 
@@ -144,7 +144,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
         // Prod1,User1,Ware1
 
-        if (networkStore.isConnected) {
+        if (1 == 1) {
           await waterTreatmentStore.assignMachine(
             assignUser!.id?.toString() || "",
             taskAssignto.split(" ").includes(assignUser?.currUser ?? "")
@@ -166,7 +166,6 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
           )
 
           if (db?.success === 200) {
-        
             fetchScehdules()
           } else {
             console.log("ERROR _ WTP - 400")
@@ -238,6 +237,14 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               warning_count={subitem?.warning_count ?? 0}
               time={item?.shift ?? "S1 (7:00)"}
               onPress={(shift: any) => {
+                // navigation.navigate("WaterTreatmentPlant2Form", {
+                //   type: subitem?.machine ?? "",
+                //   items: subitem,
+                //   onReturn: sendBack,
+                //   isValidShift: true,
+                //   isvalidDate: true,
+                //   isEdit: true,
+                // })
                 navigation.navigate("WaterTreatmentPlant2Form", {
                   type: subitem?.machine ?? "",
                   items: subitem,
@@ -245,6 +252,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                   isValidShift: shift === -1 ? true : false,
                   isvalidDate:
                     moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+
                   isEdit:
                     subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? "") &&
                     shift === -1
@@ -292,10 +300,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     const fetchTimePanel = async () => {
       let times = []
       const assign_date = moment(datePicker?.value).format("YYYY-MM-DD")
-      if (networkStore.isConnected == true) {
+      if (1 == 1 == true) {
         times = (await waterTreatmentStore.getWtpByDate(assign_date?.toString() || "")) as []
       } else {
-        console.log("itnernet disconnected", networkStore.isConnected)
+        console.log("itnernet disconnected", 1 == 1)
         times = (await waterTreatmentStore.getOfflineWtpByDate(assign_date?.toString() || "")) as []
       }
 
@@ -340,7 +348,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       setShifts(updatedShifts)
     }
     const getCurrentUserName = async () => {
-      const userinfo = networkStore.isConnected
+      const userinfo = 1 == 1
         ? await authStore.getUserInfo()
         : authStore.authInfo?.roles
 
@@ -349,7 +357,6 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }
     const fetchScehdules = async () => {
       try {
-
         console.log("pull refresh ")
         setLoading(true)
         setRefreshing(true)
@@ -360,7 +367,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
         if (datePicker.value) {
           const assign_date = moment(datePicker?.value).format("YYYY-MM-DD")
           let results
-          if (networkStore.isConnected) {
+          if (1 == 1) {
             results = (await waterTreatmentStore.getWtpSchedules(
               assign_date?.toString() || "",
               selectedShift || "",
@@ -465,7 +472,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }, [query])
 
     useEffect(() => {
-      if (networkStore.isConnected == false) {
+      if (1 == 1 == false) {
         setShowoffline(true)
 
         return
@@ -474,13 +481,14 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
 
         //when internet or first open this bind
       }
-    }, [networkStore, navigation])
+    }, [navigation])
 
     return (
       <Provider>
         <View style={$root}>
           <View style={[$outerContainer]}>
-            <View
+
+            <View 
               style={[
                 $containerHorizon,
                 {

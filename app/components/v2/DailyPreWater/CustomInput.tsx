@@ -41,11 +41,14 @@ const CustomInput = forwardRef(
     return (
       <>
         {label && (
-          <View style={{ flexDirection: "row",alignItems:"center" }}>
-            <Text style={{ margin: 0, fontSize: 18 }} semibold>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={{ margin: 0, fontSize: 18 }} numberOfLines={1} semibold>
               {showAsterick && <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>}
 
-              <Text body2 semibold> {label}</Text>
+
+              <Text body2 semibold > {label}</Text>
+
+
             </Text>
             <View>{warning && <BadgeWarning value={"!"} status="warning" />}</View>
           </View>
@@ -68,13 +71,13 @@ const CustomInput = forwardRef(
             borderWidth: 1,
             borderColor: "#EFEBEB",
           }}
-          onPress={() => {}}
+          onPress={() => { }}
         >
           {showIcon && <Icon style={{ marginLeft: 5 }} name="search1" size={19} color={"gray"} />}
 
           <TextInput
             {...textInputProps}
-            
+
             style={{ backgroundColor: "white", width: "100%" }}
             ref={ref} // Forwarded ref
             multiline={false}
@@ -82,7 +85,7 @@ const CustomInput = forwardRef(
             placeholder={placeholder || "Please Enter"}
             placeholderTextColor="gray"
             onChangeText={(text) => onChangeText(text)}
-          
+
           ></TextInput>
         </TouchableOpacity>
 

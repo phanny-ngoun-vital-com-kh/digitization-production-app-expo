@@ -18,7 +18,6 @@ export const RootStoreModel = types.model("RootStore").props({
   waterTreatmentStore: types.optional(WaterTreatmentStoreModel, {} as any),
   authStore: types.optional(AuthStoreModel, {}),
   haccpLinesStore: types.optional(HaccpMonitoringStoreModel, {}),
-
   authenticationStore: types.optional(AuthenticationStoreModel, {}),
   inventoryRequestStore: types.optional(TransferRequestStore, {}),
   episodeStore: types.optional(EpisodeStoreModel, {}),

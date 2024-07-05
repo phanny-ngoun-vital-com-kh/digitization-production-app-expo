@@ -1,6 +1,6 @@
 import React from "react"
 import Icon from "react-native-vector-icons/Ionicons"
-import { View, ViewStyle,TouchableOpacity } from "react-native"
+import { View, ViewStyle, TouchableOpacity } from "react-native"
 import { Text } from "app/components/v2"
 import { ProgressBar } from "react-native-paper"
 import styles from "./styles"
@@ -31,7 +31,7 @@ const LinePanel = ({ onClickPanel, item, currUser, dateValid }: LinePanelProps) 
   const total = item?.haccplist?.length
   // const assignTo = "Prod1"
   return (
-    <TouchableOpacity onPress={() => onClickPanel()} style={{ padding: 10, width: "100%" }}>
+    <TouchableOpacity onPress={() => onClickPanel()} style={{ padding: 10 }}>
       <View
         style={[
           styles.linePanel,
@@ -113,19 +113,34 @@ const LinePanel = ({ onClickPanel, item, currUser, dateValid }: LinePanelProps) 
           <View style={$containerHorizon}>
             <View style={[styles.badge, { backgroundColor: "#0081F8" }]}></View>
             <Text caption2 semibold>
-              Total : {total}{" "}
+              {translate("haccpMonitoring.total")}
+
+              <Text> : </Text>
+
+              <Text style={{color:'#0081F8'}} semibold >{total}</Text>
             </Text>
           </View>
           <View style={$containerHorizon}>
             <View style={[styles.badge, { backgroundColor: "green" }]}></View>
             <Text caption2 semibold>
-              Normal : {totalNormal}
+              {translate("haccpMonitoring.normalMachine")}
+              <Text> : </Text>
+
+              <Text style={{ color: "green" }} semibold>
+                {totalNormal}
+              </Text>
             </Text>
           </View>
           <View style={$containerHorizon}>
             <View style={styles.badge}></View>
             <Text caption2 semibold>
-              Warning : {totalWarningPerline() || 0}
+              {translate("haccpMonitoring.warningMachine")}
+              <Text errorColor>
+                <Text> : </Text>
+                <Text semibold errorColor>
+                  {totalWarningPerline() || 0}
+                </Text>
+              </Text>
             </Text>
           </View>
         </View>
