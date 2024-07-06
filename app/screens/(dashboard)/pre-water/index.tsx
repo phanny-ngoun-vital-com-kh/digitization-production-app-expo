@@ -1,7 +1,6 @@
 import React, { FC, useEffect, useState } from "react"
 import { LineChart } from "react-native-gifted-charts"
 import Icon from "react-native-vector-icons/AntDesign"
-import { ReactNativeZoomableView } from "@openspacelabs/react-native-zoomable-view"
 import { observer } from "mobx-react-lite"
 import { View, ViewStyle, useWindowDimensions, ScrollView } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
