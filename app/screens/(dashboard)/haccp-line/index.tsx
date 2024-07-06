@@ -211,7 +211,6 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
           text: normal_percentage + "%",
           shiftTextX: -16,
           shiftTextY: 2,
-          textBackgroundRadius: 35,
           shiftTextBackgroundY: 0,
           shiftTextBackgroundX: 0,
           textBackgroundRadius: 29,

@@ -302,7 +302,6 @@ export const DailyDsScreen: React.FC<DailyDsScreenProps> = observer(function Dai
           textBackgroundRadius: 35,
           shiftTextBackgroundY: 0,
           shiftTextBackgroundX: 0,
-          textBackgroundRadius: 29,
           textBackgroundColor: "#EEE",
           textColor: "#145da0",
         },
