@@ -3,18 +3,15 @@ import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import { Dimensions, FlatList, View } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
-// import NetInfo from "@react-native-community/netinfo"
 import IconFontisto from "react-native-vector-icons/Fontisto"
 import IconMaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import style from "./style"
 import { useStores } from "app/models"
 import { Avatar, Card } from "react-native-paper"
-import { getDBConnection } from "app/lib/offline-db"
 import { WaterTreatment } from "app/models/water-treatment/water-treatment-model"
 // import networkStore from "app/models/network"
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
-const BACKGROUND_SYNC_TASK = "background-sync-task"
 
 
 
@@ -105,76 +102,76 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
   //   }
   // })
 
-  const BindingWaterTreatment = async () => {
-    try {
-      const db = await getDBConnection()
-      db?.withExclusiveTransactionAsync(async () => {
-        await db?.runAsync(`DELETE FROM treatments;`)
-        await db?.runAsync(`DELETE FROM treatment_list;`)
-        await db?.runAsync(`DELETE FROM assignself;`)
-      })
-      const result = await waterTreatmentStore.loadWtp()
+  // const BindingWaterTreatment = async () => {
+  //   try {
+  //     const db = await getDBConnection()
+  //     db?.withExclusiveTransactionAsync(async () => {
+  //       await db?.runAsync(`DELETE FROM treatments;`)
+  //       await db?.runAsync(`DELETE FROM treatment_list;`)
+  //       await db?.runAsync(`DELETE FROM assignself;`)
+  //     })
+  //     const result = await waterTreatmentStore.loadWtp()
 
-      result.forEach(async (element: WaterTreatment) => {
-        await db?.runAsync(
-          `
-        INSERT OR REPLACE INTO treatments 
-        (assign_to, shift, treatment_id, remark, createdBy, createdDate, lastModifiedBy, lastModifiedDate, assign_date) 
-        VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?, ?);
-      `,
-          [
-            element?.assign_to,
-            element?.shift,
-            element?.treatment_id,
-            element?.remark,
-            element?.createdBy,
-            element?.createdDate,
-            element?.lastModifiedBy,
-            element?.lastModifiedDate,
-            element?.assign_date,
-          ],
-        )
+  //     result.forEach(async (element: WaterTreatment) => {
+  //       await db?.runAsync(
+  //         `
+  //       INSERT OR REPLACE INTO treatments 
+  //       (assign_to, shift, treatment_id, remark, createdBy, createdDate, lastModifiedBy, lastModifiedDate, assign_date) 
+  //       VALUES 
+  //       (?, ?, ?, ?, ?, ?, ?, ?, ?);
+  //     `,
+  //         [
+  //           element?.assign_to,
+  //           element?.shift,
+  //           element?.treatment_id,
+  //           element?.remark,
+  //           element?.createdBy,
+  //           element?.createdDate,
+  //           element?.lastModifiedBy,
+  //           element?.lastModifiedDate,
+  //           element?.assign_date,
+  //         ],
+  //       )
 
-        element.treatmentlist.forEach(async (treatment) => {
-          await db?.runAsync(
-            `INSERT OR REPLACE INTO treatment_list 
-          (id, machine, treatment_id, tds, ph, temperature, pressure, air_release, press_inlet, press_treat, press_drain, check_by, status, warning_count, odor, taste, other, assign_to_user, createdBy, createdDate, lastModifiedBy, lastModifiedDate) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `,
-            [
-              treatment?.id,
-              treatment?.machine,
-              treatment?.treatment_id,
-              treatment?.tds,
-              treatment?.ph,
-              treatment?.temperature,
-              treatment?.pressure,
-              treatment?.air_release,
-              treatment?.press_inlet,
-              treatment?.press_treat,
-              treatment?.press_drain,
-              treatment?.check_by,
-              treatment?.status,
-              treatment?.warning_count,
-              treatment?.odor,
-              treatment?.taste,
-              treatment?.other,
-              treatment?.assign_to_user,
-              treatment?.createdBy,
-              treatment?.createdDate,
-              treatment?.lastModifiedBy,
-              treatment?.lastModifiedDate,
-            ],
-          )
-        })
-      })
-    } catch (error) {
-      console.error("Error local again", error)
-    } finally {
-      console.log("Load server to local")
-    }
-  }
+  //       element.treatmentlist.forEach(async (treatment) => {
+  //         await db?.runAsync(
+  //           `INSERT OR REPLACE INTO treatment_list 
+  //         (id, machine, treatment_id, tds, ph, temperature, pressure, air_release, press_inlet, press_treat, press_drain, check_by, status, warning_count, odor, taste, other, assign_to_user, createdBy, createdDate, lastModifiedBy, lastModifiedDate) 
+  //         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  //       `,
+  //           [
+  //             treatment?.id,
+  //             treatment?.machine,
+  //             treatment?.treatment_id,
+  //             treatment?.tds,
+  //             treatment?.ph,
+  //             treatment?.temperature,
+  //             treatment?.pressure,
+  //             treatment?.air_release,
+  //             treatment?.press_inlet,
+  //             treatment?.press_treat,
+  //             treatment?.press_drain,
+  //             treatment?.check_by,
+  //             treatment?.status,
+  //             treatment?.warning_count,
+  //             treatment?.odor,
+  //             treatment?.taste,
+  //             treatment?.other,
+  //             treatment?.assign_to_user,
+  //             treatment?.createdBy,
+  //             treatment?.createdDate,
+  //             treatment?.lastModifiedBy,
+  //             treatment?.lastModifiedDate,
+  //           ],
+  //         )
+  //       })
+  //     })
+  //   } catch (error) {
+  //     console.error("Error local again", error)
+  //   } finally {
+  //     console.log("Load server to local")
+  //   }
+  // }
 
   useEffect(() => {
     const role = async () => {
@@ -451,7 +448,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     // console.log(networkStore.isConnected) 
     if (false) {
       // console.log(networkStore.isConnected) 
-      BindingWaterTreatment()
+
     }
   }, [isFocused,
     // networkStore.isConnected

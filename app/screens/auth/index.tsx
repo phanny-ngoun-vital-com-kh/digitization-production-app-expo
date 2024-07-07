@@ -15,7 +15,7 @@ import { ALERT_TYPE, Dialog, AlertNotificationRoot } from "react-native-alert-no
 import { MobileUserModel } from "app/models/auth/AuthStore"
 import * as Notifications from "expo-notifications"
 import Constants from "expo-constants"
-import { createTables, openConnection } from "app/lib/offline-db"
+
 
 // const imageLogo = require("../../images/logo.png")
 
@@ -56,8 +56,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
     authStore,
   } = useStores()
   async function initDb() {
-    await openConnection()
-    await createTables()
+
     // await waterTreatmentStore.loadWtp()
     // await waterTreatmentStore.syncDataToserver()
     // console.log("SQL is running")

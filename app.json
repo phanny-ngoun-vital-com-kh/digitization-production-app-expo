@@ -29,19 +29,13 @@
         "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
         "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
       },
-      "metaData": [
-        {
-          "android:name": "com.google.firebase.messaging.default_notification_color",
-          "android:resource": "@color/notification_icon_color",
-          "tools:replace": "android:resource"
-        }
-      ],
-
+      
       "splash": {
         "image": "./assets/images/splash-logo-android-universal.png",
         "resizeMode": "contain",
         "backgroundColor": "#fff"
       }
+      
     },
     "ios": {
       "icon": "./assets/images/app-icon-ios.png",

@@ -35,9 +35,7 @@ import {
 } from "app/utils-v2/getCurrTime"
 import { translate } from "../../../i18n"
 import ActivityModal from "app/components/v2/ActivitylogModal"
-import { getDBConnection } from "app/lib/offline-db"
 import { Text } from "app/components/v2"
-import { saveAssignTreatment } from "app/lib/offline-db/wtp"
 import QuickInspectWTP from "../quickinspect"
 
 interface WaterTreatmentScreenProps extends AppStackScreenProps<"WaterTreatment"> {}
@@ -152,18 +150,18 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               : "has self assign this machine",
             assignUser!.treatment_id,
           )
-          await saveAssignTreatment(+assignUser?.id ?? 0, newStrUser, assignUser!.treatment_id)
+          // await saveAssignTreatment(+assignUser?.id ?? 0, newStrUser, assignUser!.treatment_id)
           refresh()
         } else {
           //user assign task in offline-mode
 
           //prod1 admin1 ware1
 
-          const db = await saveAssignTreatment(
-            +assignUser?.id ?? 0,
-            newStrUser,
-            assignUser!.treatment_id,
-          )
+          // const db = await saveAssignTreatment(
+          //   +assignUser?.id ?? 0,
+          //   newStrUser,
+          //   assignUser!.treatment_id,
+          // )
 
           if (db?.success === 200) {
             fetchScehdules()
@@ -304,7 +302,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
         times = (await waterTreatmentStore.getWtpByDate(assign_date?.toString() || "")) as []
       } else {
         console.log("itnernet disconnected", 1 == 1)
-        times = (await waterTreatmentStore.getOfflineWtpByDate(assign_date?.toString() || "")) as []
+        // times = (await waterTreatmentStore.getOfflineWtpByDate(assign_date?.toString() || "")) as []
       }
 
       const warningTime = []
@@ -374,10 +372,10 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
             )) as []
           } else {
             console.log("Fetch fromlocal wtp ")
-            results = (await waterTreatmentStore.getOfflineWtp(
-              assign_date?.toString() || "",
-              selectedShift || "",
-            )) as []
+            // results = (await waterTreatmentStore.getOfflineWtp(
+            //   assign_date?.toString() || "",
+            //   selectedShift || "",
+            // )) as []
           }
 
           // console.log("done fetching", results.length)

@@ -15,7 +15,6 @@ import { Icon } from "react-native-elements"
 import { useStores } from "app/models"
 import { DrawerActions } from "@react-navigation/native"
 import { MobileUserModel } from "app/models/auth/AuthStore"
-import { closeDb } from "app/lib/offline-db"
 
 interface DrawersProps {
   navigation: any // Adjust the type accordingly
@@ -55,12 +54,11 @@ const Drawers: React.FC<DrawersProps> = ({ navigation, username, ...props }) => 
               .catch((e) => console.log(e))
    
             await logout(), await navigation.dispatch(DrawerActions.closeDrawer)
-            await closeDb()
           } else {
             authStore.clearLogout()
 
             await logout(), await navigation.dispatch(DrawerActions.closeDrawer)
-            await closeDb()
+  
           }
 
           // await logout(),
