@@ -19,7 +19,8 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
     ...config,
     extra: {
         eas: {
-          projectId: "a8e5a60c-1909-45bd-a601-a6cec8a14e75"
+          projectId: "1df89939-2f55-4948-94a1-838f73f1a564",
+      
       }
     },
     plugins: [
@@ -27,5 +28,6 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
       require("./plugins/withSplashScreen").withSplashScreen,
       require("./plugins/withFlipperDisabled").withFlipperDisabled,
     ],
+    
   }
 }

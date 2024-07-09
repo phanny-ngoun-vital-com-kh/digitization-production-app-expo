@@ -10,11 +10,12 @@ import { TouchableOpacity, View, ImageBackground, ActivityIndicator } from "reac
 import styles from "./style"
 import { translate } from "../../i18n"
 import { useStores } from "app/models"
-import 'firebase/messaging';
-import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
+import "firebase/messaging"
+import { ALERT_TYPE, Dialog, AlertNotificationRoot } from "react-native-alert-notification"
 import { MobileUserModel } from "app/models/auth/AuthStore"
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
+import * as Notifications from "expo-notifications"
+import Constants from "expo-constants"
+
 
 // const imageLogo = require("../../images/logo.png")
 
@@ -43,61 +44,67 @@ import Constants from 'expo-constants';
 // }
 
 export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }, "login">) => {
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState<boolean>(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(0)
   const [fcmToken, setFcmToken] = useState("")
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
 
   const {
     authenticationStore: { username, setUsername, validationError },
-    authStore
+    authStore,
   } = useStores()
+  async function initDb() {
+
+    // await waterTreatmentStore.loadWtp()
+    // await waterTreatmentStore.syncDataToserver()
+    // console.log("SQL is running")
+  }
+
 
   useEffect(() => {
-    registerForPushNotificationsAsync();
-  }, []);
+    registerForPushNotificationsAsync()
+  }, [])
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(handleNotification);
-    return () => subscription.remove();
-  }, []);
+    initDb()
+    const subscription = Notifications.addNotificationReceivedListener(handleNotification)
+    return () => subscription.remove()
+  }, [])
 
   const registerForPushNotificationsAsync = async () => {
-    let token = null;
+    let token = null
     if (Constants.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
+      const { status: existingStatus } = await Notifications.getPermissionsAsync()
+      let finalStatus = existingStatus
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync()
+        finalStatus = status
       }
-      if (finalStatus === 'granted') {
-        token = (await Notifications.getExpoPushTokenAsync()).data;
+      if (finalStatus === "granted") {
+        token = (await Notifications.getExpoPushTokenAsync()).data
         setFcmToken(token)
-        console.log('Expo Push Token:', token);
+        console.log("Expo Push Token:", token)
         // Send this token to your Firebase backend to enable Firebase notifications
       } else {
-        console.log('Failed to get push token for Expo notifications!');
+        console.log("Failed to get push token for Expo notifications!")
       }
     } else {
-      console.log('Must use physical device for push notifications');
+      console.log("Must use physical device for push notifications")
     }
-  };
+  }
 
   const handleNotification = (notification) => {
-    console.log('Received notification:', notification);
-  };
-  
+    console.log("Received notification:", notification)
+  }
+
   // const handleLogin = () => {
   //   setPassword('')
   //   setUsername('')
   //   navigation.navigate('Home' as never)
   // };
   // PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
-
-
 
   // useEffect(() => {
   //   const getFCMToken = async () => {
@@ -168,30 +175,38 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
     setIsSubmitted(true)
     setIsLoading(true)
     setAttemptsCount(attemptsCount + 1)
-    if (validationError) return
+    // if (validationError) return
 
     if (!password) {
-      <View style={{ width: '100%' }}>
+      ;<View style={{ width: "100%" }}>
         <Text caption1 errorColor>
-          {translate('loginScreen.passwordRequired')}
+          {translate("loginScreen.passwordRequired")}
         </Text>
       </View>
       // If the password is not entered, show the error message and return
-      return;
+      return
     }
     try {
+      // console.log(username,password)
       await authStore.doLogin(username, password)
-      const rs = await authStore.getUserInfo();
-      const authoritie = rs.data.authorities.map((authority_name:any) => ({ user_id: rs.data.id, authority_name: authority_name }));
+      const rs = await authStore.getUserInfo()
+      const authoritie = rs.data.authorities.map((authority_name: any) => ({
+        user_id: rs.data.id,
+        authority_name: authority_name,
+      }))
       const data = MobileUserModel.create({
         user_id: rs.data.id,
         login: rs.data.login,
         fcm_token: fcmToken,
-        authorities: authoritie
+        authorities: authoritie,
       })
+
+      authStore.saveCurrentInfo(data.login)
       authStore
+
         .saveUser(data)
         .saveMobileUser()
+
         .then()
         .catch((e) => console.log(e))
       // Make a request to your server to get an authentication token.
@@ -200,18 +215,17 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
       setPassword("")
       setUsername("")
     } catch (error) {
-      console.log(error);
+      console.log(error)
       // Show error dialog
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: translate('loginScreen.failedLogin'),
-        textBody: translate('loginScreen.failedLoginMessage'),
-        button: 'បិទ',
+        title: translate("loginScreen.failedLogin"),
+        textBody: translate("loginScreen.failedLoginMessage"),
+        button: "បិទ",
       })
     } finally {
-      setIsLoading(false); // Reset loading state regardless of success or failure
+      setIsLoading(false) // Reset loading state regardless of success or failure
     }
-
   }
 
   return (
@@ -219,8 +233,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
       <View>
         <ImageBackground
           source={{
-            uri:
-              'https://www.onefraternity.com.kh/wp-content/uploads/2021/08/homepage-hero-image-2.jpg',
+            uri: "https://www.onefraternity.com.kh/wp-content/uploads/2021/08/homepage-hero-image-2.jpg",
           }}
           blurRadius={8}
           resizeMode="stretch"
@@ -228,7 +241,7 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
         >
           <View style={styles.overlay}>
             <Text style={styles.title}>Production Digitization</Text>
-            <View style={{ marginTop: '20%' }}>
+            <View style={{ marginTop: "20%" }}>
               <Text>គណនី</Text>
               <TextInput
                 style={styles.input}
@@ -238,9 +251,9 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
               />
             </View>
             {!username && isSubmitted && (
-              <View style={{ width: '100%' }}>
+              <View style={{ width: "100%" }}>
                 <Text caption1 errorColor>
-                  {translate('loginScreen.userNameRequired')}
+                  {translate("loginScreen.userNameRequired")}
                 </Text>
               </View>
             )}
@@ -263,9 +276,9 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
               />
             </View>
             {!password && isSubmitted && (
-              <View style={{ width: '100%' }}>
+              <View style={{ width: "100%" }}>
                 <Text caption1 errorColor>
-                  {translate('loginScreen.passwordRequired')}
+                  {translate("loginScreen.passwordRequired")}
                 </Text>
               </View>
             )}
@@ -282,13 +295,14 @@ export const AuthScreen = observer((props: StackScreenProps<{ login: undefined }
           >ចូល</Button> */}
             <TouchableOpacity style={styles.button} onPress={login}>
               {isLoading ? (
-                <View style={{ flexDirection: 'row', justifyContent: 'center' }}><Text style={styles.buttonText}>ចូល</Text><ActivityIndicator color="white" /></View>
+                <View style={{ flexDirection: "row", justifyContent: "center" }}>
+                  <Text style={styles.buttonText}>ចូល</Text>
+                  <ActivityIndicator color="white" />
+                </View>
               ) : (
                 <Text style={styles.buttonText}>ចូល</Text>
               )}
-
             </TouchableOpacity>
-
           </View>
         </ImageBackground>
       </View>
