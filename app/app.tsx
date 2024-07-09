@@ -16,11 +16,10 @@ if (__DEV__) {
   // to only execute this in development.
   require("./devtools/ReactotronConfig.ts")
 }
-
 import "./i18n"
 import "./utils/ignoreWarnings"
 import { useFonts } from "expo-font"
-import React, { Suspense, useEffect, useState } from "react"
+import React from "react"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import * as Linking from "expo-linking"
 import { useInitialRootStore } from "./models"
@@ -101,18 +100,18 @@ function App(props: AppProps) {
   // otherwise, we're ready to render the app
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <ErrorBoundary catchErrors={Config.catchErrors}>
-            <GestureHandlerRootView style={$container}>
-              <AlertNotificationRoot>
-                <AppNavigator
-                  linking={linking}
-                  initialState={initialNavigationState}
-                  onStateChange={onNavigationStateChange}
-                />
-              </AlertNotificationRoot>
-            </GestureHandlerRootView>
-        </ErrorBoundary> 
-    </SafeAreaProvider>
+      <ErrorBoundary catchErrors={Config.catchErrors}>
+        <GestureHandlerRootView style={$container}>
+          <AlertNotificationRoot>
+              <AppNavigator
+                linking={linking}
+                initialState={initialNavigationState}
+                onStateChange={onNavigationStateChange}
+              />
+          </AlertNotificationRoot>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
+    </SafeAreaProvider >
   )
 }
 

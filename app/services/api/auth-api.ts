@@ -68,7 +68,6 @@ export class AuthApi extends BaseApi {
     }
 
     async doLogin(data: any): Promise<GetLoginResult> {
-  
         try {
             this.requestService.api.waiting?.(true)
             const response = await this.requestService.api.apisauce.post<Login>(ApiURL.login, data, {
@@ -76,8 +75,6 @@ export class AuthApi extends BaseApi {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
             })
-
-   
 
             if (!response.ok) {
                 const problem = getGeneralApiProblem(response)

@@ -1,6 +1,5 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
 
-
 export const AuthenticationStoreModel = types
   .model("AuthenticationStore")
   .props({
@@ -14,9 +13,8 @@ export const AuthenticationStoreModel = types
       return !!store.authToken
     },
     get validationError() {
-
-      if (store?.username?.length === 0) return "can't be blank"
-      if (store?.username?.length ?? 0 < 3) return "must be at least 3 characters"
+      if (store.username.length === 0) return "can't be blank"
+      if (store.username.length < 3) return "must be at least 3 characters"
       // if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(store.authEmail))
       //   return "must be a valid email address"
       return ""
@@ -32,7 +30,6 @@ export const AuthenticationStoreModel = types
     logout() {
       store.authToken = undefined
       store.username = ""
-      
       
       // store.isAuthenticated = false
       // storage.remove("token")

@@ -281,7 +281,6 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
   return (
     <AlertNotificationRoot>
       <View style={styles.container}>
-        
         <View style={styles.leftPane} >
           {/* <View style={{flexDirection:'row' }}> */}
           <MenuProvider>

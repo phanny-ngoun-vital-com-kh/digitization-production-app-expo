@@ -18,5 +18,5 @@ if (!firebase.apps.length) {
 messaging().setBackgroundMessageHandler(async remoteMessage => {
     console.log('Message handled in the background!', remoteMessage);
   });
-
+console.log('hiiiiiiiiii')
   export default messaging;
