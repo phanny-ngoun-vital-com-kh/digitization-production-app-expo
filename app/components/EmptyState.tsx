@@ -217,7 +217,7 @@ export function EmptyState(props: EmptyStateProps) {
           {...ButtonProps}
           style={$buttonStyles}
         />
-      )}1
+      )}
     </View>
   )
 }

@@ -95,8 +95,6 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
           />
           {/* </View> */}
 
-          <Button >Add</Button>
-
         </View>
       // </KeyboardAvoidingView>
     );
