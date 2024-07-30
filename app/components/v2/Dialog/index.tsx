@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, FlatList, TouchableOpacity } from 'react-native';
+import { Modal, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Icon from '../Icon';
 import { BaseStyle, useTheme } from 'app/theme-v2';
 import styles from './styles';
@@ -10,10 +10,11 @@ interface ModalProps {
     isVisible: boolean;
     onClose: () => void;
     textChange: (text: string) => void;
-    onSubmit: () => void
+    onSubmit: () => void,
+    loading: boolean
 }
 
-const ConfirmDialog: React.FC<ModalProps> = ({ isVisible, onClose, textChange, onSubmit }) => {
+const ConfirmDialog: React.FC<ModalProps> = ({ isVisible, onClose, textChange, onSubmit, loading }) => {
     // const loading= true
     const [textInputValue, setTextInputValue] = useState('');
     const [isReject, setIsReject] = useState(true);
@@ -50,8 +51,8 @@ const ConfirmDialog: React.FC<ModalProps> = ({ isVisible, onClose, textChange, o
                         <Text body2 style={{}}>មូលហេតុ</Text>
                     </View>
                     <TextInput multiline={true} style={styles.input} onChangeText={handleTextChange} placeholder='Please Enter' placeholderTextColor={'gray'} />
-                    {!textInputValue && !isReject &&(
-                        <View style={{ width: '100%' , marginLeft: '7%'}}>
+                    {!textInputValue && !isReject && (
+                        <View style={{ width: '100%', marginLeft: '7%' }}>
                             <Text caption1 errorColor>
                                 សូមបំពេញមូលហេតុ
                             </Text>
@@ -60,7 +61,12 @@ const ConfirmDialog: React.FC<ModalProps> = ({ isVisible, onClose, textChange, o
                     {/* <Text body2 style={{marginTop:'2%',marginLeft:'7%'}}>Are you sure?</Text> */}
                     <View style={styles.butuon_view}>
                         <Button style={styles.button_cancel} styleText={{ color: 'black' }} onPress={onClose}>Cancel</Button>
-                        <Button style={styles.button} onPress={handleSubmit}>Submit</Button>
+                        <Button style={styles.button} onPress={handleSubmit} disabled={loading}>
+                            {loading ? (
+                                <View style={{ flexDirection: 'row', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 17 }}>Submit</Text><ActivityIndicator color="white" /></View>
+                            ) : (
+                                <Text style={{ color: '#fff' }}>Submit</Text>
+                            )}</Button>
                     </View>
                 </View>
 

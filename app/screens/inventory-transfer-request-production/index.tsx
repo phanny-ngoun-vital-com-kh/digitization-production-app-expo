@@ -86,31 +86,29 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
 
   }, [state])
 
-  useEffect(() => {
-    // Simulate an asynchronous data loading process (e.g., API call)
-    const fetchData = async (showLoading = false) => {
-      try {
-        showLoading ? setLoading(true) : setRefreshing(true)
+  // useEffect(() => {
+  //   // Simulate an asynchronous data loading process (e.g., API call)
+  //   const fetchData = async (showLoading = false) => {
+  //     try {
+  //       showLoading ? setLoading(true) : setRefreshing(true)
 
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve));
+  //       // Simulate API call delay
+  //       await new Promise((resolve) => setTimeout(resolve));
 
-        // Update the data in the state
-        // Replace this with your actual data fetching logic
-        selectedItem
+  //       // Update the data in the state
+  //       // Replace this with your actual data fetching logic
+  //       selectedItem
+  //     } catch (error) {
+  //       showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', error.message)
+  //     } finally {
+  //       showLoading ? setLoading(false) : setRefreshing(false)
+  //     }
+  //   };
 
-        setLoading(false);
-      } catch (error) {
-        showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', error.message)
-      } finally {
-        showLoading ? setLoading(false) : setRefreshing(false)
-      }
-    };
-
-    if (selectedItem !== null) {
-      fetchData();
-    }
-  }, [selectedItem]);
+  //   if (selectedItem !== null) {
+  //     fetchData();
+  //   }
+  // }, [selectedItem]);
 
   useEffect(() => {
     const getToken = async () => {
@@ -131,7 +129,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
         itemName: item.item_name,
         key: index + 1,
         quantity: item?.quantity?.toString(),
-        remark: "",
+        remark: item.remark == null ? '':item.remark,
         fromWarehouse: selectedItem.from_warehouse.map(i => i.whsCode).toString(),
         toWarehouse: selectedItem.to_warehouse.map(i => i.whsCode).toString()
       })))
@@ -149,7 +147,6 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
       showLoading ? setLoading(true) : setRefreshing(true)
       const data = (await inventoryRequestStore.getTransferRequestList(state))
       setList(data.items)
-
     } catch (e) {
       showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', e.message)
     } finally {
@@ -192,97 +189,112 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
     }
   }
 
-  const handleItemPress = (itemId, itemStatus,itemType) => {
+  const handleItemPress = (itemId, itemStatus, itemType) => {
     setSelectedItem(list.find((v) => v.id === itemId));
     setSeletedStatus(itemStatus)
     setType(itemType)
   };
 
   const approve = async () => {
-    const data = SAPTransferRequestModel.create({
-      id: selectedItem.id,
-      postingDate: new Date(selectedItem.posting_date).toISOString(),
-      docDueDate: new Date(selectedItem.due_date).toISOString(),
-      taxDate: new Date(selectedItem.posting_date).toISOString(),
-      vendorCode: '',
-      vendorName: '',
-      fromWarehouse: selectedItem.from_warehouse.map(i => i.whsCode).toString(),
-      toWarehouse: selectedItem.to_warehouse.map(i => i.whsCode).toString(),
-      apiReferenceNo: '',
-      comments: getRemarkApprove,
-      remark: getRemarkApprove,
-      statusChange: "request-production-approve",
-      state: "in-progress",
-      activities_name: "Production Approval",
-      action: "Approved",
-      transfer_request: selectedItem.transfer_id,
-      transferRequestDetails: itemlist
-    })
-    if (inventoryRequestStore
-      .addSapTr(data)
-      .savetosap()
-      .then()
-      .catch((e) => console.log(e))
-    ) {
-      setNotiVisible(true)
-      sendNotification('Approved', 'Prodution approved your transfer request',requesterFcm)
-      sendNotification('New Transfer Request','You have new transfer reuquest',wareAdmFcm)
-      setModalApproveVisible(false)
-      setSelectedItem(null)
-      setSeletedStatus(null)
-      setGetRemarkApprove('')
-      // setWareAdmFcm([])
-      // setRequesterFcm([])
-      refresh()
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: 'ជោគជ័យ',
-        textBody: 'រក្សាទុកបានជោគជ័យ',
-        // button: 'close',
-        autoClose: 100
+    try {
+      const data = SAPTransferRequestModel.create({
+        id: selectedItem.id,
+        postingDate: moment(selectedItem.posting_date).local().startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
+        docDueDate: moment(selectedItem.due_date).local().startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
+        taxDate: moment(selectedItem.posting_date).local().startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
+        vendorCode: '',
+        vendorName: '',
+        fromWarehouse: selectedItem.from_warehouse.map(i => i.whsCode).toString(),
+        toWarehouse: selectedItem.to_warehouse.map(i => i.whsCode).toString(),
+        apiReferenceNo: '',
+        comments: selectedItem.line + ', ' + selectedItem.shift,
+        remark: getRemarkApprove,
+        statusChange: "request-production-approve",
+        state: "in-progress",
+        activities_name: "Production Approval",
+        action: "Approved",
+        transfer_request: selectedItem.transfer_id,
+        transferRequestDetails: itemlist
       })
+      
+      if (inventoryRequestStore
+        .addSapTr(data)
+        .savetosap()
+        .then()
+        .catch((e) => console.log(e))
+      ) {
+        setNotiVisible(true)
+        sendNotification('Approved', 'Prodution approved your transfer request', requesterFcm)
+        sendNotification('New Transfer Request', 'You have new transfer reuquest', wareAdmFcm)
+        setModalApproveVisible(false)
+        setSelectedItem(null)
+        setSeletedStatus(null)
+        setGetRemarkApprove('')
+        // setWareAdmFcm([])
+        // setRequesterFcm([])
+        refresh()
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'ជោគជ័យ',
+          textBody: 'រក្សាទុកបានជោគជ័យ',
+          // button: 'close',
+          autoClose: 100
+        })
+      }
+    } catch (e: any) {
+      showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', e.message)
+    } finally {
+      setLoading(false)
     }
   }
 
   const reject = async () => {
-    const data = InventoryTransferRequestModel.create({
-      id: selectedItem.id,
-      remark: getRemarkReject,
-      state: "rejected",
-      statusChange: "transfer-request-reject"
-    })
-    const activities = ActivitiesModel.create({
-      action: "Rejected",
-      activities_name: "Production Approval",
-      remark: getRemarkReject,
-      transfer_request: selectedItem.transfer_id
-    })
-    if (inventoryRequestStore
-      .approveReq(data)
-      .approverequest()
-      .then()
-      .catch((e) => console.log(e)) &&
-
-      inventoryRequestStore
-        .addActivites(activities)
-        .addactivities()
-        .then()
-        .catch((e) => console.log(e))) {
-      setModalRejectVisible(false)
-      setSelectedItem(null)
-      setSeletedStatus(null)
-      setGetRemarkReject('')
-      refresh()
-      setRejectNotiVisible(true)
-      sendNotification('Rejected', 'Your transfer request has been rejected',requesterFcm)
-      // setRequesterFcm([])
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: 'ជោគជ័យ',
-        textBody: 'រក្សាទុកបានជោគជ័យ',
-        // button: 'close',
-        autoClose: 100
+    try {
+      const data = InventoryTransferRequestModel.create({
+        id: selectedItem.id,
+        remark: getRemarkReject,
+        state: "rejected",
+        statusChange: "transfer-request-reject"
       })
+      const activities = ActivitiesModel.create({
+        action: "Rejected",
+        activities_name: "Production Approval",
+        remark: getRemarkReject,
+        transfer_request: selectedItem.transfer_id
+      })
+      if (inventoryRequestStore
+        .approveReq(data)
+        .approverequest()
+        .then()
+        .catch((e) => console.log(e)) &&
+
+        inventoryRequestStore
+          .addActivites(activities)
+          .addactivities()
+          .then()
+          .catch((e) => console.log(e))) {
+        setModalRejectVisible(false)
+        setSelectedItem(null)
+        setSeletedStatus(null)
+        setGetRemarkReject('')
+        refresh()
+        setRejectNotiVisible(true)
+        sendNotification('Rejected', 'Your transfer request has been rejected', requesterFcm)
+        // setRequesterFcm([])
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'ជោគជ័យ',
+          textBody: 'រក្សាទុកបានជោគជ័យ',
+          // button: 'close',
+          autoClose: 100
+        })
+      }
+
+    }
+    catch (e: any) {
+      showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', e.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -328,7 +340,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
               }
               renderItem={({ item }) => (
                 <View style={{ borderBottomWidth: 0.4, borderColor: '#d3d3d3' }}>
-                  <TouchableOpacity onPress={() => handleItemPress(item.id, item.status,item.transfer_type)} >
+                  <TouchableOpacity onPress={() => handleItemPress(item.id, item.status, item.transfer_type)} >
                     <View style={[styles.itemContainer, selectedItem != null ? selectedItem.id === item.id && styles.selectedItemContainer : []]}>
                       <Icon name={'file-text-o'} size={20} color="gray" style={{ marginRight: 10, marginLeft: 5 }} />
                       <Text style={[styles.item, selectedItem === item.id, item.state === 'completed' ? { color: 'green' } : item.state === 'rejected' ? { color: 'red' } : item.state === 'in-progress' ? { color: '#E69B00' } : { color: '#000' }]}>
@@ -379,40 +391,45 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
                         <Text style={styles.textBody}>{selectedItem.to_warehouse.map(w => w.whsCode)}</Text>
                       </DataTable.Cell>
                       <DataTable.Cell textStyle={styles.item}>
-                        <Text style={styles.textTitle}>Bussiness Unit: </Text>
-                        <Text style={styles.textBody}>{selectedItem.business_unit}</Text>
+                        <Text style={styles.textTitle}>Posting Date: </Text>
+                        <Text style={styles.textBody}>{moment(selectedItem.posting_date).format('YYYY-MM-DD')}</Text>
                       </DataTable.Cell>
                     </DataTable.Row>
                     <DataTable.Row style={styles.row}>
+                      <DataTable.Cell textStyle={styles.item}>
+                        <Text style={styles.textTitle}>Due Date: </Text>
+                        <Text style={styles.textBody}>{moment(selectedItem.due_date).format('YYYY-MM-DD')}</Text>
+                      </DataTable.Cell>
                       <DataTable.Cell textStyle={styles.item}>
                         <Text style={styles.textTitle}>Created By: </Text>
                         <Text style={styles.textBody}>{selectedItem.createdBy}</Text>
                       </DataTable.Cell>
                       <DataTable.Cell textStyle={styles.item}>
                         <Text style={styles.textTitle}>Created Date: </Text>
-                        <Text style={styles.textBody}>{moment(selectedItem.createdDate).format('YYYY-MM-DD')}</Text>
+                        <Text style={styles.textBody}>{moment(selectedItem.createdDate).format('YYYY-MM-DD hh:mm:ss')}</Text>
                       </DataTable.Cell>
+
+                    </DataTable.Row>
+                    <DataTable.Row style={styles.row}>
                       <DataTable.Cell textStyle={styles.item}>
                         <Text style={styles.textTitle}>Status: </Text>
                         <View style={[styles.dot, selectedItem.state === 'completed' ? { backgroundColor: 'green' } : selectedItem.state === 'rejected' ? { backgroundColor: 'red' } : selectedItem.state === 'in-progress' ? { backgroundColor: '#E69B00' } : { backgroundColor: '#000' }]}></View>
                         <Text style={[styles.textBody, { textTransform: 'capitalize' }]}> {selectedItem.state}</Text>
                       </DataTable.Cell>
-                    </DataTable.Row>
-                    <DataTable.Row style={styles.row}>
-                    <DataTable.Cell textStyle={styles.item}>
-                          <Text style={styles.textTitle}>Remark: </Text>
-                          <Text style={styles.textBody}>{(selectedItem.remark == null || selectedItem.remark =='') ? '-' : selectedItem.remark}</Text>
-                        </DataTable.Cell>
+                      <DataTable.Cell textStyle={styles.item}>
+                        <Text style={styles.textTitle}>Remark: </Text>
+                        <Text style={styles.textBody}>{(selectedItem.remark == null || selectedItem.remark == '') ? '-' : selectedItem.remark}</Text>
+                      </DataTable.Cell>
                       {selectedItem.sapDocNo ?
                         <DataTable.Cell textStyle={styles.item}>
                           <Text style={styles.textTitle}>Sap Doc No: </Text>
                           <Text style={styles.textBody}>{selectedItem.sapDocNo}</Text>
                         </DataTable.Cell>
-                        : <></>}
-                        <DataTable.Cell textStyle={styles.item}>
-                          <Text style={styles.textTitle}> </Text>
-                          <Text style={styles.textBody}> </Text>
-                        </DataTable.Cell>
+                        :<DataTable.Cell textStyle={styles.item}>
+                        <Text style={styles.textTitle}> </Text>
+                        <Text style={styles.textBody}> </Text>
+                      </DataTable.Cell>}
+
                     </DataTable.Row>
                   </DataTable>
                 </View>
@@ -423,7 +440,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
                     <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>Item Name</DataTable.Title>
                     <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Quantity</DataTable.Title>
                     <DataTable.Title style={{ flex: 0.3 }} textStyle={styles.textHeader}>UoM</DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Supplier</DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Vendor</DataTable.Title>
                     <DataTable.Title textStyle={styles.textHeader}>Remark</DataTable.Title>
                   </DataTable.Header>
 
@@ -450,23 +467,22 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
           {selectedStatus == 'transfer-request' && isProdAdm ?
             <>
               <View style={styles.divider} />
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%',marginBottom:25 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%', marginBottom: 25 }}>
 
                 <Button style={{ width: '20%', }} onPress={() => setModalApproveVisible(true)} loading={loading}>Approve</Button>
                 <Button style={{ width: '20%', backgroundColor: 'red', marginLeft: 20 }} onPress={() => setModalRejectVisible(true)}>Reject</Button>
               </View>
               {/* <View style={styles.divider} /> */}
             </>
-            :selectedStatus == 'request-warehouse-approve' && type == 'FG'?
-            <>
+            : selectedStatus == 'request-warehouse-approve' && type == 'FG' ?
+              <>
                 <View style={styles.divider} />
                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%', marginBottom: 25 }}>
-
-                    <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer', { id: selectedItem.id }) }}>Transfer</Button>
+                  <Button style={{ width: '20%', }} onPress={() => { navigation.navigate('AddTransfer', { id: selectedItem.id }) }}>Transfer</Button>
                 </View>
                 {/* <View style={styles.divider} /> */}
-            </>
-            : <></>
+              </>
+              : <></>
 
           }
         </View>
@@ -475,12 +491,14 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
           isVisible={isModalApproveVisible}
           textChange={(text) => setGetRemarkApprove(text)}
           onSubmit={approve}
+          loading={loading}
         />
         <ModalReject
           onClose={() => setModalRejectVisible(false)}
           isVisible={isModalRejectVisible}
           textChange={(text) => setGetRemarkReject(text)}
           onSubmit={reject}
+          loading={loading}
         />
       </View >
     </AlertNotificationRoot>

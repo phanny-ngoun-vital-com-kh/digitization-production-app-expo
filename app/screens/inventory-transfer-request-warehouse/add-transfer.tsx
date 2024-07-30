@@ -46,7 +46,6 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
             case '1':
                 const data = (await inventoryRequestStore.getdetail(id))
                 setItem(data)
-                console.log(data)
                 // Code for handling selection of "Info" act
                 break;
             case '2':
@@ -75,11 +74,11 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
             setRequesterFcm(createdByValues);
         }
         get()
-    }, [])
+    }, [isLoading])
 
     const refresh = async (showLoading = false) => {
         try {
-            showLoading ? setLoading(true) : setRefreshing(true)
+            showLoading ? setIsLoading(true) : setRefreshing(true)
             const provide = (await inventoryRequestStore.getprovidelist(id))
             setProvide(provide)
             // console.log(data.items)
@@ -87,7 +86,7 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
         } catch (e: any) {
             showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', e.message)
         } finally {
-            showLoading ? setLoading(false) : setRefreshing(false)
+            showLoading ? setIsLoading(false) : setRefreshing(false)
         }
     }
 
@@ -114,7 +113,7 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
                             })
                             return
                         }
-                        setAddModalVisible(true)
+                        
                     } else {
                         Dialog.show({
                             type: ALERT_TYPE.DANGER,
@@ -124,7 +123,9 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
                             // autoClose: 200
                         })
                     }
+                    
                 }
+                setAddModalVisible(true)
             } else {
                 console.error("One of the lists is undefined or empty.");
             }
@@ -265,7 +266,7 @@ export const AddTransferScreen: FC<AddTransferScreenProps> = observer(function A
 
                             <View style={{ flexDirection: 'row', width: '80%', justifyContent: 'flex-end', margin: 20 }}>
                                 <Icon name="plus" size={30} />
-                                <TouchableOpacity onPress={() => (getSap())}>
+                                <TouchableOpacity onPress={() => (getSap())} disabled={isLoading}>
                                     {isLoading ? (
                                         <View style={{ flexDirection: 'row', justifyContent: 'center' }}><Text style={{ fontSize: 18 }}>Add Transfer  </Text><ActivityIndicator color="black" /></View>
                                     ) : (

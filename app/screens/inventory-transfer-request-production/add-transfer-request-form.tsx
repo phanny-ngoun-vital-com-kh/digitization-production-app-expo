@@ -36,12 +36,12 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
     // inventoryRequestStore: { getWarehouseList, getItemList,addTransfer }
     inventoryRequestStore, authStore
   } = useStores()
-  const { colors } = useTheme()
-  const navigation = useNavigation()
+  const currentDate = new Date(Date.now());
+  currentDate.setUTCHours(0, 0, 0, 0);
   const [showPostingDate, setShowPostingDate] = useState(false);
   const [showDueDate, setShowDueDate] = useState(false);
-  const [postingDate, setPostingDate] = useState(new Date(Date.now()));
-  const [dueDate, setDueDate] = useState(new Date());
+  const [postingDate, setPostingDate] = useState(currentDate);
+  const [dueDate, setDueDate] = useState(currentDate);
   const [listItem, setListItem] = useState([])
   const [isModalVisible, setModalVisible] = useState(false);
   const [ModalSubmitVisible, setModalSubmitVisible] = useState(false);
@@ -65,7 +65,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
   const [getToWarehouseCode, setGetToWarehouseCode] = useState('')
   const [isLoading, setIsLoading] = useState(false);
   const [allFcm, setAllFcm] = useState([])
-  const [line,setLine] = useState([])
+  const [line, setLine] = useState([])
 
   const [message, setMessage] = useState({})
   const [act, setAct] = useState([{
@@ -126,7 +126,7 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
       toWarehouse: getToWarehouseCode
     })))
   }, [listItem, getfromWarehouseCode, getToWarehouseCode])
-console.log(getLine)
+
   useEffect(() => {
     const getToken = async () => {
       const data = (await inventoryRequestStore.getMobileUserList())
@@ -282,7 +282,7 @@ console.log(getLine)
       {
         // setNotiVisible(true)
         // sendNotification(allFcm, 'New Transfer Request', 'You have new transfer request from ' + getLine);
-        sendNotification('New Transfer Request','You have new transfer request from '+getLine, allFcm)
+        sendNotification('New Transfer Request', 'You have new transfer request from ' + getLine, allFcm)
         // droplineRef.current.reset();
         // droptypeRef.current.reset();
         // dropshiftRef.current.reset();
@@ -293,14 +293,16 @@ console.log(getLine)
         setTansferType('PM/RM')
         // setGetLine('')
         setGetShift('')
-        setPostingDate(new Date(Date.now()))
-        setDueDate(new Date)
+
+        setPostingDate(currentDate);
+        setDueDate(currentDate)
         setWarehouseTendency('')
         setGetFromWarehouseCode('')
         setGetToWarehouseCode('')
         setFromWarehouse(0)
         setGetToWarehouse(0)
         setRemark('')
+        setGetLine('')
         setNewItem([])
         setListItem([])
         // setAllFcm([])
@@ -331,191 +333,210 @@ console.log(getLine)
   return (
     <AlertNotificationRoot>
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-          <View style={{ width: '30%', marginRight: 10 }}>
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
-              <Text style={{ margin: 5, fontSize: 18 }}>Type</Text>
-            </View>
-            <Dropdown style={styles.dropdown}
-              data={type}
-              labelField="name"
-              valueField="name"
-              placeholder="Select Type"
-              // onSelect={setSelected}
-
-              value={transferType}
-              onChange={item => {
-                setTansferType(
-                  item.name
-                );
-              }} />
-          </View>
-          <View style={{ width: '30%', marginLeft: 10, flexDirection: 'row' }}>
-            <View style={{ width: '50%', marginRight: 2.5 }}>
+        <ScrollView>
+          <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+            <View style={{ width: '30%', marginRight: 10 }}>
               <View style={{ flexDirection: 'row' }}>
                 <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
-                <Text style={{ margin: 5, fontSize: 18 }}>Line</Text>
+                <Text style={{ margin: 5, fontSize: 18 }}>Type</Text>
               </View>
               <Dropdown style={styles.dropdown}
-                data={line}
-                labelField="prdname"
-                valueField="prdname"
-                placeholder="Select Line"
-                // onSelect={setSelected}
-
-                value={getLine}
-                onChange={item => {
-                  setGetLine(
-                    item.prdname
-                  );
-                }} />
-              {!getLine && !isSubmit && (
-                <View style={{ width: '100%' }}>
-                  <Text caption1 errorColor>
-                    សូមជ្រើសរើស Line
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View style={{ width: '50%', marginLeft: 2.5 }}>
-              <View style={{ flexDirection: 'row' }}>
-                <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
-                <Text style={{ margin: 5, fontSize: 18 }}>Shift</Text>
-              </View>
-              <Dropdown style={styles.dropdown}
-                data={shift}
+                data={type}
                 labelField="name"
                 valueField="name"
-                placeholder="Select Shift"
-                value={getShift}
+                placeholder="Select Type"
+                // onSelect={setSelected}
+
+                value={transferType}
                 onChange={item => {
-                  setGetShift(
+                  setTansferType(
                     item.name
                   );
                 }} />
-              {!getShift && !isSubmit && (
-                <View style={{ width: '100%' }}>
-                  <Text caption1 errorColor>
-                    សូមជ្រើសរើស Shift
-                  </Text>
+            </View>
+            <View style={{ width: '30%', marginLeft: 10, flexDirection: 'row' }}>
+              <View style={{ width: '50%', marginRight: 2.5 }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
+                  <Text style={{ margin: 5, fontSize: 18 }}>Line</Text>
                 </View>
-              )}
-            </View>
-          </View>
-          <View style={{ width: '30%', marginLeft: 10, marginRight: 10, flexDirection: 'row' }}>
-            <View style={{ width: '50%', marginRight: 2.5 }}>
-              <View style={{ flexDirection: 'row' }}>
-                <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
-                <Text style={{ margin: 5, fontSize: 18 }}>Posting Date</Text>
-              </View>
-              <View style={{}}>
-                <TouchableOpacity onPress={() => setShowPostingDate(true)} style={styles.date_button}>
-                  <Text style={{ marginLeft: 10 }}>{postingDate ? postingDate.toDateString() : 'Show Picker'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={{ width: '50%', marginRight: 2.5 }}>
-              <View style={{ flexDirection: 'row' }}>
-                <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
-                <Text style={{ margin: 5, fontSize: 18 }}>Due Date</Text>
-              </View>
-              <View style={{}}>
-                <TouchableOpacity onPress={() => setShowDueDate(true)} style={styles.date_button}>
-                  <Text style={{ marginLeft: 10 }}>{dueDate ? dueDate.toDateString() : 'Show Picker'}</Text>
-                </TouchableOpacity>
-                {dueDate < postingDate && !isSubmit && (
+                <Dropdown style={styles.dropdown}
+                  data={line}
+                  labelField="prdname"
+                  valueField="prdname"
+                  placeholder="Select Line"
+                  // onSelect={setSelected}
+
+                  value={getLine}
+                  onChange={item => {
+                    setGetLine(
+                      item.prdname
+                    );
+                  }} />
+                {!getLine && !isSubmit && (
                   <View style={{ width: '100%' }}>
                     <Text caption1 errorColor>
-                      Due Date មិនអាចក្រោយ Posting Date
+                      សូមជ្រើសរើស Line
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View style={{ width: '50%', marginLeft: 2.5 }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
+                  <Text style={{ margin: 5, fontSize: 18 }}>Shift</Text>
+                </View>
+                <Dropdown style={styles.dropdown}
+                  data={shift}
+                  labelField="name"
+                  valueField="name"
+                  placeholder="Select Shift"
+                  value={getShift}
+                  onChange={item => {
+                    setGetShift(
+                      item.name
+                    );
+                  }} />
+                {!getShift && !isSubmit && (
+                  <View style={{ width: '100%' }}>
+                    <Text caption1 errorColor>
+                      សូមជ្រើសរើស Shift
                     </Text>
                   </View>
                 )}
               </View>
             </View>
-          </View>
-          {showPostingDate && (
-            <DatePicker
-              value={postingDate}
-              mode={'date'}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              is24Hour={true}
-              onChange={(e, v) => { setPostingDate(v), setShowPostingDate(false) }}
-              style={{}}
-            />
-          )}
-          {showDueDate && (
-            <DatePicker
-              value={dueDate}
-              mode={'date'}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              is24Hour={true}
-              onChange={(e, v) => { setDueDate(v), setShowDueDate(false) }}
-              style={{}}
-            />
-          )}
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-          <View style={{ width: '30%', marginRight: 15 }}>
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
-              <Text style={{ margin: 5, fontSize: 18 }}>From Warehouse</Text>
-            </View>
-            <Dropdown style={styles.dropdown}
-              data={warehouse}
-              labelField="whsCode"
-              valueField="id"
-              placeholder="Select From Warehouse"
-              // onSelect={setSelected}
-              search
-              value={warehouse}
-              onChange={item => {
-                setFromWarehouse(item.id)
-                setGetFromWarehouseCode(item.whsCode)
-                setWarehouseTendency(item.tendency)
-              }} />
-            {!fromWarehouse && !isSubmit && (
-              <View style={{ width: '100%' }}>
-                <Text caption1 errorColor>
-                  សូមជ្រើសរើស From Warehouse
-                </Text>
+            <View style={{ width: '30%', marginLeft: 10, marginRight: 10, flexDirection: 'row' }}>
+              <View style={{ width: '50%', marginRight: 2.5 }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
+                  <Text style={{ margin: 5, fontSize: 18 }}>Posting Date</Text>
+                </View>
+                <View style={{}}>
+                  <TouchableOpacity onPress={() => setShowPostingDate(true)} style={styles.date_button}>
+                    <Text style={{ marginLeft: 10 }}>{postingDate ? postingDate.toDateString() : 'Show Picker'}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
+              <View style={{ width: '50%', marginRight: 2.5 }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
+                  <Text style={{ margin: 5, fontSize: 18 }}>Due Date</Text>
+                </View>
+                <View style={{}}>
+                  <TouchableOpacity onPress={() => setShowDueDate(true)} style={styles.date_button}>
+                    <Text style={{ marginLeft: 10 }}>{dueDate ? dueDate.toDateString() : 'Show Picker'}</Text>
+                  </TouchableOpacity>
+                  {dueDate < postingDate && !isSubmit && (
+                    <View style={{ width: '100%' }}>
+                      <Text caption1 errorColor>
+                        Due Date មិនអាចក្រោយ Posting Date
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
+            {showPostingDate && (
+              <DatePicker
+                value={postingDate}
+                mode={'date'}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                is24Hour={true}
+                onChange={(e, v) => {
+                  //  setPostingDate(v), setShowPostingDate(false),console.log(v) 
+                  if (v) {
+                    const selectedDate = new Date(v);
+                    // Set time to midnight
+                    selectedDate.setUTCHours(0, 0, 0, 0);
+                    setPostingDate(selectedDate);
+                    setShowPostingDate(false);
+                  }
+                }}
+                style={{}}
+              />
+            )}
+            {showDueDate && (
+              <DatePicker
+                value={dueDate}
+                mode={'date'}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                is24Hour={true}
+                onChange={(e, v) => {
+                  // setDueDate(v), setShowDueDate(false) 
+                  if (v) {
+                    const selectedDate = new Date(v);
+                    // Set time to midnight
+                    selectedDate.setUTCHours(0, 0, 0, 0);
+                    setDueDate(selectedDate);
+                    setShowDueDate(false);
+                  }
+                }}
+                style={{}}
+              />
             )}
           </View>
-          <View style={{ width: '30%', marginRight: 10 }}>
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
-              <Text style={{ margin: 5, fontSize: 18 }}>To Warehouse</Text>
-            </View>
-            <Dropdown style={styles.dropdown}
-              data={toWarehouse}
-              labelField="whsCode"
-              valueField="id"
-              placeholder="Select To Warehouse"
-              search
-              value={toWarehouse}
-              onChange={item => {
-                console.log(item)
-                setGetToWarehouse(item.id)
-                setGetToWarehouseCode(item.whsCode)
-              }} />
-            {!getToWarehouse && !isSubmit && (
-              <View style={{ width: '100%' }}>
-                <Text caption1 errorColor>
-                  សូមជ្រើសរើស To Warehouse
-                </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+            <View style={{ width: '30%', marginRight: 15 }}>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
+                <Text style={{ margin: 5, fontSize: 18 }}>From Warehouse</Text>
               </View>
-            )}
+              <Dropdown style={styles.dropdown}
+                data={warehouse}
+                labelField="whsCode"
+                valueField="id"
+                placeholder="Select From Warehouse"
+                // onSelect={setSelected}
+                search
+                value={warehouse}
+                onChange={item => {
+                  setFromWarehouse(item.id)
+                  setGetFromWarehouseCode(item.whsCode)
+                  setWarehouseTendency(item.tendency)
+                }} />
+              {!fromWarehouse && !isSubmit && (
+                <View style={{ width: '100%' }}>
+                  <Text caption1 errorColor>
+                    សូមជ្រើសរើស From Warehouse
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={{ width: '30%', marginRight: 10 }}>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={{ margin: 5, color: "red", fontSize: 18 }}>*</Text>
+                <Text style={{ margin: 5, fontSize: 18 }}>To Warehouse</Text>
+              </View>
+              <Dropdown style={styles.dropdown}
+                data={toWarehouse}
+                labelField="whsCode"
+                valueField="id"
+                placeholder="Select To Warehouse"
+                search
+                value={toWarehouse}
+                onChange={item => {
+                  console.log(item)
+                  setGetToWarehouse(item.id)
+                  setGetToWarehouseCode(item.whsCode)
+                }} />
+              {!getToWarehouse && !isSubmit && (
+                <View style={{ width: '100%' }}>
+                  <Text caption1 errorColor>
+                    សូមជ្រើសរើស To Warehouse
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={{ width: '30%', marginRight: 10 }}>
+              <Text style={{ margin: 5, fontSize: 18 }}>Remark</Text>
+              <TextInput multiline={true} value={remark} style={[styles.input, { width: '100%' }]} placeholder="Please Enter" placeholderTextColor="gray" onChangeText={(text) => setRemark(text)}></TextInput>
+            </View>
           </View>
-          <View style={{ width: '30%', marginRight: 10 }}>
-            <Text style={{ margin: 5, fontSize: 18 }}>Remark</Text>
-            <TextInput multiline={true} value={remark} style={[styles.input, { width: '100%' }]} placeholder="Please Enter" placeholderTextColor="gray" onChangeText={(text) => setRemark(text)}></TextInput>
-          </View>
-        </View>
-        <View style={[styles.divider, { marginTop: 30 }]}></View>
-        <Text style={{ marginLeft: 45, marginTop: 10, fontSize: 18, }}>Item</Text>
-        {/* <View style={{ justifyContent: 'center' }}> */}
-        <ScrollView>
+          <View style={[styles.divider, { marginTop: 30 }]}></View>
+          <Text style={{ marginLeft: 45, marginTop: 10, fontSize: 18, }}>Item</Text>
+          {/* <View style={{ justifyContent: 'center' }}> */}
+
 
           <DataTable style={{ marginTop: '2%', width: '95%', marginLeft: 'auto', marginRight: 'auto' }}>
             <DataTable.Header >

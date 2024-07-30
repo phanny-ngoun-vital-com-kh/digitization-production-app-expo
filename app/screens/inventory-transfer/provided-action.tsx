@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, FlatList, TouchableOpacity } from 'react-native';
+import { Modal, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { BaseStyle, useTheme } from '../../theme-v2';
 import styles from './styles';
 import { Text, TextInput, Button } from '../../components/v2';
@@ -40,7 +40,6 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
     const [totalProvidedValues, setTotalProvidedValues] = useState({});
     const [newItem, setNewItem] = useState(null)
     const [loading, setLoading] = useState(false)
-    const [isRejectConfirmationVisible, setIsRejectConfirmationVisible] = useState(false);
     const [Fcm, setFcm] = useState([])
     const [isModalApproveVisible, setModalApproveVisible] = useState(false);
     const [isModalRejectVisible, setModalRejectVisible] = useState(false);
@@ -174,16 +173,26 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
 
     const onReceive = async () => {
         try {
+            setLoading(true)
+            if (!newItem){
+                Dialog.show({
+                    type: ALERT_TYPE.DANGER,
+                    title: 'បរាជ័យ',
+                    textBody: 'Please try again',
+                    button: 'close'
+                })
+                return
+            }
             const it = TransferModel.create({
                 transfer_type: transferItem.transfer_type,
                 business_unit: transferItem?.business_unit,
                 status: state,
                 transfer_request: transferItem.id.toString(),
-                transfer_id: transferItem.transfer_id,
+                // transfer_id: transferItem.transfer_id,
                 posting_date: transferItem?.posting_date.toString(),
                 due_date: transferItem?.due_date.toString(),
-                from_warehouse: parseInt(String(transferItem.from_warehouse[0].id).charAt(0)),
-                to_warehouse: parseInt(String(transferItem.to_warehouse[0].id).charAt(0)),
+                from_warehouse: parseInt(String(transferItem.from_warehouse[0].id)),
+                to_warehouse: parseInt(String(transferItem.to_warehouse[0].id)),
                 line: transferItem.line,
                 shift: transferItem.shift,
                 items: newItem
@@ -226,6 +235,8 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                 textBody: 'បរាជ័យ',
                 button: 'បិទ',
             })
+        }finally{
+            setLoading(false)
         }
 
     }
@@ -278,12 +289,13 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
         >
             <View style={styles.modalcontainer}>
                 <View style={styles.model}>
+                <ScrollView>
                     <DataTable style={{ marginTop: '5%' }}>
                         <DataTable.Header >
                             <DataTable.Title style={{ flex: 0.3 }} textStyle={styles.textHeader}>No</DataTable.Title>
                             <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Item Code</DataTable.Title>
                             <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Item Name</DataTable.Title>
-                            <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Quantity</DataTable.Title>
+                            <DataTable.Title style={{ flex: 0.5,marginLeft:20 }} textStyle={styles.textHeader}>Quantity</DataTable.Title>
                             <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Received</DataTable.Title>
                             <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>UoM</DataTable.Title>
                             <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Vendor</DataTable.Title>
@@ -295,7 +307,7 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                                 <DataTable.Cell style={{ flex: 0.3 }} textStyle={styles.textHeader}>{index + 1}</DataTable.Cell>
                                 <DataTable.Cell style={{ flex: 0.8 }} textStyle={styles.textHeader}>{i.item_code}</DataTable.Cell>
                                 <DataTable.Cell style={{ flex: 0.8 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.item_name}</Text></DataTable.Cell>
-                                <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.quantity}</DataTable.Cell>
+                                <DataTable.Cell style={{ flex: 0.5,marginLeft:30 }} textStyle={styles.textHeader}>{i.quantity}</DataTable.Cell>
                                 <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.received}</DataTable.Cell>
                                 <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.uom}</DataTable.Cell>
                                 <DataTable.Cell style={{ flex: 0.5 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.supplier == null ? '-' : i.supplier}</Text></DataTable.Cell>
@@ -322,6 +334,7 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                     {/* <View style={styles.butuon_view}>
                         <Button style={styles.button_cancel} styleText={{ color: 'black' }} onPress={onClose}>Cancel</Button>
                     </View> */}
+                    </ScrollView>
                 </View>
             </View>
             {/* {isConfirmationVisible && (
@@ -349,12 +362,14 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                 isVisible={isModalApproveVisible}
                 textChange={(text) => setGetRemarkApprove(text)}
                 onSubmit={onReceive}
+                loading={loading}
             />
             <ModalReject
                 onClose={() => setModalRejectVisible(false)}
                 isVisible={isModalRejectVisible}
                 textChange={(text) => setGetRemarkReject(text)}
                 onSubmit={onReject}
+                loading={loading}
             />
             {/* <PushNotificationComponent
                 isVisible={isRejectNotiVisible}

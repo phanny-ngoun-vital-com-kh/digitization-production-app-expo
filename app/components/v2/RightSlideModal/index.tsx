@@ -120,7 +120,7 @@ const RightSlideModal: React.FC<ModalProps> = ({ data, isVisible, onClose, isLoa
                                     </View>
                                     <View style={styles.view_sub}>
                                         <Text style={styles.text_main}>Create Date: </Text>
-                                        <Text style={styles.text_sub}>{moment(data.createdDate).format('YYYY-MM-DD hh:mm:ss')}</Text>
+                                        <Text style={styles.text_sub}>{moment(data.createdDate).format('YYYY-MM-DD HH:mm:ss')}</Text>
                                     </View>
                                     <View style={styles.view_sub}>
                                         {/* <Text style={styles.text_main}> </Text>
@@ -137,7 +137,7 @@ const RightSlideModal: React.FC<ModalProps> = ({ data, isVisible, onClose, isLoa
                                         <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>Received</DataTable.Title>
                                         <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>Total</DataTable.Title>
                                         <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>UoM</DataTable.Title>
-                                        <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Supplier</DataTable.Title>
+                                        <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Vendor</DataTable.Title>
                                         <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Remark</DataTable.Title>
                                     </DataTable.Header>
                                 </DataTable>

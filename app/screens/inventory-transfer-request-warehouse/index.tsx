@@ -162,7 +162,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
             action: "Rejected",
             activities_name: "Warehouse Approval",
             transfer_request: selectedItem.transfer_id,
-            docEntry : selectedItem.sapDocEntry
+            docEntry: selectedItem.sapDocEntry
         })
         // const activities = ActivitiesModel.create({
         //     action: "Rejected",
@@ -207,7 +207,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
     const getSap = async () => {
         try {
             setIsLoading(true)
-            if(selectedItem.sapDocEntry == null ){
+            if (selectedItem.sapDocEntry == null) {
                 Dialog.show({
                     type: ALERT_TYPE.DANGER,
                     title: 'Error',
@@ -237,7 +237,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                             })
                             return
                         }
-                        setModalApproveVisible(true)
+
                     } else {
                         Dialog.show({
                             type: ALERT_TYPE.DANGER,
@@ -247,7 +247,9 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                             // autoClose: 200
                         })
                     }
+
                 }
+                setModalApproveVisible(true)
             } else {
                 console.error("One of the lists is undefined or empty.");
             }
@@ -312,11 +314,13 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                 // button: 'close',
                 autoClose: 100
             })
+        } finally {
+            setIsLoading(false)
         }
 
     }
 
-    const handleItemPress = (itemId, itemStatus,itemType) => {
+    const handleItemPress = (itemId, itemStatus, itemType) => {
         setSelectedItem(list.find((v) => v.id === itemId));
         setSeletedStatus(itemStatus)
         setType(itemType)
@@ -367,7 +371,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                             }
                             renderItem={({ item }) => (
                                 <View style={{ borderBottomWidth: 0.4, borderColor: '#d3d3d3' }}>
-                                    <TouchableOpacity onPress={() => handleItemPress(item.id, item.status,item.transfer_type)} >
+                                    <TouchableOpacity onPress={() => handleItemPress(item.id, item.status, item.transfer_type)} >
                                         <View style={[styles.itemContainer, selectedItem != null ? selectedItem.id === item.id && styles.selectedItemContainer : []]}>
                                             <Icon name={'file-text-o'} size={20} color="gray" style={{ marginRight: 10, marginLeft: 5 }} />
                                             <Text style={[styles.item, selectedItem === item.id, item.state === 'completed' ? { color: 'green' } : item.state === 'rejected' ? { color: 'red' } : item.state === 'in-progress' ? { color: '#E69B00' } : { color: '#000' }]}>
@@ -417,38 +421,42 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                                                 <Text style={styles.textBody}>{selectedItem.to_warehouse.map(w => w.whsCode)}</Text>
                                             </DataTable.Cell>
                                             <DataTable.Cell textStyle={styles.item}>
-                                                <Text style={styles.textTitle}>Bussiness Unit: </Text>
-                                                <Text style={styles.textBody}>{selectedItem.business_unit}</Text>
+                                                <Text style={styles.textTitle}>Posting Date: </Text>
+                                                <Text style={styles.textBody}>{moment(selectedItem.posting_date).format('YYYY-MM-DD')}</Text>
                                             </DataTable.Cell>
                                         </DataTable.Row>
                                         <DataTable.Row style={styles.row}>
+                                            <DataTable.Cell textStyle={styles.item}>
+                                                <Text style={styles.textTitle}>Due Date: </Text>
+                                                <Text style={styles.textBody}>{moment(selectedItem.due_date).format('YYYY-MM-DD')}</Text>
+                                            </DataTable.Cell>
                                             <DataTable.Cell textStyle={styles.item}>
                                                 <Text style={styles.textTitle}>Created By: </Text>
                                                 <Text style={styles.textBody}>{selectedItem.createdBy}</Text>
                                             </DataTable.Cell>
                                             <DataTable.Cell textStyle={styles.item}>
                                                 <Text style={styles.textTitle}>Created Date: </Text>
-                                                <Text style={styles.textBody}>{moment(selectedItem.createdDate).format('YYYY-MM-DD')}</Text>
+                                                <Text style={styles.textBody}>{moment(selectedItem.createdDate).format('YYYY-MM-DD hh:mm:ss')}</Text>
                                             </DataTable.Cell>
+                                        </DataTable.Row>
+                                        <DataTable.Row style={styles.row}>
                                             <DataTable.Cell textStyle={styles.item}>
                                                 <Text style={styles.textTitle}>Status: </Text>
                                                 <View style={[styles.dot, selectedItem.state === 'completed' ? { backgroundColor: 'green' } : selectedItem.state === 'rejected' ? { backgroundColor: 'red' } : selectedItem.state === 'in-progress' ? { backgroundColor: '#E69B00' } : { backgroundColor: '#000' }]}></View>
                                                 <Text style={[styles.textBody, { textTransform: 'capitalize' }]}> {selectedItem.state}</Text>
                                             </DataTable.Cell>
-                                        </DataTable.Row>
-                                        <DataTable.Row style={styles.row}>
+
                                             <DataTable.Cell textStyle={styles.item}>
                                                 <Text style={styles.textTitle}>Remark: </Text>
-                                                <Text style={styles.textBody}>{selectedItem.remark ? selectedItem.remark : '-'}</Text>
+                                                <Text style={styles.textBody}>{(selectedItem.remark == null || selectedItem.remark == '') ? '-' : selectedItem.remark}</Text>
                                             </DataTable.Cell>
-                                            <DataTable.Cell textStyle={styles.item}>
-                                                <Text style={styles.textTitle}>Sap Doc No: </Text>
-                                                <Text style={styles.textBody}>{selectedItem.sapDocNo}</Text>
-                                            </DataTable.Cell>
-                                            <DataTable.Cell textStyle={styles.item}>
-                                                <Text style={styles.textTitle}> </Text>
-                                                <Text style={styles.textBody}> </Text>
-                                            </DataTable.Cell>
+                                            {selectedItem.sapDocNo ?
+                                                <DataTable.Cell textStyle={styles.item}>
+                                                    <Text style={styles.textTitle}>Sap Doc No: </Text>
+                                                    <Text style={styles.textBody}>{selectedItem.sapDocNo}</Text>
+                                                </DataTable.Cell>
+                                                : <></>}
+
                                         </DataTable.Row>
                                     </DataTable>
                                 </View>
@@ -459,7 +467,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                                         <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Item Name</DataTable.Title>
                                         <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Quantity</DataTable.Title>
                                         <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>UoM</DataTable.Title>
-                                        <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Supplier</DataTable.Title>
+                                        <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Vendor</DataTable.Title>
                                         <DataTable.Title textStyle={styles.textHeader}>Remark</DataTable.Title>
                                     </DataTable.Header>
 
@@ -488,7 +496,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                             <View style={styles.divider} />
                             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%', marginBottom: 25 }}>
 
-                                <Button style={{ width: '20%', }} onPress={() => { getSap() }}>
+                                <Button style={{ width: '20%', }} onPress={() => { getSap() }} disabled={isLoading}>
                                     {/* Approve */}
                                     {isLoading ? (
                                         <View style={{ flexDirection: 'row', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 17 }}>Approve</Text><ActivityIndicator color="white" /></View>
@@ -500,7 +508,7 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                             </View>
                             {/* <View style={styles.divider} /> */}
                         </>
-                        : selectedStatus == 'request-warehouse-approve' && type == 'PM/RM'?
+                        : selectedStatus == 'request-warehouse-approve' && type == 'PM/RM' ?
                             <>
                                 <View style={styles.divider} />
                                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '82%', marginBottom: 25 }}>
@@ -528,12 +536,14 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                 isVisible={isModalApproveVisible}
                 textChange={(text) => setGetRemark(text)}
                 onSubmit={submit}
+                loading={isLoading}
             />
             <ModalReject
                 onClose={() => setModalRejectVisible(false)}
                 isVisible={isModalRejectVisible}
                 textChange={(text) => setGetRemarkReject(text)}
                 onSubmit={reject}
+                loading={isLoading}
             />
         </AlertNotificationRoot>
     )

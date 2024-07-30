@@ -380,7 +380,7 @@ export const TransferRequestStore = types
                 }
             },
             getBomList: async (searchValue?: string, tendency?: string) => {
-                const rs = await inventorytransferrequestApi.getBom(10, searchValue, tendency)
+                const rs = await inventorytransferrequestApi.getBom(30, searchValue, tendency)
                 if (rs.kind === 'ok') {
                     return rs.payload
                 } else {

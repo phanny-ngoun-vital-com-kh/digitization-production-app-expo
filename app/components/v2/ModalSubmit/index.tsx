@@ -31,7 +31,7 @@ const ModalSubmit: React.FC<ModalProps> = ({ isVisible, onClose, onSubmit, isLoa
           <Text body2 style={{ marginTop: '2%', marginLeft: '7%' }}>Are you sure?</Text>
           <View style={styles.butuon_view}>
             <Button style={styles.button_cancel} styleText={{ color: 'black' }} onPress={onClose}>Cancel</Button>
-            <Button style={styles.button} onPress={onSubmit}>{isLoading ? (
+            <Button style={styles.button} onPress={onSubmit} disabled={isLoading}>{isLoading ? (
               <ActivityIndicator color="white" /> // Display loading indicator when isLoading is true
             ) : (
               'OK'

@@ -28,10 +28,11 @@ interface ModalProps {
   })
   isLoading: boolean;
   sapDoc: number;
+  success:(t:boolean) => void;
   // onSubmit:()=>void
 }
 
-const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose, sapDoc, isLoading, total }) => {
+const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose, sapDoc, isLoading, total,success }) => {
 
   const {
     inventoryTransferStore,
@@ -43,7 +44,7 @@ const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose
   const [items, setItems] = useState([])
   const [newItem, setNewItem] = useState([])
   const [isSubmit, setIsSubmit] = useState(true)
-  const [status, setStatus] = useState('')
+  const [state, setState] = useState(false)
   const [isProdAdm, setIsProdAdm] = useState()
   const [isWareAdm, setIsWareAdm] = useState()
   const [isProdUser, setIsProdUser] = useState()
@@ -72,11 +73,18 @@ const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose
   }, []);
 
   useEffect(() => {
-    const da = async () => {
-      const provide = (await inventoryRequestStore.getprovidelist(data?.id))
-      setProvide(provide)
+    try {
+      const da = async () => {
+        const provide = (await inventoryRequestStore.getprovidelist(data?.id))
+        setProvide(provide)
+      }
+      da()
+      setState(true)
+    } catch (e) {
+
+    } finally {
+      setState(false)
     }
-    da()
   }, [isVisible == true])
 
   useEffect(() => {
@@ -207,8 +215,8 @@ const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose
       transfer_request: data?.id,
       posting_date: data?.posting_date.toString(),
       due_date: data?.due_date.toString(),
-      from_warehouse: parseInt(String(data?.from_warehouse[0].id).charAt(0)),
-      to_warehouse: parseInt(String(data?.to_warehouse[0].id).charAt(0)),
+      from_warehouse: parseInt(String(data?.from_warehouse[0].id)),
+      to_warehouse: parseInt(String(data?.to_warehouse[0].id)),
       line: data?.line,
       shift: data?.shift,
       status: 'completed',
@@ -293,22 +301,27 @@ const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose
                   /> */}
               </View>
               <View style={styles.divider}></View>
-              {provide?.length > 0 ?
-                <FlatList
-                  data={provide}
-                  // refreshControl={
-                  //   <RefreshControl
-                  //     colors={[colors.primary]}
-                  //     tintColor={colors.primary}
-                  //     refreshing={refreshing}
-                  //     onRefresh={refresh}
-                  //   />
-                  // }
-                  renderItem={({ item, index }) =>
-                    <ProvidedView data={item} index={index + 1} transferItem={data} onSuccess={(t) => { t == true ? (onClose()) : undefined }} />}
-                />
-                : <Text style={{ marginLeft: 'auto', marginRight: 'auto', marginTop: 20, fontSize: 15 }}>No Transfer</Text>}
+              {state ? (<View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator />
+              </View>) : (
+                <>
+                  {provide?.length > 0 ?
 
+                    < FlatList
+                      data={provide}
+                      // refreshControl={
+                      //   <RefreshControl
+                      //     colors={[colors.primary]}
+                      //     tintColor={colors.primary}
+                      //     refreshing={refreshing}
+                      //     onRefresh={refresh}
+                      //   />
+                      // }
+                      renderItem={({ item, index }) =>
+                        <ProvidedView data={item} index={index + 1} transferItem={data} onSuccess={(t) => { t == true ? (onClose(),success(t)) : undefined }} />}
+                    />
+                    : <Text style={{ marginLeft: 'auto', marginRight: 'auto', marginTop: 20, fontSize: 15 }}>No Transfer</Text>}</>
+              )}
               {/* {data?.transfer_type == 'PM/RM' && (isProdAdm || isProdUser) ?
                 < View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '3%' }}>
                   <Button style={{ width: '13%', backgroundColor: '#fff', borderColor: 'gray', borderWidth: 1 }} styleText={{ color: '#000', fontSize: 15 }} onPress={onClose}>Cancel</Button>
@@ -334,6 +347,7 @@ const ModalInventoryTransfer: React.FC<ModalProps> = ({ data, isVisible, onClose
           isVisible={isConfirmationVisible}
           textChange={(text) => setGetReason(text)}
           onSubmit={onCloseTransfer}
+          loading={loading}
         />
       )}
     </Modal>
