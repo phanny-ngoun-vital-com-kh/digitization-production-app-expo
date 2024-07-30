@@ -129,7 +129,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
         itemName: item.item_name,
         key: index + 1,
         quantity: item?.quantity?.toString(),
-        remark: item.remark == null ? '':item.remark,
+        remark: item.remark == null ? '' : item.remark,
         fromWarehouse: selectedItem.from_warehouse.map(i => i.whsCode).toString(),
         toWarehouse: selectedItem.to_warehouse.map(i => i.whsCode).toString()
       })))
@@ -216,7 +216,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
         transfer_request: selectedItem.transfer_id,
         transferRequestDetails: itemlist
       })
-      
+
       if (inventoryRequestStore
         .addSapTr(data)
         .savetosap()
@@ -302,6 +302,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
   return (
     <AlertNotificationRoot>
       <View style={styles.container}>
+
         <View style={styles.leftPane} >
           {/* <View style={{flexDirection:'row' }}> */}
           <MenuProvider>
@@ -401,14 +402,13 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
                         <Text style={styles.textBody}>{moment(selectedItem.due_date).format('YYYY-MM-DD')}</Text>
                       </DataTable.Cell>
                       <DataTable.Cell textStyle={styles.item}>
-                        <Text style={styles.textTitle}>Created By: </Text>
-                        <Text style={styles.textBody}>{selectedItem.createdBy}</Text>
-                      </DataTable.Cell>
-                      <DataTable.Cell textStyle={styles.item}>
                         <Text style={styles.textTitle}>Created Date: </Text>
                         <Text style={styles.textBody}>{moment(selectedItem.createdDate).format('YYYY-MM-DD hh:mm:ss')}</Text>
                       </DataTable.Cell>
-
+                      <DataTable.Cell textStyle={styles.item}>
+                        <Text style={styles.textTitle}>Created By: </Text>
+                        <Text style={styles.textBody}>{selectedItem.createdBy}</Text>
+                      </DataTable.Cell>
                     </DataTable.Row>
                     <DataTable.Row style={styles.row}>
                       <DataTable.Cell textStyle={styles.item}>
@@ -425,10 +425,10 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
                           <Text style={styles.textTitle}>Sap Doc No: </Text>
                           <Text style={styles.textBody}>{selectedItem.sapDocNo}</Text>
                         </DataTable.Cell>
-                        :<DataTable.Cell textStyle={styles.item}>
-                        <Text style={styles.textTitle}> </Text>
-                        <Text style={styles.textBody}> </Text>
-                      </DataTable.Cell>}
+                        : <DataTable.Cell textStyle={styles.item}>
+                          <Text style={styles.textTitle}> </Text>
+                          <Text style={styles.textBody}> </Text>
+                        </DataTable.Cell>}
 
                     </DataTable.Row>
                   </DataTable>
@@ -436,10 +436,10 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
                 <DataTable style={{ marginTop: '2%' }}>
                   <DataTable.Header >
                     <DataTable.Title style={{ flex: 0.3 }} textStyle={styles.textHeader}>No</DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>Item Code</DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>Item Name</DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Item Code</DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>Item Name</DataTable.Title>
                     <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Quantity</DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.3 }} textStyle={styles.textHeader}>UoM</DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>UoM</DataTable.Title>
                     <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>Vendor</DataTable.Title>
                     <DataTable.Title textStyle={styles.textHeader}>Remark</DataTable.Title>
                   </DataTable.Header>
@@ -447,12 +447,12 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
                   {selectedItem.item.map((i, index) =>
                     <DataTable.Row style={{}} key={index}>
                       <DataTable.Cell style={{ flex: 0.3 }} textStyle={styles.textHeader}>{index + 1}</DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 0.6 }} textStyle={styles.textHeader}>{i.item_code}</DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 0.7 }} textStyle={styles.textHeader}><Text style={{ fontSize: 16 }}>{i.item_name}</Text></DataTable.Cell>
+                      <DataTable.Cell style={{ flex: 0.8 }} textStyle={styles.textHeader}>{i.item_code}</DataTable.Cell>
+                      <DataTable.Cell style={{ flex: 0.8 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.item_name}</Text></DataTable.Cell>
                       <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.quantity}</DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 0.3 }} textStyle={styles.textHeader}>{i.uom}</DataTable.Cell>
+                      <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.uom}</DataTable.Cell>
                       <DataTable.Cell style={{ flex: 0.5 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.supplier == null || i.supplier == '' ? '-' : i.supplier}</Text></DataTable.Cell>
-                      <DataTable.Cell textStyle={styles.textHeader}>{i.remark == '' || i.remark == null ? '-' : i.remark}</DataTable.Cell>
+                      <DataTable.Cell ><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.remark == '' || i.remark == null ? '-' : i.remark}</Text></DataTable.Cell>
                     </DataTable.Row>
                   )}
                 </DataTable>

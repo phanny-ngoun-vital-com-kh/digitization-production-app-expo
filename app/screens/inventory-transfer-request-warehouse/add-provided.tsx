@@ -204,7 +204,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
             onRequestClose={onClose}
         >
             <View style={styles.modalcontainer}>
-                <View style={styles.model}>
+                <View style={[styles.model,{maxHeight:'85%',}]}>
                     {/* <Text>{data.map(v=>v.item_code)}</Text> */}
                     <ScrollView>
                         <DataTable style={{ marginTop: '5%' }}>
@@ -309,7 +309,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
                             )}
                         </DataTable>
                     </ScrollView>
-                    <View style={styles.butuon_view}>
+                    <View style={{ marginTop: '5%', flexDirection: 'row', width: '100%'}}>
                         <Button style={[styles.button_cancel, { marginRight: 10 }]} styleText={{ color: 'black' }} onPress={onClose}>Cancel</Button>
                         <Button style={styles.button} onPress={() => { submit() }} disabled={loading}>{loading ? (
                             <View style={{ flexDirection: 'row', justifyContent: 'center' }}>

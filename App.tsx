@@ -1,4 +1,5 @@
 import "@expo/metro-runtime"
+import 'react-native-gesture-handler';
 import React from "react"
 import * as SplashScreen from "expo-splash-screen"
 import App from "./app/app"
@@ -11,6 +12,8 @@ import * as Notifications from 'expo-notifications';
 import * as Permissions from 'expo-permissions';
 
 SplashScreen.preventAutoHideAsync()
+
+// Rest of your application code goes here
 
 function IgniteApp() {
   const [isNotiVisible, setNotiVisible] = useState(false);

@@ -27,5 +27,6 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
       require("./plugins/withSplashScreen").withSplashScreen,
       require("./plugins/withFlipperDisabled").withFlipperDisabled,
     ],
+    
   }
 }

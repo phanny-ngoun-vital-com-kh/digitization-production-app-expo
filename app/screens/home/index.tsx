@@ -1,57 +1,176 @@
+import { useIsFocused } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
 import React, { FC, useEffect, useState } from "react"
 import { Button, Text, Dimensions, FlatList, Image, ImageStyle, Platform, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "../../navigators"
-import IconFontisto from 'react-native-vector-icons/Fontisto';
-import IconMaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import IconFontisto from "react-native-vector-icons/Fontisto"
+import IconMaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import style from "./style"
-import { useStores } from "../../models"
-import { Avatar, Card, Title, Paragraph } from 'react-native-paper';
-import sendPushNotification from "../../utils-v2/push-notification-helper";
-import PushNotificationComponent from "../../utils-v2/push-notification-helper";
-// import NotificSoundModal from "app/components/v2/NotificSoundModal";
-// import CustomAudioPlayer from "app/components/v2/NotificSoundModal/CustomAudioPlayer";
-// import sendPushNotification from "app/utils-v2/push-notification-helper";
-// import PushNotificationComponent from "app/utils-v2/push-notification-helper";
-// import HomeCard from "app/components/v2/HomeCard"
+import { useStores } from "app/models"
+import { Avatar, Card } from "react-native-paper"
 
-interface HomeScreenProps extends AppStackScreenProps<"Home"> { }
-
-export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }
-) {
-
+interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
+export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const {
-    authStore: { getUserInfo }
+    authStore: { getUserInfo },
   } = useStores()
+  const isFocused = useIsFocused()
 
   useEffect(() => {
     const role = async () => {
       try {
-        const rs = await getUserInfo();
+        const rs = await getUserInfo()
         // console.log(rs.data.authorities)
         // Modify the list based on the user's role
-        if (rs.data.authorities.includes('ROLE_PROD_WARE_ADMIN') || rs.data.authorities.includes('ROLE_PROD_WARE_USER')) {
+        if (
+          rs.data.authorities.includes("ROLE_PROD_WARE_ADMIN") ||
+          rs.data.authorities.includes("ROLE_PROD_WARE_USER")
+        ) {
           // If user is a warehouse admin
           const updatedList = [
-            { id: 1, name: 'Inventory Transfer Request', subname: "Inventory Transfer Request List", navigation: 'InventoryTransferRequestWarehouse', iconname: 'arrow-top-right-bottom-left', icontype: 'Fontisto' },
-            { id: 2, name: 'Inventory Transfer', subname: "Inventory Transfer List", navigation: 'InventoryTransfer', iconname: 'warehouse', icontype: 'MaterialCommunityIcons' },
+            {
+              id: 1,
+              name: "Inventory Transfer Request",
+              subname: "Inventory Transfer Request List",
+              navigation: "InventoryTransferRequestWarehouse",
+              iconname: "arrow-top-right-bottom-left",
+              icontype: "Fontisto",
+            },
+            {
+              id: 2,
+              name: "Inventory Transfer",
+              subname: "Inventory Transfer List",
+              navigation: "InventoryTransfer",
+              iconname: "warehouse",
+              icontype: "MaterialCommunityIcons",
+            },
+            {
+              id: 3,
+              name: "Water Treatment Control",
+              subname: "Water Treatment  List",
+              navigation: "WaterTreatmentControlList",
+              iconname: "water",
+              icontype: "MaterialCommunityIcons",
+            },
+
+            {
+              id: 4,
+              name: "HACCP Monitoring",
+              subname: "HACCP Monitoring List",
+              navigation: "HccpMonitor",
+              iconname: "alert-octagon",
+              icontype: "MaterialCommunityIcons",
+            },
+
             // Add other items as needed
-          ];
-          setList(updatedList);
-        } else if (rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN') || rs.data.authorities.includes('ROLE_PROD_PRO_USER')) {
+          ]
+          setList(updatedList)
+        } else if (
+          rs.data.authorities.includes("ROLE_PROD_PRO_ADMIN") ||
+          rs.data.authorities.includes("ROLE_PROD_PRO_USER")
+        ) {
           const updatedList = [
-            { id: 1, name: 'Inventory Transfer Request', subname: "Inventory Transfer Request List", navigation: 'InventoryTransferRequestProduction', iconname: 'arrow-top-right-bottom-left', icontype: 'Fontisto' },
-            { id: 2, name: 'Inventory Transfer', subname: "Inventory Transfer List", navigation: 'InventoryTransfer', iconname: 'warehouse', icontype: 'MaterialCommunityIcons' },
+            {
+              id: 1,
+              name: "Inventory Transfer Request",
+              subname: "Inventory Transfer Request List",
+              navigation: "InventoryTransferRequestProduction",
+              iconname: "arrow-top-right-bottom-left",
+              icontype: "Fontisto",
+            },
+            {
+              id: 2,
+              name: "Inventory Transfer",
+              subname: "Inventory Transfer List",
+              navigation: "InventoryTransfer",
+              iconname: "warehouse",
+              icontype: "MaterialCommunityIcons",
+            },
+            {
+              id: 3,
+              name: "Water Treatment Control",
+              subname: "Water Treatment  List",
+              navigation: "WaterTreatmentControlList",
+              iconname: "water",
+              icontype: "MaterialCommunityIcons",
+            },
+
+            {
+              id: 4,
+              name: "HACCP Monitoring",
+              subname: "HACCP Monitoring List",
+              navigation: "HccpMonitor",
+              iconname: "alert-octagon",
+              icontype: "MaterialCommunityIcons",
+            },
+            {
+              id: 5,
+              name: "Dashboard",
+              subname: "Overview and Analytic",
+              navigation: "Dashboard",
+              iconname: "view-dashboard-outline",
+              icontype: "MaterialCommunityIcons",
+            },
           ]
           setList(updatedList)
         }
 
+        // else {
+        //   const updatedList = [
+        //     {
+        //       id: 1,
+        //       name: "Inventory Transfer Request",
+        //       subname: "Inventory Transfer Request List",
+        //       navigation: "InventoryTransferRequestProduction",
+        //       iconname: "arrow-top-right-bottom-left",
+        //       icontype: "Fontisto",
+        //     },
+        //     {
+        //       id: 2,
+        //       name: "Inventory Transfer",
+        //       subname: "Inventory Transfer List",
+        //       navigation: "InventoryTransfer",
+        //       iconname: "warehouse",
+        //       icontype: "MaterialCommunityIcons",
+        //     },
+        //     {
+        //       id: 3,
+        //       name: "Water Treatment Control",
+        //       subname: "Water Treatment  List",
+        //       navigation: "WaterTreatmentControlList",
+        //       iconname: "water",
+        //       icontype: "MaterialCommunityIcons",
+        //     },
+
+        //     {
+        //       id: 4,
+        //       name: "HACCP Monitoring",
+        //       subname: "HACCP Monitoring List",
+        //       navigation: "HccpMonitor",
+        //       iconname: "alert-octagon",
+        //       icontype: "MaterialCommunityIcons",
+        //     },
+
+        //     // {
+        //     //   id: 4,
+        //     //   name: "HACCP Monitoring",
+        //     //   subname: "HACCP Monitoring List",
+        //     //   navigation: "HccpMonitor",
+        //     //   iconname: "alert-octagon",
+        //     //   icontype: "MaterialCommunityIcons",
+        //     // },
+        //   ]
+        //   setList(updatedList)
+        // }
       } catch (e) {
-        console.log(e);
+        console.log(e)
+      } finally {
       }
-    };
-    role();
-  }, []);
+    }
+
+    role()
+    // remoteWork()
+  }, [])
 
   // useEffect(() => {
   //   if (state == true) {
@@ -67,20 +186,21 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
     let numberOfElementsLastRow = data?.length - (numberOfFullRows * numColumns);
     while (numberOfElementsLastRow !== numColumns && numberOfElementsLastRow !== 0) {
-      data.push({ key: `blank-${numberOfElementsLastRow}`, empty: true });
-      numberOfElementsLastRow++;
+      data.push({ key: `blank-${numberOfElementsLastRow}`, empty: true })
+      numberOfElementsLastRow++
     }
 
-    return data;
-  };
-
+    return data
+  }
 
   const [list, setList] = useState([])
   const [isVisible, setIsVisible] = useState(false)
   const ItemList = ({ item }) => {
-    const LeftContent = props => <Avatar.Icon {...props} icon={item.iconname} style={{ backgroundColor: '#2292EE' }} />
+    const LeftContent = (props) => (
+      <Avatar.Icon {...props} icon={item.iconname} style={{ backgroundColor: "#2292EE" }} />
+    )
     if (item.empty === true) {
-      return <View style={[style.item, style.itemInvisible]} />;
+      return <View style={[style.item, style.itemInvisible]} />
     }
     return (
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -96,64 +216,35 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
           </View>
         </TouchableOpacity> */}
-        <Card style={{ margin: 20, backgroundColor: '#fff' }} onPress={() => { navigation.navigate(item.navigation) }}>
+        <Card
+          style={{ margin: 20, backgroundColor: "#fff" }}
+          onPress={() => {
+            navigation.navigate(item.navigation)
+          }}
+        >
           <Card.Title title={item.name} subtitle={item.subname} left={LeftContent} />
-
         </Card>
-        {/* <HomeCard
-  //         title={item.name}
-  //         iconName={item.iconname}
-  //         iconType={item.icontype}
-  //         description={item.subname}
-  //         onPress={() => { navigation.navigate(item.navigation) }}
-  //         iconBackgroundColor='#2292EE'
-  //         style={{ margin: 20 ,width:'92%',borderColor:'#2292EE'}}
-  //         iconStyle={{ height:7}}
-  //         iconSize={30}
-  //         borderRadius={5}
-  //       /> */}
       </View>
     )
   }
+  // handleNetworkChanges()
 
-  async function sendNotification(title, body, deviceTokens, sound = 'default') {
-    const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+  
 
-    try {
-      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `key=${SERVER_KEY}`
-        },
-        body: JSON.stringify({
-          registration_ids: deviceTokens,
-          notification: {
-            title: title,
-            body: body,
-            sound: sound,
-          },
-          android: {
-            notification: {
-              sound: sound,
-              priority: 'high',
-              vibrate: true,
-            }
-          }
+  useEffect(() => {
+    // console.log(networkStore.isConnected) 
+    if (false) {
+      // console.log(networkStore.isConnected) 
 
-        }),
-      });
-
-      const responseData = await response.json();
-      console.log('Notification sent successfully:', responseData);
-    } catch (error) {
-      console.error('Error sending notification:', error);
     }
-  }
+  }, [isFocused,
+    // networkStore.isConnected
+  
+  ])
   return (
     <>
       <FlatList
-        style={{ backgroundColor: '#fff' }}
+        style={{ backgroundColor: "#fff" }}
         keyExtractor={(item) => item.id}
         data={formatData(list, 3)}
         numColumns={3}

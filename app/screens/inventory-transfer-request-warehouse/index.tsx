@@ -431,12 +431,12 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                                                 <Text style={styles.textBody}>{moment(selectedItem.due_date).format('YYYY-MM-DD')}</Text>
                                             </DataTable.Cell>
                                             <DataTable.Cell textStyle={styles.item}>
-                                                <Text style={styles.textTitle}>Created By: </Text>
-                                                <Text style={styles.textBody}>{selectedItem.createdBy}</Text>
-                                            </DataTable.Cell>
-                                            <DataTable.Cell textStyle={styles.item}>
                                                 <Text style={styles.textTitle}>Created Date: </Text>
                                                 <Text style={styles.textBody}>{moment(selectedItem.createdDate).format('YYYY-MM-DD hh:mm:ss')}</Text>
+                                            </DataTable.Cell>
+                                            <DataTable.Cell textStyle={styles.item}>
+                                                <Text style={styles.textTitle}>Created By: </Text>
+                                                <Text style={styles.textBody}>{selectedItem.createdBy}</Text>
                                             </DataTable.Cell>
                                         </DataTable.Row>
                                         <DataTable.Row style={styles.row}>
@@ -478,8 +478,8 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                                             <DataTable.Cell style={{ flex: 0.8 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.item_name}</Text></DataTable.Cell>
                                             <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.quantity}</DataTable.Cell>
                                             <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{i.uom}</DataTable.Cell>
-                                            <DataTable.Cell style={{ flex: 0.5 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.supplier == null ? '-' : i.supplier}</Text></DataTable.Cell>
-                                            <DataTable.Cell ><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.remark == null ? '-' : i.remark}</Text></DataTable.Cell>
+                                            <DataTable.Cell style={{ flex: 0.5 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.supplier == null || i.supplier == '' ? '-' : i.supplier}</Text></DataTable.Cell>
+                                            <DataTable.Cell ><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.remark == '' || i.remark == null ? '-' : i.remark}</Text></DataTable.Cell>
                                         </DataTable.Row>
                                     )}
                                 </DataTable>

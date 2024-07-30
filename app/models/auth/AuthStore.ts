@@ -4,17 +4,15 @@ import { LoginModel } from "./LoginModel"
 import { authApi } from "../../services/api/auth-api"
 import { getRootStore } from "../helpers/getRootStore"
 
-export const AuthoritiesModel = types
-  .model("AuthoritiesModel")
-  .props({
-    user_id: types.string,
-    authority_name: types.string,
-  })
+export const AuthoritiesModel = types.model("AuthoritiesModel").props({
+  user_id: types.string,
+  authority_name: types.string,
+})
 
 type AuthoritiesType = Instance<typeof AuthoritiesModel>
-export interface Authorities extends AuthoritiesType { }
+export interface Authorities extends AuthoritiesType {}
 type AuthoritiesSnapshotType = SnapshotOut<typeof AuthoritiesModel>
-export interface AuthoritiesSnapshot extends AuthoritiesSnapshotType { }
+export interface AuthoritiesSnapshot extends AuthoritiesSnapshotType {}
 
 export const MobileUserModel = types
   .model("MobileUserModel")
@@ -22,7 +20,7 @@ export const MobileUserModel = types
     user_id: types.string,
     login: types.string,
     fcm_token: types.string,
-    authorities: types.array(AuthoritiesModel)
+    authorities: types.array(AuthoritiesModel),
   })
   .views((self) => {
     return {
@@ -31,25 +29,22 @@ export const MobileUserModel = types
           self.user_id,
           self.login,
           self.fcm_token,
-          self.authorities
+          self.authorities,
         )
-        if (rs.kind === 'ok') {
-          console.log('Success')
-        }
-        else {
-          console.log('Error')
+        if (rs.kind === "ok") {
+          console.log("Success")
+        } else {
+          console.log("Error")
           throw Error(rs.kind)
         }
-      }
+      },
     }
   })
 
 type MobileUserType = Instance<typeof MobileUserModel>
-export interface MobileUser extends MobileUserType { }
+export interface MobileUser extends MobileUserType {}
 type MobileUserSnapshotType = SnapshotOut<typeof MobileUserModel>
-export interface MobileUserSnapshot extends MobileUserSnapshotType { }
-
-
+export interface MobileUserSnapshot extends MobileUserSnapshotType {}
 
 export const AuthStoreModel = types
   .model("AuthStore")
@@ -58,15 +53,25 @@ export const AuthStoreModel = types
     isQuest: types.optional(types.maybe(types.boolean), undefined),
     authInfo: types.optional(types.maybe(AuthInfoModel), undefined),
     login: types.optional(types.maybe(LoginModel), undefined),
-    saveuser:types.optional(types.array(MobileUserModel),[]),
-    unauthorized: types.optional(types.number, 0)
+    userLogin: types.maybeNull(types.string),
+    saveuser: types.optional(types.array(MobileUserModel), []),
+    unauthorized: types.optional(types.number, 0),
   })
-  .actions((self)=>{
-    return{
-      saveUser:(data:MobileUser) => {
+  .actions((self) => {
+    return {
+      saveUser: (data: MobileUser) => {
         self.saveuser.push(data)
-        return (data)
-      }
+        return data
+      },
+      saveCurrentInfo: (user: string) => {
+        self.userLogin = user
+        return
+      },
+      clearLogout:async ()=>{
+        self.userLogin = null
+        return 
+
+      },
     }
   })
   .views((self) => {
@@ -92,11 +97,12 @@ export const AuthStoreModel = types
           // api.setToken(rs.login.access_token)
           const rootStore = getRootStore(self)
           // await rootStore.appStore.loadAppDataInfo(true, true)
-          const data = await authApi.getUser()
+          const user = await authApi.getUser()
+
+
           // console.log(JSON.stringify(data.data))
           // console.log(data.data)
           rootStore.authenticationStore.setAuthToken(rs.login.access_token)
-
         } else {
           // Alert.alert(
 
@@ -120,18 +126,18 @@ export const AuthStoreModel = types
           throw Error(rs.kind)
         }
       },
+    
       getUserInfo: async () => {
         const user = await authApi.getUser()
+
         return user
       },
-
     }
   })
 
-
 type AuthStoreType = Instance<typeof AuthStoreModel>
-export interface AuthStore extends AuthStoreType { }
+export interface AuthStore extends AuthStoreType {}
 type AuthStoreSnapshotType = SnapshotOut<typeof AuthStoreModel>
-export interface AuthStoreSnapshot extends AuthStoreSnapshotType { }
+export interface AuthStoreSnapshot extends AuthStoreSnapshotType {}
 
 export const createAuthStoreDefaultModel = () => types.optional(AuthStoreModel, {})

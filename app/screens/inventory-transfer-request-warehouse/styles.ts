@@ -24,6 +24,7 @@ export default StyleSheet.create({
   },
   rightPane: {
     padding: 10,
+    marginBottom:30
   },
   item: {
     fontSize: 18,
