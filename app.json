@@ -6,7 +6,7 @@
     "name": "Digitization Production",
     "slug": "digitization-production-app-expo",
     "scheme": "digitization-production-app-expo",
-    "version": "1.0.0",
+    "version": "0.0.1",
     "orientation": "landscape",
     "icon": "./assets/images/app-icon-all.png",
     "splash": {
@@ -24,10 +24,19 @@
     "android": {
       "icon": "./assets/images/app-icon-android-legacy.png",
       "package": "com.digitizationproduction",
+      "projectId":"digitizationproduction",
+      "useNextNotificationsApi": true,
       "googleServicesFile": "./google-services.json",
+      "permissions": ["NOTIFICATIONS"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
-        "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
+        "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "extra": {
+        "eas": {
+          "projectId": "a304e16d-a123-4ade-810e-5a0eaaf1da15"
+        }
       },
       
       "splash": {
@@ -72,18 +81,8 @@
           }
         }
       ],
-      [
-        "expo-notifications",
-        {
-          // "icon": "./local/path/to/myNotificationIcon.png",
-          "color": "#ffffff"
-          // "sounds": [
-          //   "./local/path/to/mySound.wav",
-          //   "./local/path/to/myOtherSound.wav"
-          // ],
-          // "mode": "production"
-        }
-      ]
+      ["expo-notifications"],
+      "@react-native-firebase/app"
     ],
     "experiments": {
       "tsconfigPaths": true

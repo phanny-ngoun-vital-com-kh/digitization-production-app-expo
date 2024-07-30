@@ -12,7 +12,7 @@ const firebaseConfig = {
     measurementId: "G-C2R27WBL7V"
 };
 
-if (!firebase.apps.length) {
+if (!firebase?.apps??.length) {
     firebase.initializeApp(firebaseConfig);
 }
 messaging().setBackgroundMessageHandler(async remoteMessage => {

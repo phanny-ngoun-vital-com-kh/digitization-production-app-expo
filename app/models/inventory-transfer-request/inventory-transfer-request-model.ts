@@ -1,4 +1,4 @@
-import { inventorytransferrequestApi } from "app/services/api/inventory-transfer-request-api"
+import { inventorytransferrequestApi } from "../../services/api/inventory-transfer-request-api"
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
 
 export const ItemModel = types
@@ -110,6 +110,9 @@ export const ProvidedListModel = types
         createdDate:types.maybeNull(types.string),
         lastModifiedBy:types.maybeNull(types.string),
         lastModifiedDate:types.maybeNull(types.string),
+        transfer_request:types.maybeNull(types.string),
+        activities_name:types.maybeNull(types.string),
+        action:types.maybeNull(types.string),
     })
     .views((self) => {
         return {
@@ -118,6 +121,9 @@ export const ProvidedListModel = types
                     self.provided,
                     self.remark,
                     self.status,
+                    self.transfer_request,
+                    self.activities_name,
+                    self.action,
                 )
                 if (rs.kind === 'ok')
                     console.log('Success')

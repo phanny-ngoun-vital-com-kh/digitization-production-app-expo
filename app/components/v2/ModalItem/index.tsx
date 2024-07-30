@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, View, FlatList, TouchableOpacity, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { Modal, View, FlatList, TouchableOpacity, useWindowDimensions, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import Icon from '../Icon';
-import { BaseStyle, useTheme } from 'app/theme-v2';
+import { BaseStyle, useTheme } from '../../../theme-v2';
 import styles from './styles';
 import { Text, TextInput, Button } from '..';
-import { Bom, ItemList } from 'app/models/item/item-model';
+import { Bom, ItemList } from '../../../models/item/item-model';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import SelectDropdown from 'react-native-select-dropdown'
-import { useStores } from "app/models"
+import { useStores } from "../../../models"
 import { Dropdown } from 'react-native-element-dropdown';
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 interface ModalProps {
   data: ItemList[];
@@ -24,8 +24,6 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
   const {
     inventoryRequestStore
   } = useStores()
-
-  const dropfromwarehouseRef = useRef<SelectDropdown>(null);
 
   const FirstRoute = () => {
     const [textInputValue, setTextInputValue] = useState('');
@@ -44,8 +42,8 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
       //   behavior={Platform.OS === "ios" ? "padding" : "height"}
       //   style={{ flex: 1 }}
       // >
-        <View style={{ flex: 1 }}>
-          <View style={{flexDirection:'row',width:'100%'}}>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', width: '100%' }}>
           <TextInput
             style={[BaseStyle.textInput, { marginTop: 20, marginBottom: 20 }]}
             keyboardType="default"
@@ -59,45 +57,43 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
               name={"search"}
             />}
           />
-          <TouchableOpacity onPress={()=>textChange(textInputValue)} style={styles.buttonSearch}><Text>Search</Text></TouchableOpacity>
-          </View>
-          <FlatList
-            numColumns={1}
-            data={data}
-            renderItem={({ item }) =>
-              <View style={{}}>
-                <View style={{ flexDirection: 'row', marginTop: 5, marginBottom: 5 }}>
-                  <Text body1 accentColor style={{ marginRight: '2%', fontWeight: '500' }}>{item.itemName}</Text>
-                  <Text body1 grayColor>{item.itemCode}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', width: '100%' }}>
-                  <View style={{ flexDirection: 'row', width: '30%' }}>
-                    <Text body1 grayColor>Group: </Text>
-                    <Text body1 accentColor>{item.item_group.map(i => i.itemGroupName)}</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', width: '25%' }}>
-                    <Text body1 grayColor>UoM: </Text>
-                    <Text body1 accentColor>{item.inventoryUoM}</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', width: '20%' }}>
-                    <Text body1 grayColor>Business Unit: </Text>
-                    <Text body1 accentColor>{item.tendency}</Text>
-                  </View>
-                  <View style={{ width: '24%' }}>
-                    <TouchableOpacity onPress={() => handleAddPress(item)}>
-                      <Text body1 style={{ textAlign: 'right', color: '#2292EE' }} >Add</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <View style={styles.divider}></View>
-              </View>
-            }
-          />
-          {/* </View> */}
-
-          <Button >Add</Button>
-
+          <TouchableOpacity onPress={() => textChange(textInputValue)} style={styles.buttonSearch}><Text>Search</Text></TouchableOpacity>
         </View>
+        <FlatList
+          numColumns={1}
+          data={data}
+          renderItem={({ item }) =>
+            <View style={{}}>
+              <View style={{ flexDirection: 'row', marginTop: 5, marginBottom: 5 }}>
+                <Text body1 accentColor style={{ marginRight: '2%', fontWeight: '500' }}>{item.itemName}</Text>
+                <Text body1 grayColor>{item.itemCode}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', width: '100%' }}>
+                <View style={{ flexDirection: 'row', width: '30%' }}>
+                  <Text body1 grayColor>Group: </Text>
+                  <Text body1 accentColor>{item.item_group.map(i => i.itemGroupName)}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', width: '25%' }}>
+                  <Text body1 grayColor>UoM: </Text>
+                  <Text body1 accentColor>{item.inventoryUoM}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', width: '20%' }}>
+                  <Text body1 grayColor>Business Unit: </Text>
+                  <Text body1 accentColor>{item.tendency}</Text>
+                </View>
+                <View style={{ width: '24%' }}>
+                  <TouchableOpacity onPress={() => handleAddPress(item)}>
+                    <Text body1 style={{ textAlign: 'right', color: '#2292EE' }} >Add</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.divider}></View>
+            </View>
+          }
+        />
+        {/* </View> */}
+
+      </View>
       // </KeyboardAvoidingView>
     );
   }
@@ -107,6 +103,7 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
     const [fatherCode, setFatherCode] = useState('')
     const [bomSearch, setBomSearch] = useState('')
     const [qty, setQty] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
       const getBom = async () => {
@@ -126,14 +123,26 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
 
     const handleAddToSubItemList = () => {
       // Calculate the values
-      const calculatedValues = subItem.map(item => ({
-        ...item,
-        quantity: (item.childItem.reduce((acc, v) => acc + parseFloat(v.quantity), 0)) * parseFloat(qty)
-      }));
-      // Update the subItem list with the calculated values
-      setSubItem(calculatedValues);
-      for (let r = 0; r < calculatedValues.length; r++) {
-        onAddPress(calculatedValues[r]);
+      try {
+        setIsLoading(true)
+        const calculatedValues = subItem.map(item => ({
+          ...item,
+          quantity: (item.childItem.reduce((acc, v) => acc + parseFloat(v.quantity), 0)) * parseFloat(qty)
+        }));
+        // Update the subItem list with the calculated values
+        setSubItem(calculatedValues);
+        for (let r = 0; r < calculatedValues?.length; r++) {
+          onAddPress(calculatedValues[r]);
+        }
+      } catch (e) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'បរាជ័យ',
+          textBody: 'បរាជ័យ',
+          button: 'បិទ',
+        })
+      } finally {
+        setIsLoading(false)
       }
     };
 
@@ -146,48 +155,17 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
               <Text style={{ margin: 5, fontSize: 18 }}>Item</Text>
             </View>
             <Dropdown style={styles.dropdown}
-                    data={bomList}
-                    labelField="product_name"
-                    valueField="product_code"
-                    placeholder="Select Bom"
-                    // onSelect={setSelected}
-                    search
-                    value={bomList}
-                    onChangeText={(text:any) => setBomSearch(text)}
-                    onChange={item => {
-                      setFatherCode(item.product_code)
-                      // setSearchWarehouse('')
-                        // console.log(item)
-                        // console.log(item.title)
-
-                        // setSelected(item.title);
-                    }} />
-            <SelectDropdown
               data={bomList}
-              search={true}
-              onChangeSearchInputText={(text) => setBomSearch(text)}
-              defaultButtonText="Please Select"
-              ref={dropfromwarehouseRef}
-              onSelect={(selectedItem, index) => {
-                setFatherCode(selectedItem.product_code)
-              }}
-              buttonTextAfterSelection={(selectedItem, index) => {
-                return selectedItem.product_name
-              }}
-              rowTextForSelection={(item, index) => {
-                return item.product_name
-              }}
-              dropdownIconPosition='right'
-              renderDropdownIcon={() => (
-                <Icon name="angle-down" />
-              )}
-              renderSearchInputLeftIcon={() => (
-                <Icon name="search" />
-              )}
-              dropdownStyle={styles.dropdownStyle}
-              buttonStyle={styles.buttonStyle}
-              buttonTextStyle={styles.buttonTextStyle}
-            />
+              labelField="product_name"
+              valueField="product_code"
+              placeholder="Select Bom"
+              // onSelect={setSelected}
+              search
+              value={bomList}
+              onChangeText={(text: any) => setBomSearch(text)}
+              onChange={item => {
+                setFatherCode(item.product_code)
+              }} />
           </View>
           <View style={{ marginTop: 5, marginBottom: 20, width: '29%', marginLeft: 10 }}>
             <View style={{ flexDirection: 'row' }}>
@@ -249,7 +227,13 @@ const ModalItem: React.FC<ModalProps> = ({ tendency, data, isVisible, onClose, t
           </View>
           : <View></View>}
         <View style={{ justifyContent: 'flex-end', width: '20%', marginLeft: 'auto' }}>
-          <Button onPress={handleAddToSubItemList}>Add</Button>
+          {/* <Button onPress={handleAddToSubItemList}>Add</Button> */}
+          <Button onPress={handleAddToSubItemList} disabled={isLoading}>
+            {isLoading ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 17 }}>Add</Text><ActivityIndicator color="white" /></View>
+            ) : (
+              <Text style={{ color: '#fff' }}>Add</Text>
+            )}</Button>
         </View>
       </View>
     );

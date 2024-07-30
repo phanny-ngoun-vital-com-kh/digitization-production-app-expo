@@ -1,7 +1,7 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
 import { AuthInfoModel } from "./AuthInfo"
 import { LoginModel } from "./LoginModel"
-import { authApi } from "app/services/api/auth-api"
+import { authApi } from "../../services/api/auth-api"
 import { getRootStore } from "../helpers/getRootStore"
 
 export const AuthoritiesModel = types.model("AuthoritiesModel").props({

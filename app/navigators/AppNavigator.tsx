@@ -14,9 +14,8 @@ import {
 } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 import { observer } from "mobx-react-lite"
-import React, { useState } from "react"
-import { TouchableOpacity, useColorScheme } from "react-native"
-import * as Screens from "app/screens"
+import React, { useEffect, useState } from "react"
+import { Platform, StatusBar, TouchableOpacity, useColorScheme } from "react-native"
 import Config from "../config"
 import { useStores } from "../models"
 import DrawerContent from "./DrawerContent"
@@ -35,6 +34,7 @@ import { InventoryTransferScreen } from "app/screens/inventory-transfer"
 import { api } from "app/services/api"
 import { AddTransferScreen } from "app/screens/inventory-transfer-request-warehouse/add-transfer"
 import { Treatment } from "app/models/water-treatment/water-treatment-model"
+import * as Screens from "app/screens"
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
  * as well as what properties (if any) they might take when navigating to them.
@@ -56,11 +56,11 @@ export type WTP2ParamsForm = {
 export type AppStackParamList = {
   Welcome: undefined
   Login: undefined
-  login: undefined
-  Home: undefined
-  AddTransferRequestForm: undefined
-  InventoryTransfer: undefined
-  AddTransfer: undefined
+  login: undefined,
+  Home: undefined,
+  AddTransferRequestForm: undefined,
+  InventoryTransfer: undefined,
+  AddTransfer: undefined,
   InventoryTransferRequestWarehouse: undefined
   InventoryTransferRequestProduction: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
@@ -128,10 +128,33 @@ const AppStack = observer(function AppStack(props: {
 }) {
   const {
     authenticationStore: { isAuthenticated },
-    authStore: { getUserInfo },
-  } = useStores()
-  const navigation = useNavigation()
+    authStore: { getUserInfo }
+  } = useStores();
+  const navigation = useNavigation();
+  // const [message, setMessage] = useState()
+  // const [isNotiVisible, setNotiVisible] = useState(false);
 
+  // try {
+  //   Notifications.setNotificationHandler({
+  //     handleNotification: async (notification) => {
+  //       const { title, body } = notification.request.content.data;
+  //       setMessage(notification)
+
+  //       console.log("Received notification with title:", title);
+  //       console.log("Received notification with message:", body);
+  //       setNotiVisible(true);
+  //       return {
+  //         shouldShowAlert: true,
+  //         shouldPlaySound: true,
+  //         shouldSetBadge: false,
+  //       };
+  //     },
+  //   });
+  // } catch (e) {
+  //   console.log(e)
+  // }
+
+  // console.log('hii11')
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false, navigationBarColor: colors.background }}
@@ -355,7 +378,7 @@ const AppStack = observer(function AppStack(props: {
 })
 
 export interface NavigationProps
-  extends Partial<React.ComponentProps<typeof NavigationContainer>> {}
+  extends Partial<React.ComponentProps<typeof NavigationContainer>> { }
 
 export const AppNavigator = observer(function AppNavigator(props: NavigationProps) {
   const colorScheme = useColorScheme()
@@ -364,7 +387,6 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
     authenticationStore: { authToken, setTimeout, logout, username, password },
     authStore: { doLogin },
   } = useStores()
-
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   api.setAppInitConfig({
@@ -380,6 +402,37 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
     },
   })
 
+  const isDarkMode = colorScheme === "dark"
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      StatusBar.setBackgroundColor(isDarkMode ? "black" : "white", true)
+    }
+    StatusBar.setBarStyle(isDarkMode ? "light-content" : "dark-content", true)
+    // setForceDark(isDarkMode)
+  }, [isDarkMode])
+
+
+  // try{
+  //   Notifications.setNotificationHandler({
+  //     handleNotification: async (notification) => {
+  //       const { title, body } = notification.request.content.data;
+  //       setMessage(notification)
+
+  //       console.log("Received notification with title:", title);
+  //       console.log("Received notification with message:", body);
+  //       setNotiVisible(true);
+  //       return {
+  //         shouldShowAlert: true,
+  //         shouldPlaySound: true,
+  //         shouldSetBadge: false,
+  //       };
+  //     },
+  //   });
+  // }catch(e){
+  //   console.log(e)
+  // }
+
   return (
     <NavigationContainer
       ref={navigationRef}
@@ -387,6 +440,13 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
       {...props}
     >
       <DrawerScreen />
+      {/* <NotificSoundModal
+        color={message?.request.content.title == 'New Transfer Request' || message?.request.content.title == 'Rejected' ? "red" : 'green'}
+        title={message?.request.content.title}
+        message={message?.request.content.body}
+        onClose={() => setNotiVisible(false)}
+        isVisible={isNotiVisible}
+      /> */}
     </NavigationContainer>
   )
 })

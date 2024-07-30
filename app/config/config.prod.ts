@@ -7,8 +7,15 @@
  */
 const PROTOCOL = 'http'
 
-export const IP = '10.0.12.247'
-const PORT = '85'
+// QA
+// export const IP = '10.0.12.247'
+// const PORT = '85'
+
+// Prodution
+export const IP = 'ies.vital.com.kh'
+const PORT = '80'
+// export const IP = '10.0.8.215'
+// const PORT = '80'
 
 export default {
   API_URL: `${PROTOCOL}://${IP}:${PORT}`,

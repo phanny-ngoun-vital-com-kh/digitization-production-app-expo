@@ -16,7 +16,7 @@ const getParams = (params = []) => {
 }
 
 const getWaypoints = (waypoints = []) => {
-  if (waypoints.length === 0) {
+  if (waypoints?.length === 0) {
     return ''
   }
 

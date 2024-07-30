@@ -37,7 +37,7 @@ export const EpisodeModel = types
 
       const titleMatches = defaultValue.title.match(/^(RNR.*\d)(?: - )(.*$)/)
 
-      if (!titleMatches || titleMatches.length !== 3) return defaultValue
+      if (!titleMatches || titleMatches?.length !== 3) return defaultValue
 
       return { title: titleMatches[1], subtitle: titleMatches[2] }
     },

@@ -29,10 +29,10 @@ const ListInventoryTransfer = ({ data, style, onPress }: Props) => {
         <TouchableOpacity onPress={onPress}>
             <DataTable style={{ margin: 5 }}>
                 <DataTable.Row key={data.id}>
+                <DataTable.Cell style={{ flex: 0.8 }} textStyle={styles.textHeader}>{`PDR-${String(data.transfer_request).padStart(6, '0')}`}</DataTable.Cell>
                     <DataTable.Cell style={{ flex: 0.8 }} textStyle={styles.textHeader}>{`PDT-${String(data.id).padStart(6, '0')}`}</DataTable.Cell>
-                    <DataTable.Cell style={{ flex: 0.8 }} textStyle={styles.textHeader}>{`PDR-${String(data.transfer_request).padStart(6, '0')}`}</DataTable.Cell>
                     <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{data.transfer_type}</DataTable.Cell>
-                    <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}>{data.line}</DataTable.Cell>
+                    <DataTable.Cell style={{ flex: 0.5 }} textStyle={styles.textHeader}><Text style={{ fontSize: 18 }}>{data.line}</Text></DataTable.Cell>
                     <DataTable.Cell style={{ flex: 0.4 }} textStyle={styles.textHeader}>{data.shift}</DataTable.Cell>
                     <DataTable.Cell style={{ flex: 0.6 }} textStyle={styles.textHeader}>{data.createdBy}</DataTable.Cell>
                     <DataTable.Cell style={{ flex: 0.8 }} textStyle={styles.textHeader}>{moment(data.createdDate).format('YYYY-MM-DD')}</DataTable.Cell>

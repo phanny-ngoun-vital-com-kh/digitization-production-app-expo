@@ -1,21 +1,21 @@
-import { inventorytransferApi } from "app/services/api/invantory-transfer-api";
+import { inventorytransferApi } from "../../services/api/invantory-transfer-api";
 import { Instance, SnapshotOut, types } from "mobx-state-tree";
 
 export const ItemTranderModel = types
     .model("ItemTranderModel")
     .props({
-        id: types.number,
-        item_code: types.string,
-        item_name: types.string,
-        quantity: types.string,
-        received: types.string,
-        itemReceive:types.number,
-        remark: types.string,
-        total: types.string,
+        id: types.maybeNull(types.number),
+        item_code: types.maybeNull(types.string),
+        item_name: types.maybeNull(types.string),
+        quantity: types.maybeNull(types.string),
+        received: types.maybeNull(types.string),
+        itemReceive:types.maybeNull(types.number),
+        remark: types.maybeNull(types.string),
+        total: types.maybeNull(types.string),
         // transfer_request: types.string,
-        uom: types.string,
-        is_receive: types.string,
-        supplier: types.string
+        uom: types.maybeNull(types.string),
+        is_receive: types.maybeNull(types.string),
+        supplier: types.maybeNull(types.string)
     })
 
 type ItemTranderType = Instance<typeof ItemTranderModel>
@@ -26,17 +26,17 @@ export interface ItemTranderSnapshot extends ItemTranderSnapshotType { }
 export const TransferModel = types
     .model('TransferModel')
     .props({
-        transfer_type: types.string,
-        business_unit: types.string,
-        status: types.string,
-        transfer_request: types.string,
-        transfer_id: types.string,
-        posting_date: types.string,
-        due_date: types.string,
-        from_warehouse: types.number,
-        to_warehouse: types.number,
-        line: types.string,
-        shift: types.string,
+        transfer_type: types.maybeNull(types.string),
+        business_unit: types.maybeNull(types.string),
+        status: types.maybeNull(types.string),
+        transfer_request: types.maybeNull(types.string),
+        transfer_id: types.maybeNull(types.string),
+        posting_date: types.maybeNull(types.string),
+        due_date: types.maybeNull(types.string),
+        from_warehouse: types.maybeNull(types.number),
+        to_warehouse: types.maybeNull(types.number),
+        line: types.maybeNull(types.string),
+        shift: types.maybeNull(types.string),
         items: types.array(ItemTranderModel)
     })
     .views((self) => {
@@ -117,7 +117,11 @@ export const CloseTransfer = types
         status:types.maybeNull(types.string),
         statusChange:types.maybeNull(types.string),
         state:types.maybeNull(types.string),
-        docEntry: types.maybeNull(types.number)
+        docEntry: types.maybeNull(types.number),
+        activities_name:types.maybeNull(types.string),
+        action:types.maybeNull(types.string),
+        transfer_request_id:types.maybeNull(types.string),
+        remark:types.maybeNull(types.string),
     })
     .views((self)=>{
         return{
@@ -137,7 +141,12 @@ export const CloseTransfer = types
                     self.status,
                     self.statusChange,
                     self.state,
-                    self.docEntry
+                    self.docEntry,
+                    self.activities_name,
+                    self.action,
+                    self.transfer_request_id,
+                    self.remark,
+
                 )
                 if (rs.kind === 'ok')
                     console.log('Success')
@@ -180,7 +189,16 @@ export const TransferStore = types
     .views((self) => {
         return {
             getTransferList: async (transfer_type: string, transfer_request?: string) => {
-                const rs = await inventorytransferApi.getInvantoryTransfer(20, transfer_type, transfer_request)
+                const rs = await inventorytransferApi.getInvantoryTransfer(10, transfer_type, transfer_request)
+                if (rs.kind === 'ok') {
+                    return rs.payload
+                } else {
+                    console.log('Error')
+                    throw Error(rs.kind)
+                }
+            },
+            getInvantoryTransferFinalList: async (transfer_type: string, transfer_request?: string) => {
+                const rs = await inventorytransferApi.getInvantoryTransferFinal(10, transfer_type, transfer_request)
                 if (rs.kind === 'ok') {
                     return rs.payload
                 } else {

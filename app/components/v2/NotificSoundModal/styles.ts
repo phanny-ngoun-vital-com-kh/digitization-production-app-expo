@@ -8,10 +8,11 @@ export default StyleSheet.create({
     },
     model: {
         backgroundColor: 'white',
+        marginTop: 'auto',
+        marginBottom:'auto',
         padding: 20,
-        marginTop: '5%',
         borderRadius: 10,
-        width: '45%',
+        width: '40%',
         // height: '40%',
         shadowColor: '#000',
         shadowOffset: {
@@ -35,26 +36,25 @@ export default StyleSheet.create({
         marginLeft: 'auto',
     },
     button_cancel: {
-        marginLeft: '48%',
-        width: '25%',
-        backgroundColor: 'white',
-        borderColor: 'gray',
-        borderWidth: 1
+        width: '20%',
+        backgroundColor: '#2292EE',
     },
-    butuon_view: {
+    button_view: {
         marginTop: '5%',
         flexDirection: 'row',
-        width: '100%'
+        width: '100%',
+        justifyContent:'flex-end'
     },
-    input: {
-        borderWidth: 1,
-        backgroundColor: '#fff',
-        borderColor: '#696969',
-        marginLeft: '7%',
-        width: '93%',
-        height: 47,
-        marginTop: '2%',
-        borderRadius: 10,
-    }
-
+    message: {
+        marginTop: 30,
+        // textAlign: 'center',
+        // marginEnd:'auto'
+      },
+      title: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginEnd:'auto',
+        marginLeft:15
+        // marginBottom: 10,
+      },
 });

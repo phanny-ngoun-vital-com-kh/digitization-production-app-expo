@@ -11,13 +11,25 @@ const ApiEndpoint = {
     fetchPagingTransferFg:'fetch-paging-transfer-fg',
     saveTransfer:'save-transfer',
     receiveStatusChange:'receive-status-change',
-    closeSapTransfer:'close-sap-transfer'
+    closeSapTransfer:'close-sap-transfer',
+    fetchPagingTransferFinal:'fetch-paging-transfer-final'
 }
 
 export class InventoryTransferApi extends BaseApi{
     async getInvantoryTransfer(pageSize:number = 20,transfer_type:string,transfer_request?:string):Promise<GetInvantoryTransferResult>{
         try{
             const rs = await this.requestService.page<InventoryTransfer>(ApiEndpoint.fetchPagingTransfer,{
+                advanceSearch: {transfer_type: transfer_type,transfer_request:transfer_request}
+            },pageSize)
+            return DataResponse<Page<InventoryTransfer>>(rs)
+        }catch(e:any){
+            __DEV__ && console.tron.log(e.message)
+            return { kind: "bad-data" }
+        }
+    }
+    async getInvantoryTransferFinal(pageSize:number = 20,transfer_type:string,transfer_request?:string):Promise<GetInvantoryTransferResult>{
+        try{
+            const rs = await this.requestService.page<InventoryTransfer>(ApiEndpoint.fetchPagingTransferFinal,{
                 advanceSearch: {transfer_type: transfer_type,transfer_request:transfer_request}
             },pageSize)
             return DataResponse<Page<InventoryTransfer>>(rs)
@@ -87,7 +99,7 @@ export class InventoryTransferApi extends BaseApi{
         }
     }
 
-    async closeTransfer(id:number,items:any,transfer_type:string,business_unit:string,transfer_request:number,posting_date:string,due_date:string,from_warehouse:number,to_warehouse:number,line:string,shift:string,status:string,statusChange:string,state:string,docEntry:number):Promise<any>{
+    async closeTransfer(id:number,items:any,transfer_type:string,business_unit:string,transfer_request:number,posting_date:string,due_date:string,from_warehouse:number,to_warehouse:number,line:string,shift:string,status:string,statusChange:string,state:string,docEntry:number,activities_name:string,action:string,transfer_request_id:string,remark:string,):Promise<any>{
         try{
             const rs = await this.requestService.exec(ApiEndpoint.closeSapTransfer,{
                 id,
@@ -104,7 +116,11 @@ export class InventoryTransferApi extends BaseApi{
                 status,
                 statusChange,
                 state,
-                docEntry
+                docEntry,
+                activities_name,
+                action,
+                transfer_request_id,
+                remark
             })
             return DataResponse(rs)
         }catch(e:any){
