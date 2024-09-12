@@ -40,6 +40,7 @@ export const HaccpMonitoringStoreModel = types
           throw Error(rs.kind)
         }
       },
+   
 
       getLinesById: async (params: { assign_date: string; line: string; haccp_id: string }) => {
         const rs = await haccpMonitorApi.getHaccpLine(params)
@@ -73,6 +74,15 @@ export const HaccpMonitoringStoreModel = types
 
         if (rs.kind === "ok") {
           console.log("Success")
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
+      getinstruction:async(group_line:string)=>{
+        const rs = await haccpMonitorApi.getInstruction(group_line)
+        if (rs.kind === "ok") {
+          return rs?.payload
         } else {
           console.log("Error")
           throw Error(rs.kind)

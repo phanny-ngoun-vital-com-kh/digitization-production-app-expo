@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   ScrollView,
+  TextInput
 } from "react-native"
 import { Text } from "app/components/v2"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
@@ -22,21 +23,35 @@ import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 import { translate } from "../../../i18n/translate"
+import IconAntDesign from "react-native-vector-icons/AntDesign"
 
-interface PreWaterForm2ScreenProps extends AppStackScreenProps<"PreWaterForm2"> {}
+interface PreWaterForm2ScreenProps extends AppStackScreenProps<"PreWaterForm2"> { }
 
 export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
   function PreWaterForm2Screen() {
+
     const { preWaterTreatmentStore, authStore } = useStores()
     const navigation = useNavigation()
     const route = useRoute().params
     const [isScanning, setScanning] = useState(false)
     const [image, setImage] = useState(null)
-    const [oldRoute, setRoute] = useState({})
-    const [hasCompleted, setCompleted] = useState(false)
     const [activities, setActivities] = useState([])
     const [showLog, setShowlog] = useState<boolean>(false)
     const [isLoading, setLoading] = useState<boolean>(false)
+    const assignedUsers = route?.item?.assign_to_user.split(' ');
+    const isUserAssigned = assignedUsers.includes(authStore?.userLogin);
+    // const isEdit = (route?.isvalidDate && isUserAssigned && route?.isValidShift)
+    const [isEdit, setIsEdit] = useState()
+    const [sf1, setSf1] = useState(route?.item?.sf1 || '')
+    const [sf2, setSf2] = useState(route?.item?.sf2 || '')
+    const [acf1, setacf1] = useState(route?.item?.acf1 || '')
+    const [acf2, setacf2] = useState(route?.item?.acf2 || '')
+    const [um101, setum101] = useState(route?.item?.um101 || '')
+    const [um102, setum102] = useState(route?.item?.um102 || '')
+    const [other, setOther] = useState(route?.item?.remark || '')
+    const [rawWater, setRawWater] = useState(route?.item?.raw_water || '')
+    const [bufferSt002, setBufferSt002] = useState(route?.item?.buffer_st002 || '')
+
     const [form, setForm] = useState({
       sf1: "",
       sf2: "",
@@ -61,120 +76,6 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       raw_water: true,
       buffer_st002: true,
     })
-
-    const getWarningcount = () => {
-      const restrictSf1 = +form.sf1 < 0.2 || +form.sf1 > 0.5
-
-      const restrictSf2 = +form.sf2 < 0.2 || +form.sf2 > 0.5
-
-      const restrictAf1 = +form.acf1 < 0.2 || +form.acf1 > 0.5
-
-      const restrictAf2 = +form.acf2 < 0.2 || +form.acf2 > 0.5
-
-      const restricttenMm1 = +form?.um101 > 2.5 || +form?.um101 < 1
-
-      const restrictenMm2 = +form?.um102 > 2.5 || +form?.um102 < 1
-
-      const restrictRawater = +form?.raw_water > 8.5 || +form?.raw_water < 6.5
-      const restrictBuffer = +form?.buffer_st002 > 8.5 || +form?.buffer_st002 < 6.5
-
-      let warningcount = 0
-      if (route?.type?.toLowerCase()?.startsWith("pressure")) {
-        if (restrictSf1 || restrictSf2 || restrictAf1 || restrictAf2) {
-          warningcount += +restrictSf1 + +restrictSf2 + +restrictAf1 + +restrictAf2
-        }
-
-        if (restricttenMm1 || restrictenMm2) {
-          warningcount += +restricttenMm1 + +restrictenMm2
-        }
-      } else {
-        if (restrictSf1 || restrictSf2 || restrictAf1 || restrictAf2) {
-          warningcount += +restrictSf1 + +restrictSf2 + +restrictAf1 + +restrictAf2
-        }
-
-        if (restrictRawater || restrictBuffer) {
-          warningcount += +restrictRawater + +restrictBuffer
-        }
-      }
-
-      return warningcount
-    }
-    const getUserActivities = () => {
-      const modifedForm = form
-      const arrActions = []
-      delete modifedForm.remarks
-      if (route?.type?.includes("Pressure Drop")) {
-        delete modifedForm.raw_water
-        delete modifedForm.buffer_st002
-      }
-
-      for (const key in modifedForm) {
-        if (+oldRoute[key] !== +form[key]) {
-          arrActions.push({
-            name: key,
-            oldValue: oldRoute[key],
-            value: form[key],
-          })
-        }
-      }
-      const str = []
-      for (const item of arrActions) {
-        str.push("" + item.name.toUpperCase() + " from " + item.oldValue + " to " + item.value)
-      }
-      return "has modified " + str.join(" , ")
-    }
-    const handleSubmitting = async () => {
-      try {
-        const payload = PreTreatmentListItemModel.create({
-          id: route?.item?.id,
-          control: route?.type,
-          pre_treatment_id: route?.item?.pre_treatment_id ?? "",
-          pre_treatment_type: route?.item?.pre_treatment_type ?? "",
-          action: !hasCompleted ? "has completed the form" : getUserActivities(),
-          sf1: form.sf1,
-          sf2: form.sf2,
-          acf1: form.acf2,
-
-          acf2: form.acf2,
-          um101: form.um101,
-
-          um102: form.um102,
-          raw_water: form.raw_water,
-          buffer_st002: form.buffer_st002,
-          status: getWarningcount() > 0 ? "warning" : "normal",
-          warning_count: getWarningcount(),
-          remark: form.remarks,
-        })
-        setRoute({
-          sf1: form.sf1,
-          sf2: form.sf2,
-          acf1: form.acf2,
-          acf2: form.acf2,
-          um101: form.um101,
-          um102: form.um102,
-          raw_water: form.raw_water,
-          buffer_st002: form.buffer_st002,
-          remark: form.remarks,
-        })
-        setLoading(true)
-        setCompleted(true)
-
-        await preWaterTreatmentStore.addPretreatments(payload).savePreWtp4()
-        fetchUserActivity()
-        route?.onBack()
-      } catch (error) {
-        console.log(error.message)
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "បរាជ័យ",
-          textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
-          button: "បិទ",
-          autoClose: 500,
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
 
     const setImageToform = (result: string[]) => {
       const blocktext = result as string[]
@@ -418,47 +319,57 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
       setActivities(result.sort((a, b) => new Date(b.actionDate) - new Date(a.actionDate)))
     }
 
-    const checkUserRole = async () => {
-      // console.log("machine user assign to", route?.items?.assign_to_user)
-      setEditable(route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift)
-    }
+    useEffect(() => {
+      const role = async () => {
+        try {
+          const rs = await authStore.getUserInfo();
+          const admin=rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
+          const edit = (route?.isvalidDate && isUserAssigned && route?.isValidShift) || admin
+          setIsEdit(edit)
+          // Modify the list based on the user's role
+          // setGetRole(rs)
+        } catch (e) {
+          console.log(e);
+        }
+      };
+      role();
+    }, []);
+
     useLayoutEffect(() => {
+      const assignedUsers = route?.item?.assign_to_user.split(' ');
+      const isUserAssigned = assignedUsers.includes(authStore?.userLogin);
+      console.log(route?.isvalidDate, isUserAssigned, route?.isValidShift)
       navigation.setOptions({
         headerShown: true,
         title: route?.type,
 
+        headerTitle: (props) => (
+          <TouchableOpacity {...props}>
+            <Text semibold body1>
+              {route?.type}
+
+              {route?.type?.toLowerCase().includes("tds") ? (
+                <Text errorColor semibold body2>
+                  {`  ( < 300 mg/l )`}
+                </Text>
+              ) : route?.type?.toLowerCase().includes("ph") ? (
+                <Text errorColor semibold body2>
+                  {` ( 6.5 - 8.5  )`}
+                </Text>
+              ) : (
+                <Text semibold body1>
+                  {` ΔP`}
+                </Text>
+              )}
+            </Text>
+          </TouchableOpacity>
+        ),
         headerRight: () =>
-          route?.isvalidDate && route?.item?.assign_to_user ? (
+          (isEdit) ? (
             <TouchableOpacity
               style={$horizon}
               disabled={isScanning}
-              onPress={() => {
-                if (route?.type?.toLowerCase()?.startsWith("pressure")) {
-                  let errorslist = errors
-                  delete errorslist.raw_water
-                  delete errorslist.buffer_st002
-                  delete errorslist.remarks
-
-                  const isvalid = Object.values(errorslist).every((error) => error === false)
-
-                  if (!isvalid) {
-                    return
-                  }
-                } else {
-                  let errorslist = errors
-                  delete errorslist.remarks
-
-                  const isvalid = Object.values(errorslist).every((error) => error === false)
-
-                  if (!isvalid) {
-                    return
-                  }
-                }
-
-                // navigation.goBack()
-
-                handleSubmitting()
-              }}
+              onPress={() => { submit() }}
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
               <Text primaryColor body1 semibold>
@@ -469,53 +380,280 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
             <></>
           ),
       })
-    }, [navigation, route, errors, form, isEditable, isScanning])
+    }, [navigation, route, errors, form, isEditable, isScanning, sf1, sf2, acf1, acf2, um101, um102, other,bufferSt002,isEdit])
 
-    console.log('old route',oldRoute)
-    console.log('new route',form)
-    useEffect(() => {
-      checkUserRole()
-      if (route?.item?.sf1 !== null) {
-        setCompleted(true)
-      } else {
-        setCompleted(false)
+    const alert = (title: string, textBody: string) => {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: title,
+        textBody: textBody,
+        button: 'បិទ',
+      })
+    }
+
+    const submit = async () => {
+      let entity
+      if (route?.type?.toLowerCase()?.startsWith("pressure")) {
+        if (sf1 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ SF 1')
+          return
+        }
+        if (sf2 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ SF 2')
+          return
+        }
+        if (acf1 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ ACF 1')
+          return
+        }
+        if (acf2 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ ACF 2')
+          return
+        }
+        if (um101 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ 10µm 1')
+          return
+        }
+        if (um102 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ 10µm 2')
+          return
+        }
+        let updatedWarningCount = 0;
+        let status = 'normal'
+        if (parseFloat(sf1) < 0.2 || parseFloat(sf1) > 0.5) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(sf2) < 0.2 || parseFloat(sf2) > 0.5) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(acf1) < 0.2 || parseFloat(acf1) > 0.5) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(acf2) < 0.2 || parseFloat(acf2) > 0.5) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(um101) > 2.5) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(um102) > 2.5) {
+          updatedWarningCount++;
+        }
+        if (updatedWarningCount > 0) {
+          status = 'warning'
+        }
+        if (route?.item?.status == 'pending') {
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: "Add Treatment",
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type,
+            sf1: sf1,
+            sf2: sf2,
+            acf1: acf1,
+            acf2: acf2,
+            um101: um101,
+            um102: um102,
+            remark: other
+          })
+        } else {
+          const changes = [
+            route?.item?.sf1 != sf1 ? `SF 1 from ${route?.item?.sf1} to ${sf1}` : '',
+            route?.item?.sf2 != sf2 ? `SF 2 from ${route?.item?.sf2} to ${sf2}` : '',
+            route?.item?.acf1 != acf1 ? `ACF1 from ${route?.item?.acf1} to ${acf1}` : '',
+            route?.item?.acf2 != acf2 ? `ACF2 from ${route?.item?.acf2} to ${acf2}` : '',
+            route?.item?.um101 != um101 ? `10µm 1 from ${route?.item?.um101} to ${um101}` : '',
+            route?.item?.um102 != um102 ? `10µm 2 from ${route?.item?.um102} to ${um102}` : '',
+            route?.item?.remark != other ? `Remark from ${route?.item?.remark == null ? '' : route?.item?.remark} to ${other}` : ''
+          ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: `has modified ${actionString}`,
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type,
+            sf1: sf1,
+            sf2: sf2,
+            acf1: acf1,
+            acf2: acf2,
+            um101: um101,
+            um102: um102,
+            remark: other
+          })
+        }
+      } else if (route?.type?.toLowerCase().includes("tds") || route?.type?.toLowerCase().includes("ph")) {
+        if (rawWater == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ Raw Water')
+          return
+        }
+        if (sf1 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ SF')
+          return
+        }
+        if (sf2 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ SF 2')
+          return
+        }
+        if (acf1 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ ACF 1')
+          return
+        }
+        if (acf2 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ ACF 2')
+          return
+        }
+        if (um101 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ 10µm 1')
+          return
+        }
+        if (um102 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ 10µm 2')
+          return
+        }
+        if (bufferSt002 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ Buffer St002')
+          return
+        }
+        let updatedWarningCount = 0;
+        let status = 'normal'
+        if (route?.type?.toLowerCase().includes("tds")) {
+          if (parseFloat(rawWater) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(sf1) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(sf2) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(acf1) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(acf2) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(um101) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(um102) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(bufferSt002) > 300) {
+            updatedWarningCount++;
+          }
+          if (updatedWarningCount > 0) {
+            status = 'warning'
+          }
+        } else if (route?.type?.toLowerCase().includes("ph")) {
+          if (parseFloat(rawWater) < 6.5 || parseFloat(rawWater) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(sf1) < 6.5 || parseFloat(sf1) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(sf2) < 6.5 || parseFloat(sf2) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(acf1) < 6.5 || parseFloat(acf1) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(acf2) < 6.5 || parseFloat(acf2) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(um101) < 6.5 || parseFloat(um101) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(um102) < 6.5 || parseFloat(um102) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(bufferSt002) < 6.5 || parseFloat(bufferSt002) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (updatedWarningCount > 0) {
+            status = 'warning'
+          }
+        }
+        if (route?.item?.status == 'pending') {
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: "Add Treatment",
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type,
+            sf1: sf1,
+            sf2: sf2,
+            acf1: acf1,
+            acf2: acf2,
+            um101:um101,
+            um102:um102,
+            raw_water: rawWater,
+            buffer_st002:bufferSt002,
+            remark: other
+          })
+
+        } else {
+          const changes = [
+            route?.item?.sf1 != sf1 ? `SF 1 from ${route?.item?.sf1} to ${sf1}` : '',
+            route?.item?.sf2 != sf2 ? `SF 2 from ${route?.item?.sf2} to ${sf2}` : '',
+            route?.item?.acf1 != acf1 ? `ACF1 from ${route?.item?.acf1} to ${acf1}` : '',
+            route?.item?.acf2 != acf2 ? `ACF2 from ${route?.item?.acf2} to ${acf2}` : '',
+            route?.item?.um101 != um101 ? `10µm 1 from ${route?.item?.um101} to ${um101}` : '',
+            route?.item?.um102 != um102 ? `10µm 2 from ${route?.item?.um102} to ${um102}` : '',
+            route?.item?.remark != other ? `Remark from ${route?.item?.remark == null ? '' : route?.item?.remark} to ${other}` : ''
+        ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: `has modified ${actionString}`,
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type, sf: sf,
+            sf1: sf1,
+            sf2: sf2,
+            acf1: acf1,
+            acf2: acf2,
+            um101:um101,
+            um102:um102,
+            raw_water: rawWater,
+            buffer_st002:bufferSt002,
+            remark: other
+          })
+        }
       }
-
-      setForm({
-        sf1: route?.item?.sf1 ?? "",
-        sf2: route?.item?.sf2 ?? "",
-        acf1: route?.item?.acf1 ?? "",
-        acf2: route?.item?.acf2 ?? "",
-        um101: route?.item?.um101 ?? "",
-        um102: route?.item?.um102 ?? "",
-        raw_water: route?.item?.raw_water ?? "",
-        remarks: route?.item?.remark ?? "",
-        buffer_st002: route?.item?.buffer_st002 ?? "",
-      })
-      setRoute({
-        sf1: route?.item?.sf1 ?? "",
-        sf2: route?.item?.sf2 ?? "",
-        acf1: route?.item?.acf1 ?? "",
-        acf2: route?.item?.acf2 ?? "",
-        um101: route?.item?.um101 ?? "",
-        um102: route?.item?.um102 ?? "",
-        raw_water: route?.item?.raw_water ?? "",
-        remarks: route?.item?.remark ?? "",
-        buffer_st002: route?.item?.buffer_st002 ?? "",
-      })
-      fetchUserActivity()
-      setErrors({
-        sf1: !route?.item?.sf1,
-        sf2: !route?.item?.sf2,
-        acf1: !route?.item?.acf1,
-        acf2: !route?.item?.acf2,
-        um101: !route?.item?.um101,
-        um102: !route?.item?.um102,
-        raw_water: !route?.item?.raw_water,
-        remarks: !route?.item?.remark,
-        buffer_st002: !route?.item?.buffer_st002,
-      })
-    }, [route])
+      try {
+        setLoading(true)
+        await (preWaterTreatmentStore
+          .addPretreatments(entity)
+          .savePreWtp4()
+          .then()
+          .catch((e) => console.log(e)))
+        {
+          Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'ជោគជ័យ',
+            textBody: 'រក្សាទុកបានជោគជ័យ',
+            // button: 'close',
+            autoClose: 100
+          })
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ",
+          button: "បិទ",
+          // autoClose: 500,
+        })
+      } finally {
+        route?.onBack()
+        setLoading(false)
+      }
+    }
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={$root}>
         {isScanning && (
@@ -538,20 +676,7 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
         )}
         <ScrollView>
           <View style={$outerContainer}>
-            <View style={[$horizon, { justifyContent: "space-between" }]}>
-              {route?.type?.toLowerCase().includes("pressure") ? (
-                <>
-                  <Text></Text>
-                </>
-              ) : route?.type?.toLowerCase().includes("ph") ? (
-                <Text errorColor semibold body1>
-                  {`${translate("wtpcommon.level")} PH 6.5 - 8.5`}
-                </Text>
-              ) : (
-                <Text errorColor semibold body1>
-                  {`${translate("wtpcommon.level")} TDS < 300 mg/l`}
-                </Text>
-              )}
+            <View style={[$horizon, { justifyContent: "flex-end" }]}>
               {route?.isvalidDate && route?.item?.assign_to_user && (
                 <ActivityBar
                   direction="end"
@@ -562,268 +687,347 @@ export const PreWaterForm2Screen: FC<PreWaterForm2ScreenProps> = observer(
                 />
               )}
             </View>
+            {route?.type?.toLowerCase()?.startsWith("pressure") ?
+              <View>
+                <View style={main}>
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>SF 1</Text>
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.2-0.5 bar)</Text>
+                        {(parseFloat(sf1) < 0.2 || parseFloat(sf1) > 0.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
 
-            <View style={$horizon}>
-              <View style={$width}>
-                <CustomInput
-                  disabled={isEditable}
-                  keyboardType="decimal-pad"
-                  showIcon={false}
-                  warning={
-                    route?.type?.toLowerCase().includes("ph")
-                      ? (form.sf1 && +form.sf1 < 6.5) || +form.sf1 > 8.5
-                      : route?.type?.toLowerCase().includes("tds")
-                      ? form.sf1 && +form.sf1 < 300
-                      : (form.sf1 && +form.sf1 < 0.2) || +form.sf1 > 0.5
-                  }
-                  value={form.sf1?.toString() || ""}
-                  onBlur={() => {
-                    form.sf1 !== ""
-                      ? setErrors((pre) => ({ ...pre, sf1: false }))
-                      : setErrors((pre) => ({ ...pre, sf1: true }))
-                  }}
-                  onChangeText={(text) => {
-                    form.sf1 !== ""
-                      ? setErrors((pre) => ({ ...pre, sf1: false }))
-                      : setErrors((pre) => ({ ...pre, sf1: true }))
-
-                    setForm((pre) => ({ ...pre, sf1: text.trim() }))
-                  }}
-                  label="SF 1"
-                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
-                  errormessage={errors?.sf1 ? "សូមជ្រើសរើស SF1" : ""}
-                />
-              </View>
-              <View style={$width}>
-                <CustomInput
-                  disabled={isEditable}
-                  keyboardType="decimal-pad"
-                  showIcon={false}
-                  warning={
-                    route?.type?.toLowerCase().includes("ph")
-                      ? (form.sf2 && +form.sf2 < 6.5) || +form.sf2 > 8.5
-                      : route?.type?.toLowerCase().includes("tds")
-                      ? form.sf2 && +form.sf2 < 300
-                      : (form.sf2 && +form.sf2 < 0.2) || +form.sf2 > 0.5
-                  }
-                  value={form.sf2?.toString() || ""}
-                  onBlur={() => {
-                    form.sf2 !== ""
-                      ? setErrors((pre) => ({ ...pre, sf2: false }))
-                      : setErrors((pre) => ({ ...pre, sf2: true }))
-                  }}
-                  onChangeText={(text) => {
-                    form.sf2 !== ""
-                      ? setErrors((pre) => ({ ...pre, sf2: false }))
-                      : setErrors((pre) => ({ ...pre, sf2: true }))
-
-                    setForm((pre) => ({ ...pre, sf2: text.trim() }))
-                  }}
-                  label="SF 2"
-                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
-                  errormessage={errors?.sf2 ? "សូមជ្រើសរើស SF2" : ""}
-                />
-              </View>
-            </View>
-            <View style={$horizon}>
-              <View style={$width}>
-                <CustomInput
-                  disabled={isEditable}
-                  // warning={(form.acf1 && +form.acf1 < 0.2) || +form.acf1 > 0.5}
-                  warning={
-                    route?.type?.toLowerCase().includes("ph")
-                      ? (form.acf1 && +form.acf1 < 6.5) || +form.acf1 > 8.5
-                      : route?.type?.toLowerCase().includes("tds")
-                      ? form.acf1 && +form.acf1 < 300
-                      : (form.acf1 && +form.acf1 < 0.2) || +form.acf1 > 0.5
-                  }
-                  value={form.acf1?.toString() || ""}
-                  keyboardType="decimal-pad"
-                  showIcon={false}
-                  onBlur={() => {
-                    form.acf1 !== ""
-                      ? setErrors((pre) => ({ ...pre, acf1: false }))
-                      : setErrors((pre) => ({ ...pre, acf1: true }))
-                  }}
-                  onChangeText={(text) => {
-                    form.acf1 !== ""
-                      ? setErrors((pre) => ({ ...pre, acf1: false }))
-                      : setErrors((pre) => ({ ...pre, acf1: true }))
-
-                    setForm((pre) => ({ ...pre, acf1: text.trim() }))
-                  }}
-                  label="ACF 1"
-                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
-                  errormessage={errors?.acf1 ? "សូមជ្រើសរើស ACF1" : ""}
-                />
-              </View>
-              <View style={$width}>
-                <CustomInput
-                  disabled={isEditable}
-                  // warning={(form.acf2 && +form.acf2 < 0.2) || +form.acf2 > 0.5}
-                  warning={
-                    route?.type?.toLowerCase().includes("ph")
-                      ? (form.acf2 && +form.acf2 < 6.5) || +form.acf2 > 8.5
-                      : route?.type?.toLowerCase().includes("tds")
-                      ? form.acf2 && +form.acf2 < 300
-                      : (form.acf2 && +form.acf2 < 0.2) || +form.acf2 > 0.5
-                  }
-                  value={form.acf2?.toString() || ""}
-                  keyboardType="decimal-pad"
-                  showIcon={false}
-                  onBlur={() => {
-                    form.acf2 !== ""
-                      ? setErrors((pre) => ({ ...pre, acf2: false }))
-                      : setErrors((pre) => ({ ...pre, acf2: true }))
-                  }}
-                  onChangeText={(text) => {
-                    form.acf2 !== ""
-                      ? setErrors((pre) => ({ ...pre, acf2: false }))
-                      : setErrors((pre) => ({ ...pre, acf2: true }))
-
-                    setForm((pre) => ({ ...pre, acf2: text.trim() }))
-                  }}
-                  label="ACF 2"
-                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "0.2 - 0.5 bar"}
-                  errormessage={errors?.acf2 ? "សូមជ្រើសរើស ACF2" : ""}
-                />
-              </View>
-            </View>
-            <View style={$horizon}>
-              <View style={$width}>
-                <CustomInput
-                  disabled={isEditable}
-                  // warning={(form?.um101 && +form.um101 < 1) || +form?.um101 > 2.5}
-                  warning={
-                    route?.type?.toLowerCase().includes("ph")
-                      ? (form.um101 && +form.um101 < 6.5) || +form.um101 > 8.5
-                      : route?.type?.toLowerCase().includes("tds")
-                      ? form.um101 && +form.um101 < 300
-                      : (form.um101 && +form.um101 < 0.2) || +form.um101 > 0.5
-                  }
-                  value={form.um101?.toString() || ""}
-                  keyboardType="decimal-pad"
-                  showIcon={false}
-                  onBlur={() => {
-                    form.um101 !== ""
-                      ? setErrors((pre) => ({ ...pre, um101: false }))
-                      : setErrors((pre) => ({ ...pre, um101: true }))
-                  }}
-                  onChangeText={(text) => {
-                    form.um101 !== ""
-                      ? setErrors((pre) => ({ ...pre, um101: false }))
-                      : setErrors((pre) => ({ ...pre, um101: true }))
-
-                    setForm((pre) => ({ ...pre, um101: text.trim() }))
-                  }}
-                  label="10Mm 1"
-                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "1 < 2.5 bar"}
-                  errormessage={errors?.um101 ? "សូមជ្រើសរើស 10Mm1" : ""}
-                />
-              </View>
-              <View style={$width}>
-                <CustomInput
-                  disabled={isEditable}
-                  value={form.um102?.toString() || ""}
-                  // warning={(form?.um102 && +form.um102 < 1) || +form?.um102 > 2.5}
-                  warning={
-                    route?.type?.toLowerCase().includes("ph")
-                      ? (form.um102 && +form.um102 < 6.5) || +form.um102 > 8.5
-                      : route?.type?.toLowerCase().includes("tds")
-                      ? form.um102 && +form.um102 < 300
-                      : (form.um102 && +form.um102 < 0.2) || +form.um102 > 0.5
-                  }
-                  keyboardType="decimal-pad"
-                  showIcon={false}
-                  onBlur={() => {
-                    form.um102 !== ""
-                      ? setErrors((pre) => ({ ...pre, um102: false }))
-                      : setErrors((pre) => ({ ...pre, um102: true }))
-                  }}
-                  onChangeText={(text) => {
-                    form.um102 !== ""
-                      ? setErrors((pre) => ({ ...pre, um102: false }))
-                      : setErrors((pre) => ({ ...pre, um102: true }))
-
-                    setForm((pre) => ({ ...pre, um102: text.trim() }))
-                  }}
-                  label="10Mm 2"
-                  hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "1 < 2.5 bar"}
-                  errormessage={errors?.um102 ? "សូមជ្រើសរើស 10Mm2" : ""}
-                />
-              </View>
-            </View>
-
-            {!route?.type?.toLowerCase().startsWith("pressure") && (
-              <View style={$horizon}>
-                <View style={$width}>
-                  <CustomInput
-                    disabled={isEditable}
-                    keyboardType="decimal-pad"
-                    value={form?.raw_water ?? ""}
-                    showIcon={false}
-                    onBlur={() => {
-                      form.raw_water !== ""
-                        ? setErrors((pre) => ({ ...pre, raw_water: false }))
-                        : setErrors((pre) => ({ ...pre, raw_water: true }))
-                    }}
-                    onChangeText={(text) => {
-                      form.raw_water !== ""
-                        ? setErrors((pre) => ({ ...pre, raw_water: false }))
-                        : setErrors((pre) => ({ ...pre, raw_water: true }))
-
-                      setForm((pre) => ({ ...pre, raw_water: text.trim() }))
-                    }}
-                    label="Raw Water"
-                    hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "6.5 - 8.5"}
-                    // warning={(form?.raw_water && +form.raw_water < 6.5) || +form?.raw_water > 8.5}
-                    warning={
-                      route?.type?.toLowerCase().includes("ph")
-                        ? (form.raw_water && +form.raw_water < 6.5) || +form.raw_water > 8.5
-                        : route?.type?.toLowerCase().includes("tds")
-                        ? form.raw_water && +form.raw_water < 300
-                        : (form.raw_water && +form.raw_water < 0.2) || +form.raw_water > 0.5
-                    }
-                    errormessage={errors?.raw_water ? "សូមជ្រើសរើស Raw Water" : ""}
-                  />
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={sf1}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setSf1(text)}>
+                      </TextInput>
+                      {sf1 == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF 1</Text>
+                        : <></>}
+                    </View>
+                  </View >
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>SF 2</Text>
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.2-0.5 bar)</Text>
+                        {(parseFloat(sf2) < 0.2 || parseFloat(sf2) > 0.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={sf2}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setSf2(text)}>
+                      </TextInput>
+                      {sf2 == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF 2</Text>
+                        : <></>}
+                    </View>
+                  </View>
                 </View>
-                <View style={$width}>
-                  <CustomInput
-                    disabled={isEditable}
-                    keyboardType="decimal-pad"
-                    value={form?.buffer_st002 ?? ""}
-                    showIcon={false}
-                    onBlur={() => {
-                      form.buffer_st002 !== ""
-                        ? setErrors((pre) => ({ ...pre, buffer_st002: false }))
-                        : setErrors((pre) => ({ ...pre, buffer_st002: true }))
-                    }}
-                    onChangeText={(text) => {
-                      form.buffer_st002 !== ""
-                        ? setErrors((pre) => ({ ...pre, buffer_st002: false }))
-                        : setErrors((pre) => ({ ...pre, buffer_st002: true }))
-
-                      setForm((pre) => ({ ...pre, buffer_st002: text.trim() }))
-                    }}
-                    label="Buffer ST0002"
-                    hintLimit={route?.type?.toLowerCase()?.startsWith("pressure ") && "6.5 - 8.5"}
-                    // warning={
-                    //   (form?.buffer_st002 && +form.buffer_st002 < 6.5) || +form?.buffer_st002 > 8.5
-                    // }
-                    warning={
-                      route?.type?.toLowerCase().includes("ph")
-                        ? (form.buffer_st002 && +form.buffer_st002 < 6.5) ||
-                          +form.buffer_st002 > 8.5
-                        : route?.type?.toLowerCase().includes("tds")
-                        ? form.buffer_st002 && +form.buffer_st002 < 300
-                        : (form.buffer_st002 && +form.buffer_st002 < 0.2) ||
-                          +form.buffer_st002 > 0.5
-                    }
-                    errormessage={errors?.buffer_st002 ? "សូមជ្រើសរើស Buffer" : ""}
-                  />
+                <View style={main}>
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>ACF1</Text>
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.2-0.5 bar)</Text>
+                        {(parseFloat(acf1) < 0.2 || parseFloat(acf1) > 0.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={acf1}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setacf1(text)}>
+                      </TextInput>
+                      {acf1 == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF1</Text>
+                        : <></>}
+                    </View>
+                  </View >
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>ACF 2</Text>
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.2-0.5 bar)</Text>
+                        {(parseFloat(acf2) < 0.2 || parseFloat(acf2) > 0.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={acf2}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setacf2(text)}>
+                      </TextInput>
+                      {acf2 == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF 2</Text>
+                        : <></>}
+                    </View>
+                  </View >
+                </View>
+                <View style={main}>
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>10µm 1</Text>
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(&lt; 2.5 bar)</Text>
+                        {(parseFloat(um101) > 2.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={um101}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setum101(text)}>
+                      </TextInput>
+                      {um101 == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 10µm 1</Text>
+                        : <></>}
+                    </View>
+                  </View >
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>10µm 2</Text>
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(&lt; 2.5 bar)</Text>
+                        {(parseFloat(um102) > 2.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={um102}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setum102(text)}>
+                      </TextInput>
+                      {um102 == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 10µm 2</Text>
+                        : <></>}
+                    </View>
+                  </View >
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ marginRight: 10 }}>
+                    <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                      <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                    </View>
+                    <TextInput
+                      value={other}
+                      readOnly={!isEdit}
+                      style={[styles.input, { width: '100%' }]}
+                      placeholder="Please Enter"
+                      onChangeText={(text) => setOther(text)}>
+                    </TextInput>
+                  </View>
                 </View>
               </View>
-            )}
+
+              : (route?.type?.toLowerCase().includes("tds") || route?.type?.toLowerCase().includes("ph")) ?
+                <View>
+                  <View style={main}>
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>Raw Water</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(rawWater) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(rawWater) < 6.5 || parseFloat(rawWater) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={rawWater}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setRawWater(text)}>
+                        </TextInput>
+                        {rawWater == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Raw Water</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>SF 1</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(sf1) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(sf1) < 6.5 || parseFloat(sf1) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={sf1}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setSf1(text)}>
+                        </TextInput>
+                        {sf1 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF 1</Text>
+                          : <></>}
+                      </View>
+                    </View >
+
+                  </View>
+                  <View style={main}>
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>SF 2</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(sf2) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(sf2) < 6.5 || parseFloat(sf2) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={sf2}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setSf2(text)}>
+                        </TextInput>
+                        {sf2 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF 2</Text>
+                          : <></>}
+                      </View>
+                    </View>
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>ACF1</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(acf1) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(acf1) < 6.5 || parseFloat(acf1) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={acf1}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setacf1(text)}>
+                        </TextInput>
+                        {acf1 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF1</Text>
+                          : <></>}
+                      </View>
+                    </View >
+
+                  </View>
+                  <View style={main}>
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>ACF 2</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(acf2) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(acf2) < 6.5 || parseFloat(acf2) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={acf2}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setacf2(text)}>
+                        </TextInput>
+                        {acf2 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF 2</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>10µm 1</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(um101) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(um101) < 6.5 || parseFloat(um101) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={um101}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setum101(text)}>
+                        </TextInput>
+                        {um101 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 10µm 1</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                  </View>
+                  <View style={main}>
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>10µm 2</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(um102) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(um102) < 6.5 || parseFloat(um102) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={um102}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setum102(text)}>
+                        </TextInput>
+                        {um102 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 10µm 2</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>Buffer_St002</Text>
+                          {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(bufferSt002) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(bufferSt002) < 6.5 || parseFloat(bufferSt002) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={bufferSt002}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setBufferSt002(text)}>
+                        </TextInput>
+                        {bufferSt002 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Buffer_St002</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                      </View>
+                      <TextInput
+                        value={other}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setOther(text)}>
+                      </TextInput>
+                    </View>
+                  </View>
+                </View>
+
+                : <></>}
           </View>
         </ScrollView>
         <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} />
@@ -852,4 +1056,14 @@ const $horizon: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: 15,
+}
+const main: ViewStyle = {
+  flexDirection: 'row',
+  width: '97%',
+  marginBottom: 40
+}
+
+const sub: ViewStyle = {
+  width: '50%',
+  margin: 10
 }

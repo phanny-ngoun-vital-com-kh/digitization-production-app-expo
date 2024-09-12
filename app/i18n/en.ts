@@ -296,7 +296,7 @@ const en = {
     },
   },
   wtpcommon: {
-    todayTask: "កិច្ចការថ្ងៃនេះ",
+    todayTask: "កិច្ចការថ្ងៃ",
     pleaseSelect: "សូមជ្រើសរើស",
     save: "រក្សាទុក",
     viewActivity: "មើលសកម្មភាព",
@@ -307,7 +307,7 @@ const en = {
     loadingData:"សូមរង់ចាំកំពុងដំណើរការ",
     normal: "ធម្មតា",
     warning: "មានបញ្ហា",
-    outDate: "ហួសម៉ោង",
+    outDate: "ខុសម៉ោង",
     youareApproved:"អ្នកត្រូវបានចាត់តាំង",
     pending: "កំពុងរង់ចាំ",
     level: "កម្រិត",

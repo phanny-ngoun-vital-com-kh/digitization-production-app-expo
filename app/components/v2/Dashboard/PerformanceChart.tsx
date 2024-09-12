@@ -57,7 +57,7 @@ export default function PerformanceChart({
                   </Text>
 
                   <Text style={{ color: color, fontSize: 18 }}>
-                    {percentages < 0 ? "N/A" : label}
+                    {percentages < 0 ? "N/A" : 'Warning'}
                   </Text>
                 </View>
               )

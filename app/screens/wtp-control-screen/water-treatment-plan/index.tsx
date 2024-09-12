@@ -106,8 +106,8 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
       { time: "22:00", type: "S2" },
     ]
 
-    const invalidDate = (created_date: any) =>
-      moment(Date.now()).format("LL") === moment(created_date).format("LL")
+    const invalidDate = (assign_date: any) =>
+      moment(Date.now()).format("YYYY-MM-DD") === moment.utc(assign_date).format("YYYY-MM-DD")
 
     const isValidShift = (time: any) =>
       getCurrentTime() > cleanTimeCurrent(!time.includes("(") ? time : time?.split(" ")[1]) &&
@@ -224,14 +224,14 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
               currUser={assignUser?.currUser}
               key={index.toString()}
               id={subitem.id}
-              validDate={invalidDate(item?.createdDate)}
+              validDate={invalidDate(item?.assign_date)}
               validShift={isValidShift(item?.shift)}
               isAssign={subitem.assign_to_user?.split(" ").includes(assignUser?.currUser ?? "")}
               assign_to_user={subitem.assign_to_user ?? ""}
               status={subitem?.status ?? "pending"}
               created_date={item?.assign_date}
               machine_type={subitem?.machine}
-              assign_to={item?.assign_to ?? "vorn"}
+              assign_to={item?.assign_to ?? ""}
               warning_count={subitem?.warning_count ?? 0}
               time={item?.shift ?? "S1 (7:00)"}
               onPress={(shift: any) => {
@@ -249,14 +249,14 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                   onReturn: sendBack,
                   isValidShift: shift === -1 ? true : false,
                   isvalidDate:
-                    moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                    moment(Date.now()).format("LL") === moment(item?.assign_date).format("LL"),
 
                   isEdit:
                     subitem?.assign_to_user?.split(" ").includes(assignUser?.currUser ?? "") &&
                     shift === -1
                       ? true
                       : false &&
-                        moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                        moment(Date.now()).format("LL") === moment(item?.assign_date).format("LL"),
                 })
               }}
             />
@@ -541,7 +541,7 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                       return (
                         <TimePanel
                           isWarning={
-                            subitem.isWarning && `${item.name} (${subitem.time})` !== selectedShift
+                            subitem.isWarning 
                           }
                           onPress={() => {
                             if (`${item.name} (${subitem.time})` === selectedShift) {
@@ -579,10 +579,9 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
                       placeholder={translate("dailyWaterTreatment.search")}
                       onChangeText={(text: string) => {
                         setQuery(text)
-                      }}
+                      } }
                       label=""
-                      errormessage={""}
-                    />
+                      errormessage={""} warning={false} hintLimit={""} disabled={false} showIcon={false}                    />
                   </View>
                   {showOffline && (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>

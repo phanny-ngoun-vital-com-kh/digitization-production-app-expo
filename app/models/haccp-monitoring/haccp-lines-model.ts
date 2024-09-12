@@ -66,17 +66,17 @@ export const LinesItemModel = types
     line: types.string,
     id: types.maybeNull(types.number),
     water_pressure: types.maybeNull(types.string),
-    nozzles_rinser: types.maybeNull(types.string),
+    nozzles_rinser: types.maybeNull(types.number),
     side_wall: types.maybeNull(types.string),
     air_pressure: types.maybeNull(types.string),
     temperature_preform: types.maybeNull(types.string),
     treated_water_pressure: types.maybeNull(types.string),
     fg: types.maybeNull(types.string),
     smell: types.maybeNull(types.number),
-    activity_control: types.number,
+    activity_control: types.string,
     take_action: types.maybeNull(types.string),
     other: types.maybeNull(types.string),
-    warning_count: types.maybeNull(types.string),
+    warning_count: types.maybeNull(types.number),
     status: types.maybeNull(types.string),
     done_by: types.maybeNull(types.string),
     haccp_id: types.maybeNull(types.string),
@@ -87,24 +87,21 @@ export const LinesItemModel = types
   .views((self) => {
     return {
       saveHaccpLine23: async () => {
-        console.log("act", self.activity_control)
-        console.log("type", typeof self.activity_control)
-
         const rs = await haccpMonitorApi.saveLines({
-          id: self.id ?? null,
+          id: self.id ,
           line: self.line,
           activities: self.activities,
           activity_control: self.activity_control,
-          done_by: self.done_by ?? "N/A",
-          fg: self.fg ?? "",
-          other: self.other ?? "",
-          smell: self.smell ?? 0,
-          haccp_id: self.haccp_id ?? "",
-          nozzles_rinser: self.nozzles_rinser ?? "",
-          take_action: self.take_action ?? "N/A",
-          status: self.status ?? "pending",
+          done_by: self.done_by,
+          fg: self.fg ,
+          other: self.other,
+          smell: self.smell,
+          haccp_id: self.haccp_id,
+          nozzles_rinser: self.nozzles_rinser,
+          take_action: self.take_action,
+          status: self.status,
           warning_count: Number(self.warning_count),
-          water_pressure: self.water_pressure ?? "",
+          water_pressure: self.water_pressure,
         })
         if (rs.kind === "ok") {
           console.log("Success")
@@ -116,20 +113,21 @@ export const LinesItemModel = types
       saveHaccpLine456: async () => {
 
         const rs = await haccpMonitorApi.saveLines456({
-          id: self.id ?? null,
+          id: self.id ,
           line: self.line,
           activities: self.activities,
           activity_control: Number(self?.activity_control),
-          done_by: self.done_by ?? "N/A",
-          fg: self.fg ?? "",
-          haccp_id: self.haccp_id ?? "",
-          side_wall: self?.side_wall ?? "",
-          treated_water_pressure: self.temperature_preform ?? "",
-          temperature_preform: self.temperature_preform ?? "",
-          take_action: self.take_action ?? "N/A",
-          status: self?.status ?? "pending",
+          done_by: self.done_by,
+          fg: self.fg ,
+          haccp_id: self.haccp_id ,
+          side_wall: self.side_wall,
+          treated_water_pressure: self.treated_water_pressure,
+          temperature_preform: self.temperature_preform ,
+          take_action: self.take_action,
+          status: self.status ,
           warning_count: Number(self.warning_count),
-          air_pressure: self?.air_pressure ?? "",
+          air_pressure: self.air_pressure,
+          other: self.other,
         })
         if (rs.kind === "ok") {
           console.log("Success")

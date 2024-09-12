@@ -234,8 +234,8 @@ export const InventoryTransferScreen: FC<InventoryTransferScreenProps> = observe
   const layout = useWindowDimensions();
 
   const [routes] = useState([
-    { key: 'first', title: 'Transaction' },
-    { key: 'second', title: 'waiting' },
+    { key: 'first', title: 'Transaction Movement' },
+    { key: 'second', title: 'Transaction' },
   ]);
 
   const renderTabBar = props => (

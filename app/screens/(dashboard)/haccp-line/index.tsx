@@ -29,11 +29,11 @@ interface LineDsScreenProps extends AppStackScreenProps<"LineDs"> {}
 export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScreen() {
   const data = [
     { label: "All", value: "All" },
-    { label: "Water Line 2", value: "Line 2" },
-    { label: "Water Line 3", value: "Line 3" },
-    { label: "Water Line 4", value: "Line 4" },
-    { label: "Water Line 5", value: "Line 5" },
-    { label: "Water Line 6", value: "Line 6" },
+    { label: "Production Line 2", value: "Line 2" },
+    { label: "Production Line 3", value: "Line 3" },
+    { label: "Production Line 4", value: "Line 4" },
+    { label: "Production Line 5", value: "Line 5" },
+    { label: "Production Line 6", value: "Line 6" },
   ]
   const machineColors = [
     { label: data[0 + 1].value, color: "#071952" },
@@ -202,7 +202,7 @@ export const LineDsScreen: FC<LineDsScreenProps> = observer(function LineDsScree
       pending_percentages = 100 - (+warning_percentages + +normal_percentage)
 
       setEmptyLine(false)
-      setPercentages(+normal_percentage)
+      setPercentages(+warning_percentages)
 
       setPieData([
         {

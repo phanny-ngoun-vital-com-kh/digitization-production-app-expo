@@ -8,6 +8,7 @@ import { EpisodeStoreModel } from "./EpisodeStore"
 import { AuthStoreModel } from "./auth/AuthStore"
 import { TransferRequestStore } from "./inventory-transfer-request/inventory-transfer-request-store"
 import { TransferStore } from "./inventory-transfer/inventory-transfer-store"
+import { HACCPMonitoringOzoneStore } from "./haccp-monitoring-ozone/haccp-monitoring-ozone-store"
 
 /**
  * A RootStore model.
@@ -22,6 +23,7 @@ export const RootStoreModel = types.model("RootStore").props({
   inventoryRequestStore: types.optional(TransferRequestStore, {}),
   episodeStore: types.optional(EpisodeStoreModel, {}),
   inventoryTransferStore: types.optional(TransferStore, {}),
+  haccpMonitoringOzoneStore: types.optional(HACCPMonitoringOzoneStore,{})
 })
 
 /**

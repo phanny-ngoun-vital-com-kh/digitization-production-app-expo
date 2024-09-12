@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   ScrollView,
+  TextInput,
 } from "react-native"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
@@ -24,11 +25,13 @@ import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/ut
 import { HaccpActionType, LinesItemModel } from "app/models/haccp-monitoring/haccp-lines-model"
 import { styles } from "./styles"
 import { translate } from "../../../i18n/translate"
-interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> {}
+import IconAntDesign from "react-native-vector-icons/AntDesign"
+
+interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> { }
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
     const route = useRoute().params
-    const { haccpLinesStore, authStore } = useStores()
+    const { haccpLinesStore, authStore ,inventoryRequestStore} = useStores()
     const [activityLogs, setActivityLogs] = useState<HaccpActionType[]>([])
     const navigation = useNavigation()
     const [showinstruction, setShowInstruction] = useState(true)
@@ -38,6 +41,19 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
     const [isLoading, setLoading] = useState(false)
     const [isScanning, setScanning] = useState(false)
     const [image, setImage] = useState(null)
+    const [waterPressure, setWaterPressure] = useState(route?.item?.water_pressure || '')
+    const [nozzlesRinser, setNozzlesRinser] = useState(route?.item?.nozzles_rinser != null ? parseFloat(route?.item?.nozzles_rinser) : null)
+    const [fg, setFg] = useState(route?.item?.fg || '')
+    const [smell, setSmell] = useState(route?.item?.smell != null ? parseFloat(route?.item?.smell) : null)
+    const [activities, setActivities] = useState(route?.item?.activity_control != null ? parseFloat(route?.item?.activity_control) : null)
+    const [takeAction, setTakeAction] = useState(route?.item?.take_action || '')
+    const [other, setOther] = useState(route?.item?.other || '')
+    const [isEdit, setIsEdit] = useState()
+    const [sideWall, setSideWall] = useState(route?.item?.side_wall || '')
+    const [airPressure, setAirPressure] = useState(route?.item?.air_pressure || '')
+    const [temperaturePreform, setTemperaturePreform] = useState(route?.item?.temperature_preform || '')
+    const [treatedWaterPressure, setTreatedWaterPressure] = useState(route?.item?.treated_water_pressure || '')
+    const [allFcm, setAllFcm] = useState([])
 
     const [formLineA, setFormLineA] = useState({
       side_wall: "",
@@ -48,27 +64,9 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       activity_control: null,
       instruction: "",
     })
-    const [oldformLineA, setoldFormLineA] = useState({
-      side_wall: "",
-      air_pressure: "",
-      tem_preform: "",
-      tw_pressure: "",
-      FG: "",
-      activity_control: null,
-      instruction: "",
-    })
     const [formLineB, setFormLineB] = useState({
       water_pressure: "",
-      nozzie_rinser: "",
-      FG: "",
-      activity_control: null,
-      smell: null,
-      instruction: "",
-      other: "",
-    })
-    const [oldformLineB, setoldFormLineB] = useState({
-      water_pressure: "",
-      nozzie_rinser: "",
+      nozzie_rinser: null,
       FG: "",
       activity_control: null,
       smell: null,
@@ -81,7 +79,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       FG: true,
       activity_control: true,
       smell: true,
-      instruction: false,
+      instruction: (formLineB.nozzie_rinser == null || formLineB.nozzie_rinser == false || formLineB.smell == null || formLineB.smell == false) ? true : false,
       other: false,
     })
     const [errorsLineA, setErrorsLineA] = useState({
@@ -93,327 +91,11 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       activity_control: true,
       instruction: true,
     })
-    const getCurrentUserName = async () => {
-      const userinfo = await authStore.getUserInfo()
-      const { login } = userinfo.data
-
-      setCurrUser(login)
-    }
-
-    const getWarningCount = (type: string) => {
-      let count = 0
-      if (type === "B") {
-        const form = Object.entries(formLineB)
-
-        for (const [key, value] of form) {
-          switch (key) {
-            case "FG":
-              if (+value < 0.05 || +value > 0.4) {
-                count += 1
-              }
-
-              break
-            case "activity_control":
-              if (!value) {
-                count += 1
-              }
-
-              break
-            case "nozzie_rinser":
-              if (+value !== 32 && +value !== 40) {
-                count += 1
-              }
-
-              break
-
-            case "water_pressure":
-              if (+value < 1) {
-                count += 1
-              }
-
-              break
-
-            default:
-              break
-          }
-        }
-      } else {
-        const form = Object.entries(formLineA)
-
-        for (const [key, value] of form) {
-          switch (key) {
-            case "side_wall":
-              if (+value < 100 || +value > 110) {
-                count += 1
-              }
-
-              break
-
-            case "air_pressure":
-              if (+value < 1.5) {
-                count += 1
-              }
-
-              break
-
-            case "tem_preform":
-              if (+value < 100 || +value > 110) {
-                count += 1
-              }
-
-              break
-            case "tw_pressure":
-              if (+value < 1.5) {
-                count += 1
-              }
-
-              break
-            case "FG":
-              if (+value < 0.05 || +value > 0.4) {
-                count += 1
-              }
-
-              break
-            case "activity_control":
-              if (!value) {
-                count += 1
-              }
-
-              break
-            default:
-              break
-          }
-        }
-      }
-
-      return count
-    }
-
-    const getActions = (type: string) => {
-      let actions = ""
-      if (route?.haccp_id === null) {
-        return ""
-      }
-      if (type === "B") {
-        const form = Object.entries(formLineB)
-
-        for (const [key, value] of form) {
-          switch (key) {
-            case "FG":
-              if (+value !== +oldformLineB.FG)
-                actions += ", " + `${key} from ${oldformLineB[key]} to ${formLineB[key]}`
-
-              break
-            case "activity_control":
-              if (value !== !!oldformLineB.activity_control)
-                actions +=
-                  ", " +
-                  `${key} from ${oldformLineB[key] ? "Under Control" : "Over Control"} to ${
-                    formLineB[key] ? "Under Control" : "Over Control"
-                  }`
-
-              break
-            case "nozzie_rinser":
-              if (+value !== +oldformLineB.nozzie_rinser)
-                actions += ", " + `${key} from ${oldformLineB[key]} to ${formLineB[key]}`
-
-              break
-
-            case "water_pressure":
-              if (+value !== +oldformLineB.water_pressure)
-                actions += ", " + `${key} from ${oldformLineB[key]} to ${formLineB[key]}`
-
-              break
-
-            default:
-              break
-          }
-        }
-      } else {
-        const form = Object.entries(formLineA)
-
-        for (const [key, value] of form) {
-          switch (key) {
-            case "side_wall":
-              if (+value !== +oldformLineA.side_wall)
-                actions += ", " + `${key} from ${oldformLineA[key]} to ${formLineA[key]}`
-
-              break
-
-            case "air_pressure":
-              if (+value !== +oldformLineA.air_pressure)
-                actions += ", " + `${key} from ${oldformLineA[key]} to ${formLineA[key]}`
-
-              break
-
-            case "tem_preform":
-              if (+value !== +oldformLineA.tem_preform)
-                actions += ", " + `${key} from ${oldformLineA[key]} to ${formLineA[key]}`
-
-              break
-            case "tw_pressure":
-              if (+value !== +oldformLineA.tw_pressure)
-                actions += ", " + `${key} from ${oldformLineA[key]} to ${formLineA[key]}`
-
-              break
-            case "FG":
-              if (+value !== +oldformLineA.FG)
-                actions += ", " + `${key} from ${oldformLineA[key]} to ${formLineA[key]}`
-
-              break
-            case "activity_control":
-              if (value !== !!oldformLineA.activity_control)
-                actions +=
-                  ", " +
-                  `${key} from ${oldformLineA[key] ? "Under Control" : "Over Control"} to ${
-                    formLineA[key] ? "Under Control" : "Over Control"
-                  }`
-
-              break
-            default:
-              break
-          }
-        }
-      }
-
-      return actions
-    }
-
-    const validateLineA = async (errorsLineA) => {
-      const errorlists = errorsLineA
-      delete errorlists.instruction
-
-      const notvalid = Object.values(errorlists).some((err) => err === true)
-      const actions = getActions("A")
-      const warning_count = getWarningCount("A")
-      if (notvalid) {
-        return
-      }
-
-      try {
-        setLoading(true)
-        const payload = LinesItemModel.create({
-          id: route?.item?.id ?? null,
-          line: "Line" + " " + route?.line?.toString(),
-          activities: [
-            {
-              action: route?.item?.id
-                ? actions
-                  ? "has modified field" + actions?.trim()
-                  : "modified the line without change fields"
-                : "completed the line shift",
-            },
-          ],
-          activity_control: formLineA.activity_control ? 1 : 0,
-          done_by: currUser,
-          fg: formLineA.FG,
-          haccp_id: route?.haccp_id,
-          side_wall: formLineA.side_wall,
-          treated_water_pressure: formLineA.tw_pressure,
-          temperature_preform: formLineA.tem_preform,
-          take_action: formLineA.instruction,
-          status: warning_count > 0 ? "warning" : "normal",
-          warning_count: warning_count + "",
-          air_pressure: formLineA.air_pressure,
-        })
-        setoldFormLineA({
-          activity_control: formLineA?.activity_control ?? null,
-          FG: formLineA?.FG ?? "",
-          instruction: formLineA?.instruction ?? "",
-          air_pressure: formLineA?.air_pressure ?? "",
-          side_wall: formLineA?.side_wall ?? "",
-          tem_preform: formLineA?.tem_preform ?? "",
-          tw_pressure: formLineA?.tw_pressure ?? "",
-        })
-        await haccpLinesStore.addHaccpLines(payload).saveHaccpLine456()
-        getActivities()
-      } catch (error) {
-        console.log(error)
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "មិនជោគជ័យ",
-          textBody: "កំណត់ត្រាមិនត្រូវបានរក្សាទុកទេ។",
-          // button: 'close',
-          autoClose: 200,
-        })
-      } finally {
-        setLoading(false)
-        route?.onRefresh()
-      }
-    }
-
-    console.log(formLineB)
-    const validateLineB = async (errorsLineB) => {
-      const errorlists = errorsLineB
-      delete errorlists.instruction
-      delete errorlists.other
-      const actions = getActions("B")
-      const warning_count = getWarningCount("B")
-      const notvalid = Object.values(errorlists).some((err) => err === true)
-      if (notvalid) {
-        return
-      }
-
-      try {
-        setLoading(true)
-
-        const payload = LinesItemModel.create({
-          line: "Line" + " " + route?.line?.toString(),
-          id: route?.item?.id ?? null,
-          activities: [
-            {
-              action: route?.item?.id
-                ? actions
-                  ? "has modified field" + actions?.trim()
-                  : "modified the line without change fields"
-                : "completed the line shift",
-            },
-          ],
-          activity_control: formLineB.activity_control ? 1 : 0,
-          done_by: currUser,
-          fg: formLineB.FG,
-          smell: formLineB?.smell === true ? 1 : 0,
-          haccp_id: route?.haccp_id,
-          nozzles_rinser: formLineB.nozzie_rinser,
-          take_action: formLineB.instruction,
-          other: formLineB.other,
-          status: warning_count > 0 ? "warning" : "normal",
-          warning_count: warning_count + "",
-          water_pressure: formLineB.water_pressure,
-        })
-
-        await haccpLinesStore.addHaccpLines(payload).saveHaccpLine23()
-        getActivities()
-        setoldFormLineB({
-          activity_control: formLineB?.activity_control ?? null,
-          FG: formLineB?.FG ?? "",
-          instruction: formLineB?.instruction ?? "",
-          nozzie_rinser: formLineB?.nozzie_rinser ?? "",
-          other: formLineB?.other ?? "",
-          smell: formLineB?.smell ?? null,
-          water_pressure: formLineB?.water_pressure ?? "",
-        })
-        // console.log(payload)
-      } catch (error) {
-        console.log(error)
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "មិនជោគជ័យ",
-          textBody: "កំណត់ត្រាមិនត្រូវបានរក្សាទុកទេ។",
-          // button: 'close',
-          autoClose: 200,
-        })
-      } finally {
-        setLoading(false)
-        route?.onRefresh()
-      }
-
-      // navigation.goBack()
-    }
 
     const onShowInstruction = () => {
       setShowInstruction((pre) => !pre)
     }
+
     const performOCR = async (file: ImagePicker.ImagePickerAsset) => {
       setLoading(true)
 
@@ -551,6 +233,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       }
     }
 
+
     const onlaunchCamera = async () => {
       try {
         const result = await getResultImageCamera()
@@ -573,28 +256,36 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       }
     }
 
-    const getActivities = async () => {
-      try {
-        const rs = await haccpLinesStore.getActivitiesLog(route?.haccp_id, route?.item?.id)
+    useEffect(() => {
+      const role = async () => {
+        try {
+          const rs = await authStore.getUserInfo();
+          const admin = rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
+          const edit = (route?.isvalidDate || route?.assign) || admin
+          setIsEdit(edit)
+          // Modify the list based on the user's role
+          // setGetRole(rs)
+          const data = (await inventoryRequestStore.getMobileUserList())
+          const usersWithRole = data.filter(user =>
+            user.authorities.some(authority => authority.authority_name === "ROLE_PROD_PRO_ADMIN")
+          );
 
-        setActivityLogs(rs.sort((a, b) => b.id - a.id))
-      } catch (error) {
-        // setActivityLogs([])
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "បរាជ័យ",
-          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
-          // button: 'close',
-          autoClose: 100,
-        })
-      }
-    }
+          // Extract fcm_token from the filtered user object
+          const fcmTokens = usersWithRole.map(user => user.fcm_token);
+          setAllFcm(fcmTokens)
+        } catch (e) {
+          console.log(e);
+        }
+      };
+      role();
+    }, [route]);
+
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
         title: "Line - " + route?.line?.toString(),
         headerRight: () =>
-          route?.isvalidDate && route?.assign ? (
+          (isEdit) ? (
             <TouchableOpacity
               disabled={disableSave}
               style={{
@@ -604,10 +295,10 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
               }}
               onPress={() => {
                 if ([4, 5, 6].includes(+route?.line)) {
-                  validateLineA(errorsLineA)
+                  line456Submit();
                 }
                 if ([2, 3].includes(+route?.line)) {
-                  validateLineB(errorsLineB)
+                  line23Submit();
                 }
               }}
             >
@@ -619,74 +310,311 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           ) : (
             <></>
           ),
-      })
-    }, [route, navigation, errorsLineA, errorsLineB, currUser, disableSave])
+      });
+    }, [route, navigation, waterPressure, nozzlesRinser, fg, smell, activities, takeAction, other, sideWall, airPressure, temperaturePreform, treatedWaterPressure, isEdit,allFcm]);
 
-    useEffect(() => {
-      getCurrentUserName()
-      if (route?.item?.id) {
-        getActivities()
-        if ([4, 5, 6].includes(+route?.line)) {
-          setFormLineA({
-            activity_control: !!route?.item?.activity_control ?? null,
-            FG: route?.item?.fg ?? "",
-            instruction: route?.item?.take_action ?? "",
-            air_pressure: route?.item?.air_pressure ?? "",
-            side_wall: route?.item?.side_wall ?? "",
-            tem_preform: route?.item?.temperature_preform ?? "",
-            tw_pressure: route?.item?.treated_water_pressure ?? "",
-          })
-          setoldFormLineA({
-            activity_control: !!route?.item?.activity_control ?? null,
-            FG: route?.item?.fg ?? "",
-            instruction: route?.item?.take_action ?? "",
-            air_pressure: route?.item?.air_pressure ?? "",
-            side_wall: route?.item?.side_wall ?? "",
-            tem_preform: route?.item?.temperature_preform ?? "",
-            tw_pressure: route?.item?.treated_water_pressure ?? "",
-          })
-          setErrorsLineA({
-            activity_control: false,
-            FG: !route?.item?.fg ?? "",
-            instruction: !route?.item?.take_action ?? "",
-            air_pressure: !route?.item?.air_pressure ?? "",
-            side_wall: !route?.item?.side_wall ?? "",
-            tem_preform: !route?.item?.temperature_preform ?? "",
-            tw_pressure: !route?.item?.treated_water_pressure ?? "",
-          })
-          // setErrorsLineA()
-        }
-        if ([2, 3].includes(+route?.line)) {
-          setFormLineB({
-            activity_control: !!route?.item?.activity_control ?? "",
-            FG: route?.item?.fg ?? "",
-            instruction: route?.item?.take_action ?? "",
-            nozzie_rinser: route?.item?.nozzles_rinser ?? "",
-            other: route?.item?.other ?? "",
-            smell: route?.item?.smell ?? "",
-            water_pressure: route?.item?.water_pressure ?? "",
-          })
-          setErrorsLineB({
-            activity_control: false,
-            FG: !route?.item?.fg ?? "",
-            instruction: !route?.item?.take_action ?? "",
-            nozzie_rinser: !route?.item?.nozzles_rinser ?? "",
-            other: !route?.item?.other ?? "",
-            smell: !route?.item?.smell ?? "",
-            water_pressure: !route?.item?.water_pressure ?? "",
-          })
-          setoldFormLineB({
-            activity_control: !!route?.item?.activity_control ?? "",
-            FG: route?.item?.fg ?? "",
-            instruction: route?.item?.take_action ?? "",
-            nozzie_rinser: route?.item?.nozzles_rinser ?? "",
-            other: route?.item?.other ?? "",
-            smell: route?.item?.smell ?? "",
-            water_pressure: route?.item?.water_pressure ?? "",
-          })
-        }
+    async function sendNotification(title: string, body: string, deviceTokens, sound = 'default') {
+      const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
+
+      try {
+        const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `key=${SERVER_KEY}`
+          },
+          body: JSON.stringify({
+            registration_ids: deviceTokens,
+            notification: {
+              title: title,
+              body: body,
+              sound: sound,
+            },
+            android: {
+              notification: {
+                sound: sound,
+                priority: 'high',
+                vibrate: true,
+              }
+            }
+
+          }),
+        });
+        const responseData = await response.json();
+        console.log('Notification sent successfully:', responseData);
+      } catch (error) {
+        console.error('Error sending notification:', error);
       }
-    }, [route, navigation])
+    }
+
+    const alert = (title: string, textBody: string) => {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: title,
+        textBody: textBody,
+        button: 'បិទ',
+      })
+    }
+
+    const line23Submit = async () => {
+
+      let updatedWarningCount = 0;
+      if (waterPressure == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ Water Pressure')
+        return
+      }
+      if (nozzlesRinser == null) {
+        alert('បរាជ័យ', 'សូ​មជ្រើសរើស Nozzles rinser')
+        return
+      }
+      if (fg == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ FG')
+        return
+      }
+      if (smell == null) {
+        alert('បរាជ័យ', 'សូ​មជ្រើសរើស Smell')
+        return
+      }
+      if (activities == null) {
+        alert('បរាជ័យ', 'សូ​មជ្រើសរើស Control')
+        return
+      }
+      if (takeAction == '' && (nozzlesRinser == 0 || smell == 0)) {
+        alert('បរាជ័យ', 'សូ​មបំពេញ Take action')
+        return
+      }
+
+      let status = 'normal'
+      if (parseFloat(waterPressure) < 1.0) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(fg) < 0.05 || parseFloat(fg) > 0.4) {
+        updatedWarningCount++;
+      }
+      if (smell == 0) {
+        updatedWarningCount++;
+      }
+      if (activities == 0) {
+        updatedWarningCount++;
+      }
+      if (nozzlesRinser == 0) {
+        updatedWarningCount++;
+      }
+      if (updatedWarningCount > 0) {
+        status = 'warning'
+      }
+      let entity
+      try {
+        setLoading(true)
+        if (route?.item == undefined) {
+          entity = LinesItemModel.create({
+            id: route?.item?.id ?? null,
+            line: "Line" + " " + route?.line,
+            warning_count: updatedWarningCount,
+            status: status,
+            water_pressure: waterPressure,
+            fg: fg,
+            nozzles_rinser: nozzlesRinser,
+            smell: smell,
+            activity_control: (activities).toString(),
+            take_action: takeAction,
+            other: other,
+            haccp_id: route?.haccp_id,
+            activities: [{ action: "Add Monitoring " }],
+          })
+        } else if (route?.item) {
+          const changes = [
+            route?.item?.water_pressure != waterPressure ? `Water Pressure from ${route?.item?.water_pressure} to ${waterPressure}` : '',
+            parseFloat(route?.item?.nozzles_rinser) != parseFloat(nozzlesRinser) ? `Nozzles Rinser from ${parseFloat(route?.item?.nozzles_rinser) == 1 ? 'Yes' : 'No'} to ${parseFloat(nozzlesRinser) == 1 ? 'Yes' : 'No'}` : '',
+            route?.item?.fg != fg ? `FG from ${route?.item?.fg} to ${fg}` : '',
+            parseFloat(route?.item?.smell) != parseFloat(smell) ? `Smell from ${parseFloat(route?.item?.smell) == 1 ? 'Yes' : 'No'} to ${parseFloat(smell) == 1 ? 'Yes' : 'No'}` : '',
+            parseFloat(route?.item?.activity_control) != parseFloat(activities) ? `Control from ${parseFloat(route?.item?.activity_control) == 1 ? 'Yes' : 'No'} to ${parseFloat(activities) == 1 ? 'Yes' : 'No'}` : '',
+            route?.item?.take_action != takeAction ? `Take Action from ${route?.item?.take_action} to ${takeAction}` : '',
+            route?.item?.other != other ? `Other from ${route?.item?.other} to ${other}` : '',
+          ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+
+          entity = LinesItemModel.create({
+            id: route?.item?.id ?? null,
+            line: "Line" + " " + route?.line,
+            warning_count: updatedWarningCount,
+            status: status,
+            water_pressure: waterPressure,
+            fg: fg,
+            nozzles_rinser: nozzlesRinser,
+            smell: smell,
+            activity_control: (activities).toString(),
+            take_action: takeAction,
+            other: other,
+            haccp_id: route?.haccp_id,
+            activities: [{ action: `has modified ${actionString}` }],
+          })
+        }
+
+        await (haccpLinesStore
+          .addHaccpLines(entity)
+          .saveHaccpLine23()
+          .then()
+          .catch((e) => console.log(e)))
+        {
+          if (nozzlesRinser == 0) {
+            sendNotification(`Critical Warning Line - ${+ route?.line?.toString()}`, `Nozzles are clog now, Please take action.`,allFcm)
+          }
+          Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'ជោគជ័យ',
+            textBody: 'រក្សាទុកបានជោគជ័យ',
+            // button: 'close',
+            autoClose: 100
+          })
+          console.log(entity)
+        }
+      } catch (error) {
+        console.log(error);
+        // Show error dialog
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'បរាជ័យ',
+          textBody: 'សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ',
+          button: 'បិទ',
+        });
+      } finally {
+        setLoading(false); // Reset loading state regardless of success or failure
+        route?.onReload()
+      }
+    }
+
+    const line456Submit = async () => {
+
+      let updatedWarningCount = 0;
+      if (sideWall == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ Side Wall')
+        return
+      }
+      if (airPressure == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ Air Pressure')
+        return
+      }
+
+      if (temperaturePreform == null) {
+        alert('បរាជ័យ', 'សូ​មបំពេញ Temperature Preform')
+        return
+      }
+      if (fg == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ FG')
+        return
+      }
+      if (treatedWaterPressure == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ Treated Water Pressure')
+        return
+      }
+      if (activities == null) {
+        alert('បរាជ័យ', 'សូ​មជ្រើសរើស Control')
+        return
+      }
+      let status = 'normal'
+      if (parseFloat(sideWall) < 100 || parseFloat(sideWall) > 110) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(airPressure) < 1.5) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(temperaturePreform) < 87 || parseFloat(temperaturePreform) > 115) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(fg) < 0.05 || parseFloat(fg) > 0.4) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(treatedWaterPressure) < 1.5) {
+        updatedWarningCount++;
+      }
+      if (activities == 0) {
+        updatedWarningCount++;
+      }
+      if (updatedWarningCount > 0) {
+        status = 'warning'
+      }
+      let entity
+      setLoading(true)
+      try {
+        if (route?.item == undefined) {
+          entity = LinesItemModel.create({
+            id: route?.item?.id ?? null,
+            line: "Line" + " " + route?.line,
+            warning_count: updatedWarningCount,
+            status: status,
+            side_wall: sideWall,
+            fg: fg,
+            air_pressure: airPressure,
+            temperature_preform: temperaturePreform,
+            activity_control: (activities).toString(),
+            treated_water_pressure: treatedWaterPressure,
+            take_action: takeAction,
+            other: other,
+            haccp_id: route?.haccp_id,
+            activities: [{ action: "Add Monitoring " }],
+          })
+        } else if (route?.item) {
+          const changes = [
+            route?.item?.side_wall != sideWall ? `Side Wall from ${route?.item?.side_wall} to ${sideWall}` : '',
+            route?.item?.air_pressure != airPressure ? `Air Pressure from ${route?.item?.air_pressure} to ${airPressure}` : '',
+            route?.item?.temperature_preform != temperaturePreform ? `Temperature Preform from ${route?.item?.temperature_preform} to ${temperaturePreform}` : '',
+            route?.item?.fg != fg ? `FG from ${route?.item?.fg} to ${fg}` : '',
+            route?.item?.treated_water_pressure != treatedWaterPressure ? `Treated Water Pressure from ${route?.item?.treated_water_pressure} to ${treatedWaterPressure}` : '',
+            parseFloat(route?.item?.activity_control) != parseFloat(activities) ? `Control from ${parseFloat(route?.item?.activity_control) == 1 ? 'Yes' : 'No'} to ${parseFloat(activities) == 1 ? 'Yes' : 'No'}` : '',
+            route?.item?.take_action != takeAction ? `Take Action from ${route?.item?.take_action} to ${takeAction}` : '',
+            route?.item?.other !== other ? `Other from ${route?.item?.other} to ${other}` : ''
+          ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+
+          entity = LinesItemModel.create({
+            id: route?.item?.id ?? null,
+            line: "Line" + " " + route?.line,
+            warning_count: updatedWarningCount,
+            status: status,
+            side_wall: sideWall,
+            fg: fg,
+            air_pressure: airPressure,
+            temperature_preform: temperaturePreform,
+            activity_control: (activities).toString(),
+            treated_water_pressure: treatedWaterPressure,
+            take_action: takeAction,
+            other: other,
+            haccp_id: route?.haccp_id,
+            activities: [{ action: `has modified ${actionString}` }],
+          })
+        }
+
+        await (haccpLinesStore
+          .addHaccpLines(entity)
+          .saveHaccpLine456()
+          .then()
+          .catch((e) => console.log(e)))
+        {
+          Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'ជោគជ័យ',
+            textBody: 'រក្សាទុកបានជោគជ័យ',
+            // button: 'close',
+            autoClose: 100
+          })
+          console.log(entity)
+        }
+        console.log(entity)
+      } catch (error) {
+        console.log(error);
+        // Show error dialog
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'បរាជ័យ',
+          textBody: 'សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ',
+          button: 'បិទ',
+        });
+      } finally {
+        setLoading(false); // Reset loading state regardless of success or failure
+        route?.onReload()
+      }
+    }
 
     return (
       <Provider>
@@ -713,310 +641,19 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             )}
             <ScrollView showsVerticalScrollIndicator persistentScrollbar stickyHeaderIndices={[]}>
               <View style={[$outerContainer]}>
-                {[4, 5, 6].includes(+route?.line) && (
-                  <>
-                    {route?.isvalidDate && route?.assign && (
-                      <ActivityBar
-                        direction="end"
-                        showInfo
-                        disable
-                        onAttachment={onlaunchGallery}
-                        onScanCamera={onlaunchCamera}
-                        onClickinfo={() => {
-                          setShowActivitylog(true)
-                        }}
-                        onActivity={() => {
-                          setDisableSave(true)
-                          setShowActivitylog(true)
-                        }}
-                      />
-                    )}
-
-                    <Divider style={{ marginVertical: 30, backgroundColor: "#A49B9B" }} />
-                    <View style={{ rowGap: 50 }}>
-                      <View style={$containerHorizon}>
-                        <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            keyboardType="decimal-pad"
-                            hintLimit="100 - 110%"
-                            showIcon={false}
-                            value={formLineA.side_wall?.toString() || ""}
-                            onBlur={() => {
-                              formLineA.side_wall !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, side_wall: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, side_wall: true }))
-                            }}
-                            warning={
-                              (formLineA.side_wall && +formLineA?.side_wall < 100) ||
-                              +formLineA.side_wall > 110
-                            }
-                            onChangeText={(text) => {
-                              formLineA.side_wall !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, side_wall: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, side_wall: true }))
-
-                              setFormLineA((pre) => ({ ...pre, side_wall: text.trim() }))
-                            }}
-                            label="Side-wall"
-                            errormessage={errorsLineA?.side_wall ? "សូមជ្រើសរើស side wall" : ""}
-                          />
-                        </View>
-                        <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            keyboardType="decimal-pad"
-                            hintLimit="> 1.5 Bar"
-                            warning={formLineA.air_pressure && +formLineA?.air_pressure < 1.5}
-                            value={formLineA.air_pressure?.toString() || ""}
-                            showIcon={false}
-                            onBlur={() => {
-                              formLineA.air_pressure !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, air_pressure: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, air_pressure: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineA.air_pressure !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, air_pressure: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, air_pressure: true }))
-
-                              setFormLineA((pre) => ({ ...pre, air_pressure: text.trim() }))
-                            }}
-                            label="Air Pressure"
-                            errormessage={
-                              errorsLineA?.air_pressure ? "សូមជ្រើសរើស Air Pressure" : ""
-                            }
-                          />
-                        </View>
-                        <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            keyboardType="decimal-pad"
-                            hintLimit="100 - 110%"
-                            warning={
-                              (formLineA.tem_preform && +formLineA?.tem_preform < 100) ||
-                              +formLineA?.tem_preform > 110
-                            }
-                            showIcon={false}
-                            value={formLineA.tem_preform?.toString() || ""}
-                            onBlur={() => {
-                              formLineA.tem_preform !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, tem_preform: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, tem_preform: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineA.tem_preform !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, tem_preform: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, tem_preform: true }))
-
-                              setFormLineA((pre) => ({ ...pre, tem_preform: text.trim() }))
-                            }}
-                            label="Temperature Preform"
-                            errormessage={
-                              errorsLineA?.tem_preform ? "សូមជ្រើសរើស Temperature Preform" : ""
-                            }
-                          />
-                        </View>
-                      </View>
-                      <View style={$containerHorizon}>
-                        <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            keyboardType="decimal-pad"
-                            value={formLineA.tw_pressure?.toString() || ""}
-                            warning={formLineA.tw_pressure && +formLineA?.tw_pressure < 1.5}
-                            showIcon={false}
-                            onBlur={() => {
-                              formLineA.tw_pressure !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, tw_pressure: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, tw_pressure: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineA.tw_pressure !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, tw_pressure: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, tw_pressure: true }))
-
-                              setFormLineA((pre) => ({ ...pre, tw_pressure: text.trim() }))
-                            }}
-                            hintLimit="> 1.5 bar / flow scale > 3"
-                            label="Treated Water Pressure"
-                            errormessage={
-                              errorsLineA?.tw_pressure ? "សូមជ្រើសរើស Treated Water Pressure" : ""
-                            }
-                          />
-                        </View>
-                        <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            keyboardType="decimal-pad"
-                            showIcon={false}
-                            warning={
-                              (formLineA.FG && +formLineA?.FG < 0.05) || +formLineA?.FG > 0.4
-                            }
-                            value={formLineA.FG?.toString() || ""}
-                            hintLimit="0.05 - 0.4 ppm"
-                            onBlur={() => {
-                              formLineA.FG !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, FG: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, FG: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineA.FG !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, FG: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, FG: true }))
-
-                              setFormLineA((pre) => ({ ...pre, FG: text.trim() }))
-                            }}
-                            label="FG [ O₃ ]"
-                            errormessage={errorsLineA?.FG ? "សូមជ្រើសរើស FG [ O3 ]" : ""}
-                          />
-                        </View>
-                        <View style={[$width, { marginTop: 1 }]}>
-                          <View style={{ paddingBottom: 38 }}>
-                            <Text style={{ margin: 0, fontSize: 15 }} semibold>
-                              <Text errorColor style={{ fontSize: 20 }}>
-                                *
-                              </Text>
-                              Activity Control     <View style={$containerHorizon}>
-                            {formLineA?.activity_control != null && !formLineA?.activity_control ? (
-                              <Badge size={22} style={{ backgroundColor: "#D32600",marginLeft:10,marginBottom:5 }}>
-                                !
-                              </Badge>
-                            ) : null}
-                          </View>
-                          
-                            </Text>
-                        
-                          </View>
-                   
-
-                          <View style={[$containerHorizon]}>
-                            <View>
-                              <View style={[$containerHorizon, { marginTop: 0, gap: 0 }]}>
-                                <View
-                                  style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
-                                >
-                                  <TouchableOpacity
-                                    disabled={!(route?.assign && route?.isvalidDate)}
-                                    style={$containerHorizon}
-                                    onPress={() => {
-                                      setErrorsLineA((pre) => ({ ...pre, activity_control: false }))
-                                      setFormLineA((pre) => ({
-                                        ...pre,
-                                        activity_control: true,
-                                      }))
-                                    }}
-                                  >
-                                    <Checkbox
-                                      disabled={!(route?.assign && route?.isvalidDate)}
-                                      status={
-                                        formLineA?.activity_control === null
-                                          ? "unchecked"
-                                          : formLineA?.activity_control
-                                          ? "checked"
-                                          : "unchecked"
-                                      }
-                                      onPress={() => {
-                                        setErrorsLineA((pre) => ({
-                                          ...pre,
-                                          activity_control: false,
-                                        }))
-                                        setFormLineA((pre) => ({
-                                          ...pre,
-                                          activity_control: true,
-                                        }))
-                                      }}
-                                      color="#0081F8"
-                                    />
-                                    <Text>Under Control </Text>
-                                  </TouchableOpacity>
-                                </View>
-                                <View
-                                  style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}
-                                >
-                                  <TouchableOpacity
-                                    disabled={!(route?.assign && route?.isvalidDate)}
-                                    style={$containerHorizon}
-                                    onPress={() => {
-                                      setErrorsLineA((pre) => ({ ...pre, activity_control: false }))
-                                      setFormLineA((pre) => ({
-                                        ...pre,
-                                        activity_control: false,
-                                      }))
-                                    }}
-                                  >
-                                    <Checkbox
-                                      disabled={!(route?.assign && route?.isvalidDate)}
-                                      status={
-                                        formLineA?.activity_control === null
-                                          ? "unchecked"
-                                          : !formLineA?.activity_control
-                                          ? "checked"
-                                          : "unchecked"
-                                      }
-                                      onPress={() => {
-                                        setErrorsLineA((pre) => ({
-                                          ...pre,
-                                          activity_control: false,
-                                        }))
-                                        setFormLineA((pre) => ({
-                                          ...pre,
-                                          activity_control: false,
-                                        }))
-                                      }}
-                                      color="#0081F8"
-                                    />
-                                    <Text>Over Control </Text>
-                                  </TouchableOpacity>
-                                </View>
-                              </View>
-                            </View>
-                          </View>
-                          <Text errorColor caption1 style={{ marginTop: 10 }}>
-                            {errorsLineA?.activity_control && errorsLineA?.activity_control
-                              ? "*សូម​ត្រួតពិនិត្យ"
-                              : ""}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={$containerHorizon}>
-                        <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            value={formLineA?.instruction}
-                            onBlur={() => {
-                              formLineA.instruction !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, instruction: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, instruction: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineA.instruction !== ""
-                                ? setErrorsLineA((pre) => ({ ...pre, instruction: false }))
-                                : setErrorsLineA((pre) => ({ ...pre, instruction: true }))
-
-                              setFormLineA((pre) => ({ ...pre, instruction: text.trim() }))
-                            }}
-                            showIcon={false}
-                            showAsterick={false}
-                            label="Instruction "
-                            errormessage={""}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  </>
-                )}
-
                 {[2, 3].includes(+route?.line) && (
                   <>
                     <InstructionList
                       showinstruction={showinstruction}
                       handleToggle={onShowInstruction}
+                      group_list="1"
                     />
 
                     <View style={[$containerHorizon, { justifyContent: "space-between" }]}>
-                      <Text title3>Bottle and Cap rinsing</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text title3>Bottle and Cap rinsing</Text>
+                        <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(oPRP7 & 8 and CCP10 & 11)</Text>
+                      </View>
 
                       {route?.isvalidDate && route?.assign && (
                         <ActivityBar
@@ -1038,433 +675,513 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                     <View style={{ rowGap: 25 }}>
                       <View style={$containerHorizon}>
                         <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            showIcon={false}
-                            keyboardType="decimal-pad"
-                            warning={formLineB.water_pressure && +formLineB?.water_pressure < 1}
-                            value={formLineB.water_pressure?.toString() || ""}
-                            onBlur={() => {
-                              formLineB.water_pressure !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, water_pressure: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, water_pressure: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineB.water_pressure !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, water_pressure: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, water_pressure: true }))
-
-                              setFormLineB((pre) => ({ ...pre, water_pressure: text.trim() }))
-                            }}
-                            label="Water Pressure"
-                            hintLimit="> 1.0 bar"
-                            errormessage={
-                              errorsLineB?.water_pressure ? "សូមជ្រើសរើស water pressure" : ""
-                            }
-                          />
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Water Pressure</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(&gt; 1.0 bar)</Text>
+                              {parseFloat(waterPressure) < 1.0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <TextInput
+                              value={waterPressure}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => {
+                                setWaterPressure(text);
+                              }}>
+                            </TextInput>
+                            {waterPressure == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ water pressure</Text>
+                              : <></>}
+                          </View>
                         </View>
                         <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            showIcon={false}
-                            warning={
-                              formLineB.nozzie_rinser &&
-                              +formLineB?.nozzie_rinser !== 32 &&
-                              +formLineB?.nozzie_rinser !== 40
-                            }
-                            keyboardType="decimal-pad"
-                            value={formLineB.nozzie_rinser?.toString() || ""}
-                            onBlur={() => {
-                              formLineB.nozzie_rinser !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineB.nozzie_rinser !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, nozzie_rinser: true }))
-
-                              setFormLineB((pre) => ({ ...pre, nozzie_rinser: text.trim() }))
-                            }}
-                            hintLimit="No one clog of 32/40"
-                            label="Nozzies rinser"
-                            errormessage={
-                              errorsLineB?.nozzie_rinser ? "សូមជ្រើសរើស Nozzies Rinser" : ""
-                            }
-                          />
-                        </View>
-                      </View>
-
-                      <Text title3>Filling and Capping</Text>
-                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
-
-                      <View style={[$containerHorizon, { gap: 30 }]}>
-                        <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            hintLimit="0.05 - 0.4 ppm"
-                            showIcon={false}
-                            warning={
-                              (formLineB.FG && +formLineB?.FG < 0.05) || +formLineB?.FG > 0.4
-                            }
-                            keyboardType="decimal-pad"
-                            value={formLineB.FG?.toString() || ""}
-                            onBlur={() => {
-                              formLineB.FG !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, FG: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, FG: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineB.FG !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, FG: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, FG: true }))
-
-                              setFormLineB((pre) => ({ ...pre, FG: text.trim() }))
-                            }}
-                            label="FG [ O3 ] "
-                            errormessage={errorsLineB?.FG ? "សូមជ្រើសរើស FG" : ""}
-                          />
-                        </View>
-                        <View style={$width}>
-                          <Text style={{ marginTop: -10 }} semibold body2>
-                            <Text errorColor>*</Text> Smell
-                          </Text>
-                          <View style={[$containerHorizon, { marginTop: 10, gap: 0 }]}>
-                            <View style={[$containerHorizon, { marginTop: 10, margin: 0, gap: 0 }]}>
-                              <TouchableOpacity
-                                disabled={!route?.assign}
-                                style={$containerHorizon}
-                                onPress={() => {
-                                  setErrorsLineB((pre) => ({ ...pre, smell: false }))
-                                  setFormLineB((pre) => ({
-                                    ...pre,
-                                    smell: true,
-                                  }))
-                                }}
-                              >
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Nozzles rinser</Text>
+                              {(nozzlesRinser) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <View style={{ flexDirection: 'row' }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
                                 <Checkbox
                                   disabled={!route?.assign}
                                   status={
-                                    formLineB?.smell === null
+                                    nozzlesRinser === null
                                       ? "unchecked"
-                                      : formLineB?.smell
-                                      ? "checked"
-                                      : "unchecked"
+                                      : nozzlesRinser == 1
+                                        ? "checked"
+                                        : "unchecked"
                                   }
                                   onPress={() => {
-                                    setErrorsLineB((pre) => ({ ...pre, smell: false }))
-                                    setFormLineB((pre) => ({
-                                      ...pre,
-                                      smell: true,
-                                    }))
+                                    setNozzlesRinser(1)
                                   }}
                                   color="#0081F8"
                                 />
                                 <Text>Yes </Text>
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                disabled={!route?.assign}
-                                style={$containerHorizon}
-                                onPress={() => {
-                                  setFormLineB((pre) => ({
-                                    ...pre,
-                                    smell: false,
-                                  }))
-                                }}
-                              >
+                              </View>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Checkbox
                                   disabled={!route?.assign}
                                   status={
-                                    formLineB?.smell === null
+                                    nozzlesRinser === null
                                       ? "unchecked"
-                                      : !formLineB?.smell
-                                      ? "checked"
-                                      : "unchecked"
+                                      : nozzlesRinser == 0
+                                        ? "checked"
+                                        : "unchecked"
                                   }
                                   onPress={() => {
-                                    setErrorsLineB((pre) => ({ ...pre, smell: false }))
-                                    setFormLineB((pre) => ({
-                                      ...pre,
-                                      smell: false,
-                                    }))
+                                    setNozzlesRinser(0)
                                   }}
                                   color="#0081F8"
                                 />
-                                <Text>No</Text>
-                              </TouchableOpacity>
+                                <Text>No </Text>
+                              </View>
+
                             </View>
+                            {nozzlesRinser == null ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Nozzles rinser</Text>
+                              : <></>}
                           </View>
-                          <Text errorColor caption1 style={{ marginTop: 10 }}>
-                            {formLineB.smell=== null && "*សូម​ត្រួតពិនិត្យ"}
-                          </Text>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text title3>Filling and Capping</Text>
+                        <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(CCP12 & 13)</Text>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+
+                      <View style={[$containerHorizon, { gap: 30 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>FG [ O3 ]</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.05-0.4 ppm)</Text>
+                              {(parseFloat(fg) < 0.05 || parseFloat(fg) > 0.4) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={fg}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setFg(text)}>
+                            </TextInput>
+                            {fg == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ FG</Text>
+                              : <></>}
+                          </View>
                         </View>
                         <View style={$width}>
-                          <View style={[{ marginBottom: 5 }]}>
-                            <View style={[$containerHorizon, { marginBottom: 20 }]}>
-                              <View style={{ paddingBottom: 0 }}>
-                                <Text style={{ margin: 0, fontSize: 15 }} semibold>
-                                  <Text errorColor style={{ fontSize: 20 }}>
-                                    *
-                                  </Text>
-                                  Activity Control
-                                </Text>
-                              </View>
-                              {formLineB?.activity_control != null &&
-                              !formLineB?.activity_control ? (
-                                <Badge size={22} style={{ backgroundColor: "#D32600" }}>
-                                  !
-                                </Badge>
-                              ) : null}
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Smell</Text>
+                              {(smell) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                             </View>
+                            <View style={{ flexDirection: 'row' }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                                <Checkbox
+                                  disabled={!route?.assign}
+                                  status={
+                                    smell === null
+                                      ? "unchecked"
+                                      : smell == 1
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setSmell(1)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Yes </Text>
+                              </View>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Checkbox
+                                  disabled={!route?.assign}
+                                  status={
+                                    smell === null
+                                      ? "unchecked"
+                                      : smell == 0
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setSmell(0)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>No </Text>
+                              </View>
 
-                            <View style={$containerHorizon}>
-                              <View style={[$containerHorizon, { paddingBottom: 20, gap: 0 }]}>
-                                <View
-                                  style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
-                                >
-                                  <TouchableOpacity
-                                    disabled={!(route?.assign && route?.isvalidDate)}
-                                    style={$containerHorizon}
-                                    onPress={() => {
-                                      setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
-                                      setFormLineB((pre) => ({
-                                        ...pre,
-                                        activity_control: true,
-                                      }))
-                                    }}
-                                  >
-                                    <Checkbox
-                                      disabled={!(route?.assign && route?.isvalidDate)}
-                                      status={
-                                        formLineB?.activity_control === null
-                                          ? "unchecked"
-                                          : formLineB?.activity_control
-                                          ? "checked"
-                                          : "unchecked"
-                                      }
-                                      onPress={() => {
-                                        setErrorsLineB((pre) => ({
-                                          ...pre,
-                                          activity_control: false,
-                                        }))
-                                        setFormLineB((pre) => ({
-                                          ...pre,
-                                          activity_control: true,
-                                        }))
-                                      }}
-                                      color="#0081F8"
-                                    />
-                                    <Text>Under Control </Text>
-                                  </TouchableOpacity>
-                                  
-                                </View>
-                                
-                                <View
-                                  style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
-                                >
-                                  <TouchableOpacity
-                                    disabled={!(route?.assign && route?.isvalidDate)}
-                                    style={$containerHorizon}
-                                    onPress={() => {
-                                      setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
-                                      setFormLineB((pre) => ({
-                                        ...pre,
-                                        activity_control: false,
-                                      }))
-                                    }}
-                                  >
-                                    <Checkbox
-                                      disabled={!(route?.assign && route?.isvalidDate)}
-                                      status={
-                                        formLineB?.activity_control === null
-                                          ? "unchecked"
-                                          : !formLineB?.activity_control
-                                          ? "checked"
-                                          : "unchecked"
-                                      }
-                                      onPress={() => {
-                                        setErrorsLineB((pre) => ({
-                                          ...pre,
-                                          activity_control: false,
-                                        }))
-                                        setFormLineB((pre) => ({
-                                          ...pre,
-                                          activity_control: false,
-                                        }))
-                                      }}
-                                      color="#0081F8"
-                                    />
-                                    <Text>Over Control </Text>
-                                  </TouchableOpacity>
-                                </View>
-                                
-                                {/* <Text errorColor caption1 style={{ marginTop: 0 }}>
-                                  {errorsLineB?.activity_control && errorsLineB?.activity_control
-                                    ? "*សូម​ត្រួតពិនិត្យ"
-                                    : ""}
-                                </Text> */}
-                              </View>
-                      
                             </View>
-                            <Text errorColor caption1 style={{ marginTop: 0 }}>
-                                {errorsLineB?.activity_control && errorsLineB?.activity_control
-                                  ? "*សូម​ត្រួតពិនិត្យ"
-                                  : ""}
-                              </Text>
+                            {smell == null ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Smell</Text>
+                              : <></>}
                           </View>
                         </View>
-
-                        {/* <View style={[$width, { marginBottom: 0 }]}>
-                          <View style={[$containerHorizon, { marginBottom: 80 }]}>
-                            <View style={{ paddingBottom: 0 }}>
-                              <Text style={{ margin: 0, fontSize: 15 }} semibold>
-                                <Text errorColor style={{ fontSize: 20 }}>
-                                  *
-                                </Text>
-                                Activity Control
-                              </Text>
-                            </View>
-                            {formLineB?.activity_control != null && !formLineB?.activity_control ? (
-                              <Badge size={22} style={{ backgroundColor: "#D32600" }}>
-                                !
-                              </Badge>
-                            ) : null}
-                          </View>
-
-                          <View style={$containerHorizon}>
-                            <View style={[$containerHorizon, { paddingBottom: 20, gap: 0 }]}>
-                              <View
-                                style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
-                              >
-                                <TouchableOpacity
-                                  disabled={!(route?.assign && route?.isvalidDate)}
-                                  style={$containerHorizon}
-                                  onPress={() => {
-                                    setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
-                                    setFormLineB((pre) => ({
-                                      ...pre,
-                                      activity_control: true,
-                                    }))
-                                  }}
-                                >
-                                  <Checkbox
-                                    disabled={!(route?.assign && route?.isvalidDate)}
-                                    status={
-                                      formLineB?.activity_control === null
-                                        ? "unchecked"
-                                        : formLineB?.activity_control
-                                          ? "checked"
-                                          : "unchecked"
-                                    }
-                                    onPress={() => {
-                                      setErrorsLineB((pre) => ({
-                                        ...pre,
-                                        activity_control: false,
-                                      }))
-                                      setFormLineB((pre) => ({
-                                        ...pre,
-                                        activity_control: true,
-                                      }))
-                                    }}
-                                    color="#0081F8"
-                                  />
-                                  <Text>Under Control </Text>
-                                </TouchableOpacity>
-                              </View>
-                              <View
-                                style={[$containerHorizon, { marginTop: 0, margin: 0, gap: 0 }]}
-                              >
-                                <TouchableOpacity
-                                  disabled={!(route?.assign && route?.isvalidDate)}
-                                  style={$containerHorizon}
-                                  onPress={() => {
-                                    setErrorsLineB((pre) => ({ ...pre, activity_control: false }))
-                                    setFormLineB((pre) => ({
-                                      ...pre,
-                                      activity_control: false,
-                                    }))
-                                  }}
-                                >
-                                  <Checkbox
-                                    disabled={!(route?.assign && route?.isvalidDate)}
-                                    status={
-                                      formLineB?.activity_control === null
-                                        ? "unchecked"
-                                        : !formLineB?.activity_control
-                                          ? "checked"
-                                          : "unchecked"
-                                    }
-                                    onPress={() => {
-                                      setErrorsLineB((pre) => ({
-                                        ...pre,
-                                        activity_control: false,
-                                      }))
-                                      setFormLineB((pre) => ({
-                                        ...pre,
-                                        activity_control: false,
-                                      }))
-                                    }}
-                                    color="#0081F8"
-                                  />
-                                  <Text>Over Control </Text>
-                                </TouchableOpacity>
-                              </View>
-                              <Text errorColor caption1 style={{ marginTop: 0 }}>
-                                {errorsLineB?.activity_control && errorsLineB?.activity_control
-                                  ? "*សូម​ត្រួតពិនិត្យ"
-                                  : ""}
-                              </Text>
-                            </View>
-
-                          </View>
-
-                        </View> */}
                       </View>
-
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text title3>Activity control when exceeding</Text>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
                       <View style={$containerHorizon}>
                         <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            showIcon={false}
-                            onBlur={() => {
-                              formLineB.instruction !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, instruction: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, instruction: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineB.instruction !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, instruction: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, instruction: true }))
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Control</Text>
+                              {(activities) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <View style={{ flexDirection: 'row' }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                                <Checkbox
+                                  disabled={!route?.assign}
+                                  status={
+                                    activities === null
+                                      ? "unchecked"
+                                      : activities == 1
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setActivities(1)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Under Control</Text>
+                              </View>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Checkbox
+                                  disabled={!route?.assign}
+                                  status={
+                                    activities === null
+                                      ? "unchecked"
+                                      : activities == 0
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setActivities(0)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Over Control</Text>
+                              </View>
 
-                              setFormLineB((pre) => ({ ...pre, instruction: text.trim() }))
-                            }}
-                            label="Take Action  "
-                            value={formLineB.instruction}
-                            showAsterick={false}
-                            errormessage={""}
-                          />
+                            </View>
+                            {activities == null ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Control</Text>
+                              : <></>}
+                          </View>
                         </View>
                         <View style={$width}>
-                          <CustomInput
-                            disabled={route?.assign && route?.isvalidDate}
-                            value={formLineB.other}
-                            showIcon={false}
-                            showAsterick={false}
-                            onBlur={() => {
-                              formLineB.other !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, other: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, other: true }))
-                            }}
-                            onChangeText={(text) => {
-                              formLineB.other !== ""
-                                ? setErrorsLineB((pre) => ({ ...pre, other: false }))
-                                : setErrorsLineB((pre) => ({ ...pre, other: true }))
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              {takeAction == '' && (nozzlesRinser == 0 || smell == 0) ?
+                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                : <></>}
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Take action</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(Instruction 4)</Text>
+                            </View>
+                            <TextInput
+                              value={takeAction}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setTakeAction(text)}>
+                            </TextInput>
+                            {takeAction == '' && (nozzlesRinser == 0 || smell == 0) ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Take Action</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={$width}>
+                        <View style={{ marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                            <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                          </View>
+                          <TextInput
+                            value={other}
+                            readOnly={!isEdit}
+                            style={[styles.input, { width: '100%' }]}
+                            placeholder="Please Enter"
+                            onChangeText={(text) => setOther(text)}>
+                          </TextInput>
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                )}
 
-                              setFormLineB((pre) => ({ ...pre, other: text.trim() }))
-                            }}
-                            label="Other "
-                            errormessage={""}
-                          />
+                {[4, 5, 6].includes(+route?.line) && (
+                  <>
+                    <InstructionList
+                      showinstruction={showinstruction}
+                      handleToggle={onShowInstruction}
+                      group_list="2"
+                    />
+                    {route?.isvalidDate && route?.assign && (
+                      <ActivityBar
+                        direction="end"
+                        showInfo
+                        disable
+                        onAttachment={onlaunchGallery}
+                        onScanCamera={onlaunchCamera}
+                        onClickinfo={() => {
+                          setShowActivitylog(true)
+                        }}
+                        onActivity={() => {
+                          setDisableSave(true)
+                          setShowActivitylog(true)
+                        }}
+                      />
+                    )}
+
+                    <View style={{ rowGap: 15 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center' }}>
+                          <Text title3>PET Inspection</Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(CCP10)</Text>
+                        </View>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+                          <Text title3>Preform interior blower</Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(oPRP7)</Text>
+                        </View>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+                      <View style={[$containerHorizon, { gap: 10 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Side-wall</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(Sensitive 100-110%)</Text>
+                              {(parseFloat(sideWall) < 100 || parseFloat(sideWall) > 110) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={sideWall}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setSideWall(text)}>
+                            </TextInput>
+                            {sideWall == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Side-wall</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Air Pressure</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(&gt; 1.5 bar)</Text>
+                              {(parseFloat(airPressure) < 1.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={airPressure}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setAirPressure(text)}>
+                            </TextInput>
+                            {airPressure == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Air Pressure</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center' }}>
+                          <Text title3>Preform heating module</Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(oPRP8)</Text>
+                        </View>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+                          <Text title3>Bottle Filling and Capping</Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(CCP12 & 13)</Text>
+                        </View>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+
+                      <View style={[$containerHorizon, { gap: 10 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Temperature Preform</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(87-115 °C)</Text>
+                              {(parseFloat(temperaturePreform) < 87 || parseFloat(temperaturePreform) > 115) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={temperaturePreform}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setTemperaturePreform(text)}>
+                            </TextInput>
+                            {temperaturePreform == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Temperature Preform</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>FG [O₃]</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.05-0.4 ppm)</Text>
+                              {(parseFloat(fg) < 0.05 || parseFloat(fg) > 0.4) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={fg}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setFg(text)}>
+                            </TextInput>
+                            {fg == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ FG</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <Text title3>Cap rinsing</Text>
+                        <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(CCP11 & oPRP9)</Text>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+
+                      <View style={[$containerHorizon, { gap: 10 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Treated water pressure/Flow scale</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(&gt; 1.5 bar / flow scale&gt;3)</Text>
+                              {(parseFloat(treatedWaterPressure) < 1.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={treatedWaterPressure}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setTreatedWaterPressure(text)}>
+                            </TextInput>
+                            {treatedWaterPressure == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Treated water pressure/Flow scale</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                      </View>
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <Text title3>Activity control when exceeding critical limit</Text>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+
+                      <View style={[$containerHorizon, { gap: 10 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Control</Text>
+                              {(activities) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <View style={{ flexDirection: 'row' }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                                <Checkbox
+                                  disabled={!route?.assign}
+                                  status={
+                                    activities === null
+                                      ? "unchecked"
+                                      : activities == 1
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setActivities(1)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Under Control</Text>
+                              </View>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Checkbox
+                                  disabled={!route?.assign}
+                                  status={
+                                    activities === null
+                                      ? "unchecked"
+                                      : activities == 0
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setActivities(0)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Over Control</Text>
+                              </View>
+
+                            </View>
+                            {activities == null ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Control</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              {/* {takeAction == '' && (nozzlesRinser == 0 || smell == 0) ?
+                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                : <></>} */}
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Take action</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(Instruction 4)</Text>
+                            </View>
+                            <TextInput
+                              value={takeAction}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setTakeAction(text)}>
+                            </TextInput>
+                            {/* {takeAction == '' && (nozzlesRinser == 0 || smell == 0) ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Take Action</Text>
+                              : <></>} */}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={$containerHorizon}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                            </View>
+                            <TextInput
+                              value={other}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setOther(text)}>
+                            </TextInput>
+                          </View>
                         </View>
                       </View>
                     </View>

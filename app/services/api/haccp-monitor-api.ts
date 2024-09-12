@@ -14,6 +14,7 @@ const ApiURL = {
   haccpActivitiesList: "get-haccp-activities",
   haccpSelfAssign: "assign-self-haccp",
   haccpActivitiesByTime: "get-haccp-activities-by-time",
+  getInstruction:"get-instruction"
 }
 
 export class HaccpMonitoringApi extends BaseApi {
@@ -22,7 +23,6 @@ export class HaccpMonitoringApi extends BaseApi {
       const rs = await this.requestService.list<HaccpLineStore>(ApiURL.haccpListByDate, {
         assign_date: date,
       })
-
       return DataResponseList(rs)
     } catch (e: any) {
       __DEV__ && console.tron.log(e.message)
@@ -140,6 +140,19 @@ export class HaccpMonitoringApi extends BaseApi {
       return { kind: "bad-data" }
     }
   }
+
+  async getInstruction(group_line: string): Promise<any> {
+    try {
+      const rs = await this.requestService.list(ApiURL.getInstruction, {
+        group_line: group_line,
+      })
+      return DataResponseList(rs)
+    } catch (e: any) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data" }
+    }
+  }
+
 }
 
 export const haccpMonitorApi = new HaccpMonitoringApi()

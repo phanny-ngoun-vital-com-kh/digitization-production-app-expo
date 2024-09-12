@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   ScrollView,
+  TextInput
 } from "react-native"
 import { Text } from "app/components/v2"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
@@ -24,8 +25,9 @@ import { styles } from "../styles"
 import BadgeWarning from "app/components/v2/Badgewarn"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 import { translate } from "../../../i18n/translate"
+import IconAntDesign from "react-native-vector-icons/AntDesign"
 
-interface PreWaterForm1ScreenProps extends AppStackScreenProps<"PreWaterForm1"> {}
+interface PreWaterForm1ScreenProps extends AppStackScreenProps<"PreWaterForm1"> { }
 
 export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
   function PreWaterForm1Screen() {
@@ -34,13 +36,25 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     const { preWaterTreatmentStore, authStore } = useStores()
     const [isloading, setLoading] = useState(false)
     const [isScanning, setScanning] = useState(false)
-    const [hasCompleted, setCompleted] = useState(false)
     const route = useRoute().params
     const [image, setImage] = useState(null)
     const [showLog, setShowlog] = useState<boolean>(false)
+    const [sf, setSf] = useState(route?.item?.sf || '')
+    const [acf, setacf] = useState(route?.item?.acf || '')
+    const [resin, setResin] = useState(route?.item?.resin || '')
+    const [um5, setum5] = useState(route?.item?.um5 || '')
+    const [other, setOther] = useState(route?.item?.remark || '')
+    const [airSF, setAirSF] = useState(route?.item?.sf != null ? parseFloat(route?.item?.sf) : null)
+    const [airACF, setAirACF] = useState(route?.item?.acf != null ? parseFloat(route?.item?.acf) : null)
+    const [airResin, setAirResin] = useState(route?.item?.resin != null ? parseFloat(route?.item?.resin) : null)
+    const [rawWater, setRawWater] = useState(route?.item?.raw_water || '')
+    const assignedUsers = route?.item?.assign_to_user.split(' ');
+    const [isEdit, setIsEdit] = useState()
+    const isUserAssigned = assignedUsers.includes(authStore?.userLogin);
+    // const isEdit = (route?.isvalidDate && isUserAssigned && route?.isValidShift)
     const [form, setForm] = useState({
-      sf1: "",
-      acf1: "",
+      sf: "",
+      acf: "",
       resin: "",
       raw_water: "",
       fiveMm: "",
@@ -49,434 +63,38 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         sf: null,
         acf: null,
         resin: null,
+        remarks: "",
       },
     })
 
     const [oldRoute, setRoute] = useState({})
     const [isEditable, setEditable] = useState(false)
     const [errors, setErrors] = useState({
-      sf1: true,
-      acf1: true,
+      sf: true,
+      acf: true,
       resin: true,
       raw_water: true,
       fiveMm: true,
       remarks: true,
       air_released: false,
     })
-    const fetchUserActivity = async () => {
-      const result = await preWaterTreatmentStore.getActivitiesList(
-        route?.item?.id,
-        route?.item?.pre_treatment_type,
-      )
-      setActivities(result.sort((a, b) => new Date(b.actionDate) - new Date(a.actionDate)))
-    }
-
-    const checkChanges = () => {
-      const modifedForm = form
-      // delete modifedForm?.remarks
-      const arractions = []
-
-      if (route?.type?.toLowerCase().includes("air")) {
-        delete modifedForm.fiveMm
-        delete modifedForm.raw_water
-        delete modifedForm.resin
-        delete modifedForm.acf1
-        delete modifedForm.sf1
-        console.log("checking air released", route?.item?.resin)
-        // delete modifedForm?.remarks
-
-        if (hasCompleted) {
-          console.log("checking air released x2")
-
-          for (const key in form.air_released) {
-            console.log("true ")
-
-            console.log(oldRoute?.air_released[key], form?.air_released[key])
-            if (oldRoute?.air_released[key] !== form?.air_released[key]) {
-              console.log("old route air released :  ")
-              arractions.push({
-                name: key,
-                oldValue: oldRoute?.air_released[key] ? "Yes" : "No",
-                value: form?.air_released[key] ? "Yes" : "No",
-              })
-            }
-          }
+    
+    useEffect(() => {
+      const role = async () => {
+        try {
+          const rs = await authStore.getUserInfo();
+          const admin=rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
+          const edit = (route?.isvalidDate && isUserAssigned && route?.isValidShift) || admin
+          setIsEdit(edit)
+          // Modify the list based on the user's role
+          // setGetRole(rs)
+        } catch (e) {
+          console.log(e);
         }
-      } else {
-        delete modifedForm.air_released
-        delete modifedForm?.remarks
+      };
+      role();
+    }, []);
 
-        for (const key in modifedForm) {
-          if (oldRoute[key] !== null) {
-            // console.log("current Form", form[key], key)
-            // console.log("old Route", oldRoute[key], key)
-            if (form[key] != oldRoute[key]) {
-              arractions.push({
-                name: key,
-                oldValue: oldRoute[key],
-                value: form[key],
-              })
-            }
-          }
-        }
-      }
-
-      return arractions // Return false if no values have changed
-    }
-    const getActionUser = () => {
-      const arrActions = checkChanges()
-      const str = []
-      for (const item of arrActions) {
-        str.push("" + item.name.toUpperCase() + " from " + item.oldValue + " to " + item.value)
-      }
-      return !hasCompleted ? "has completed this machine" : "has modified " + str.join(" , ")
-    }
-    const checkWarningCount = () => {
-      let warning = 0
-      if (route?.type?.toLowerCase().includes("pressure")) {
-        delete form.raw_water
-        for (const key in form) {
-          if (form[key] < 0.1 || form[key] > 0.3) {
-            warning += 1
-          }
-        }
-      }
-
-      if (route?.type?.toLowerCase().includes("tds")) {
-        for (const key in form) {
-          if (form[key] > 300) {
-            warning += 1
-          }
-        }
-      }
-      if (route?.type?.toLowerCase().includes("ph")) {
-        for (const key in form) {
-          if (form[key] < 6.5 || form[key] > 8.5) {
-            warning += 1
-          }
-        }
-      }
-
-      return warning
-    }
-    const formvalidation = () => {
-      let hasError = false
-      const errlists = errors
-      delete errlists?.remarks
-      if (!route?.type?.toLowerCase().includes("air")) {
-        delete errlists?.air_released
-
-        if (!route?.type?.toLowerCase().includes("ph")) {
-          // delete errlists?.raw_water
-          delete errlists?.raw_water
-        }
-      } else {
-        delete errlists?.fiveMm
-        delete errlists?.acf1
-        delete errlists?.sf1
-        delete errlists?.resin
-        delete errlists?.raw_water
-        const airErrorLists = {
-          sf: form.air_released?.sf,
-          acf: form.air_released?.acf,
-          resin: form.air_released?.resin,
-        }
-        for (const key in airErrorLists) {
-          if (airErrorLists[key] === null) {
-            hasError = true
-          }
-        }
-      }
-
-      for (const key in errlists) {
-        if (errors[key] === true) {
-          hasError = true
-        }
-      }
-
-      return hasError
-    }
-
-    const getAirStatus = (): number => {
-      const errlists = {
-        sf: form.air_released?.sf,
-        acf: form.air_released?.acf,
-        resin: form.air_released?.resin,
-      }
-      const errs = []
-      for (const key in errlists) {
-        if (errlists[key] === true) {
-          errs.push(key)
-        }
-      }
-      return errs.length
-    }
-    const handleSubmit = async () => {
-      try {
-        if (route?.type?.toLowerCase().includes("air")) {
-          setLoading(true)
-          const modifiedForm = Object.assign({}, form)
-
-          const actions = getActionUser()
-          console.log(actions)
-
-          const payload = PreTreatmentListItemModel.create({
-            pre_treatment_type: route?.item?.pre_treatment_type,
-            id: route?.item?.id,
-            pre_treatment_id: route?.item?.pre_treatment_id,
-            action: actions,
-
-            sf: form.air_released?.sf ? "1" : "0",
-            acf: form.air_released?.acf ? "1" : "0",
-            resin: form.air_released?.resin ? "1" : "0",
-            status: getAirStatus() ? "warning" : "normal",
-            remark: modifiedForm.remarks,
-            warning_count: getAirStatus(),
-          })
-
-          setCompleted(true)
-
-          setRoute({
-            remarks: modifiedForm.remarks,
-            air_released: {
-              sf: form.air_released?.sf,
-              acf: form.air_released?.acf,
-              resin: form.air_released?.resin,
-            },
-          })
-
-          await preWaterTreatmentStore.addPretreatments(payload).savePreWtp()
-          setCompleted(true)
-          fetchUserActivity()
-          route?.onBack()
-        } else {
-          setLoading(true)
-          const actions = getActionUser()
-          const getWarningcount = checkWarningCount()
-          const payload = PreTreatmentListItemModel.create({
-            pre_treatment_type: route?.item?.pre_treatment_type,
-            id: route?.item?.id,
-            pre_treatment_id: route?.item?.pre_treatment_id,
-            action: actions,
-            sf: form.sf1,
-            acf: form.acf1,
-            resin: form.resin,
-            remark: form.remarks,
-            raw_water: form.raw_water ?? null,
-            um5: form.fiveMm,
-            status: getWarningcount > 0 ? "warning" : "normal",
-            warning_count: getWarningcount,
-          })
-          setCompleted(true)
-
-          setRoute({
-            sf1: form.sf1 ?? null,
-            acf1: form.acf1 ?? null,
-            resin: form.resin ?? null,
-            raw_water: form.raw_water ?? null,
-            fiveMm: form.fiveMm ?? null,
-            remark: form.remarks ?? null,
-          })
-
-          setLoading(true)
-
-          await preWaterTreatmentStore.addPretreatments(payload).savePreWtp()
-          fetchUserActivity()
-          route?.onBack()
-        }
-      } catch (error) {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "បរាជ័យ",
-          textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
-          button: "បិទ",
-          autoClose: 500,
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    const setImageToform = (result: string[]) => {
-      const blocktext = result as string[]
-      const numeric = []
-      if (route?.type?.toLowerCase().includes("air")) {
-        return
-      }
-      const isNumeric = (string) => /^[+-]?\d+(\.\d+)?$/.test(string)
-
-      for (let i = 0; i < blocktext.length; i++) {
-        const values = blocktext[i]
-
-        // Check if the value is numeric and not in the ignore list
-        if (isNumeric(values)) {
-          numeric.push(values)
-        } else if (values === "✓") {
-          numeric.push(values)
-        }
-      }
-      if (route?.type?.toLowerCase().includes("ph")) {
-        const [sf1, resin, acf1, mM5, raw_water] = numeric
-
-        setForm({
-          sf1: sf1,
-          acf1: acf1,
-          resin: resin,
-          raw_water: raw_water,
-          fiveMm: mM5,
-        })
-        setErrors({
-          sf1: false,
-          acf1: false,
-          raw_water: false,
-          resin: false,
-          fiveMm: false,
-        })
-        return
-      }
-      const [sf1, resin, acf1, mM5] = numeric
-
-      setForm({
-        sf1: sf1,
-        acf1: acf1,
-        resin: resin,
-        fiveMm: mM5,
-      })
-      setErrors({
-        sf1: false,
-        acf1: false,
-        resin: false,
-        fiveMm: false,
-      })
-    }
-
-    const onlaunchGallery = async () => {
-      try {
-        const result = await getResultImageGallery()
-
-        if (!result) {
-          return
-        }
-        if (!result?.canceled) {
-          performOCR(result?.assets[0])
-          setImage(result?.assets[0]?.uri)
-          // Set the selected image in state
-        } else {
-          console.log("Cancel scan")
-        }
-      } catch (error) {
-        console.error(error.message)
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "បរាជ័យ",
-          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
-          // button: 'close',
-          autoClose: 100,
-        })
-      }
-    }
-    const onlaunchCamera = async () => {
-      try {
-        const result = await getResultImageCamera()
-        if (!result) {
-          return
-        }
-        if (!result?.canceled) {
-          performOCR(result?.assets[0])
-          setImage(result?.assets[0]?.uri)
-          // Set the selected image in state
-        } else {
-          console.log("Cancel scan")
-        }
-      } catch (error) {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "បរាជ័យ",
-          textBody: "សូម​ព្យាយាម​ម្តង​ទៀត",
-          // button: 'close',
-          autoClose: 100,
-        })
-      }
-    }
-    const performOCR = async (file: ImagePicker.ImagePickerAsset) => {
-      setScanning(true)
-
-      try {
-        const result = await ImagetoText(file)
-        if (!result) {
-          Dialog.show({
-            type: ALERT_TYPE.WARNING,
-            title: "រក​មិនឃើញ",
-            autoClose: 500,
-            textBody: "យើងមិនអាចស្រង់ចេញបានទេ។",
-          })
-          setScanning(false)
-          return
-        }
-        const annotations = result["annotations"]
-        // Function to check if a sequence of words matches the pattern to ignore
-        let shouldIgnoreSequence: any
-        if (route?.type?.toLowerCase().includes("ph")) {
-          shouldIgnoreSequence = (sequence) => {
-            const ignorePattern = ["*", "Warning", "Level", "(", "6.5", "-", "8.5", ")"]
-            for (let i = 0; i < ignorePattern.length; i++) {
-              if (sequence[i] !== ignorePattern[i]) {
-                return false
-              }
-            }
-            return true
-          }
-        } else {
-          shouldIgnoreSequence = (sequence) => {
-            const ignorePattern = ["*", "Warning", "Level", "(", "0.1", "-0.3", "Mpa", ")"]
-            for (let i = 0; i < ignorePattern.length; i++) {
-              if (sequence[i] !== ignorePattern[i]) {
-                return false
-              }
-            }
-            return true
-          }
-        }
-
-        // Function to filter out unwanted sequences
-        const filterAnnotations = (annotations) => {
-          let filteredAnnotations = []
-          for (let i = 0; i < annotations.length; i++) {
-            // Check if the current sequence matches the ignore pattern
-            if (i <= annotations.length - 8 && shouldIgnoreSequence(annotations.slice(i, i + 8))) {
-              // Skip the next 8 items
-              i += 7
-            } else {
-              filteredAnnotations.push(annotations[i])
-            }
-          }
-          return filteredAnnotations
-        }
-
-        const filteredAnnotations = filterAnnotations(annotations)
-        setImageToform(filteredAnnotations)
-      } catch (error) {
-        console.error(error.message)
-        Dialog.show({
-          type: ALERT_TYPE.WARNING,
-          title: "បរាជ័យ",
-          autoClose: 500,
-          textBody: "ស្កែនរូបភាពទៅជាអត្ថបទមិនជោគជ័យទេ។",
-        })
-      } finally {
-        setScanning(false)
-      }
-    }
-
-    const getCurrentUserName = async () => {
-      const userinfo = await authStore.getUserInfo()
-      const { login } = userinfo.data
-      return login
-    }
-    const checkUserRole = async () => {
-      // console.log("machine user assign to", route?.items?.assign_to_user)
-      setEditable(route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift)
-    }
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
@@ -488,18 +106,20 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
               {route?.type}
 
               {route?.type?.toLowerCase().includes("air") ? (
-                <></>
+                <Text errorColor semibold body2>
+                  {`  (Y / N )`}
+                </Text>
               ) : route?.type?.toLowerCase().includes("tds") ? (
                 <Text errorColor semibold body2>
-                  {` ( ${translate("preWaterTreatment.warningLevel")} ( > 300 ppm ) )`}
+                  {`  ( ≤300 ppm )`}
                 </Text>
               ) : route?.type?.toLowerCase().includes("ph") ? (
                 <Text errorColor semibold body2>
-                  {` ( ${translate("preWaterTreatment.warningLevel")}( 6.5 - 8.5  ) )`}
+                  {` ( 6.5 - 8.5  )`}
                 </Text>
               ) : (
                 <Text errorColor semibold body2>
-                  {` ( ${translate("preWaterTreatment.warningLevel")}( 0.1 - 0.3 Mpa ) )`}
+                  {`   ( 0.1 - 0.3 Mpa )`}
                 </Text>
               )}
             </Text>
@@ -507,16 +127,12 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
         ),
 
         headerRight: () =>
-          route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift ? (
+
+          (isEdit) ? (
             <TouchableOpacity
               style={$horizon}
               onPress={() => {
-                // navigation.goBack()
-                const hasError = formvalidation()
-                console.log("error", hasError)
-                if (!hasError) {
-                  handleSubmit()
-                }
+                submit()
               }}
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
@@ -530,60 +146,283 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             </>
           ),
       })
-    }, [form, route, errors, oldRoute, isEditable])
+    }, [form, route, errors, oldRoute, isEditable, sf, acf, resin, um5, other, airACF, airResin, airSF, rawWater,isEdit])
 
-    useEffect(() => {
-      checkUserRole()
-      fetchUserActivity()
-      let airReleased
-      if (route.item.sf == null) {
-        airReleased = {
-          sf: null,
-          acf: null,
-          resin: null,
+    const alert = (title: string, textBody: string) => {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: title,
+        textBody: textBody,
+        button: 'បិទ',
+      })
+    }
+
+    const submit = async () => {
+      let entity
+      if (route?.type?.toLowerCase().includes("pressure")) {
+        if (sf == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ SF')
+          return
         }
-      } else {
-        setCompleted(true)
-        airReleased = {
-          sf: route?.item?.sf == 1 ? true : false,
-          acf: route?.item?.acf == 1 ? true : false,
-          resin: route?.item?.resin == 1 ? true : false,
+        if (acf == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ ACF')
+          return
+        }
+        if (resin == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ Resin')
+          return
+        }
+        if (um5 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ 5µm')
+          return
+        }
+        let updatedWarningCount = 0;
+        let status = 'normal'
+        if (parseFloat(sf) < 0.1 || parseFloat(sf) > 0.3) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(acf) < 0.1 || parseFloat(acf) > 0.3) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(resin) < 0.1 || parseFloat(resin) > 0.3) {
+          updatedWarningCount++;
+        }
+        if (parseFloat(um5) < 0.1 || parseFloat(um5) > 0.3) {
+          updatedWarningCount++;
+        }
+        if (updatedWarningCount > 0) {
+          status = 'warning'
+        }
+        if (route?.item?.status == 'pending') {
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: "Add Treatment",
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type,
+            sf: sf,
+            acf: acf,
+            resin: resin,
+            um5: um5,
+            remark: other
+          })
+
+        } else {
+          const changes = [
+            route?.item?.sf != sf ? `SF from ${route?.item?.sf} to ${sf}` : '',
+            route?.item?.acf != acf ? `ACF from ${route?.item?.acf} to ${acf}` : '',
+            route?.item?.resin != resin ? `Resin from ${route?.item?.resin} to ${resin}` : '',
+            route?.item?.um5 != um5 ? `5µm from ${route?.item?.um5} to ${um5}` : '',
+            route?.item?.remark != other ? `Remark from ${route?.item?.remark == null ? '' : route?.item?.remark} to ${other}` : ''
+          ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: `has modified ${actionString}`,
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type, sf: sf,
+            acf: acf,
+            resin: resin,
+            um5: um5,
+            remark: other
+          })
+        }
+      } else if (route?.type?.toLowerCase().includes("air")) {
+        if (airSF == null) {
+          alert('បរាជ័យ', 'សូ​មបំពេញ SF')
+          return
+        }
+        if (airACF == null) {
+          alert('បរាជ័យ', 'សូ​មបំពេញ ACF')
+          return
+        }
+        if (airResin == null) {
+          alert('បរាជ័យ', 'សូ​មបំពេញ Resin')
+          return
+        }
+        let updatedWarningCount = 0;
+        let status = 'normal'
+        if (airSF == 0) {
+          updatedWarningCount++;
+        }
+        if (airACF == 0) {
+          updatedWarningCount++;
+        }
+        if (airResin == 0) {
+          updatedWarningCount++;
+        }
+        if (updatedWarningCount > 0) {
+          status = 'warning'
+        }
+        if (route?.item?.status == 'pending') {
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: "Add Treatment",
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type,
+            sf: airSF.toString(),
+            acf: airACF.toString(),
+            resin: airResin.toString(),
+            remark: other
+          })
+
+        } else {
+          const changes = [
+            route?.item?.sf != airSF ? `SF from ${route?.item?.sf == 1 ? 'Yes' : 'No'} to ${airSF == 1 ? 'Yes' : 'No'}` : '',
+            route?.item?.acf != airACF ? `ACF from ${route?.item?.acf == 1 ? 'Yes' : 'No'} to ${airACF == 1 ? 'Yes' : 'No'}` : '',
+            route?.item?.resin != airResin ? `Resin from ${route?.item?.resin == 1 ? 'Yes' : 'No'} to ${airResin == 1 ? 'Yes' : 'No'}` : '',
+            route?.item?.remark != other ? `Remark from ${route?.item?.remark == null ? '' : route?.item?.remark} to ${other}` : ''
+          ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: `has modified ${actionString}`,
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type,
+            sf: airSF.toString(),
+            acf: airACF.toString(),
+            resin: airResin.toString(),
+            remark: other
+          })
+        }
+      } else if (route?.type?.toLowerCase().includes("tds") || route?.type?.toLowerCase().includes("ph")) {
+        if (rawWater == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ Raw Water')
+          return
+        }
+        if (sf == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ SF')
+          return
+        }
+        if (acf == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ ACF')
+          return
+        }
+        if (resin == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ Resin')
+          return
+        }
+        if (um5 == '') {
+          alert('បរាជ័យ', 'សូ​មបំពេញ 5µm')
+          return
+        }
+        let updatedWarningCount = 0;
+        let status = 'normal'
+        if (route?.type?.toLowerCase().includes("tds")) {
+          if (parseFloat(rawWater) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(sf) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(acf) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(resin) > 300) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(um5) > 300) {
+            updatedWarningCount++;
+          }
+          if (updatedWarningCount > 0) {
+            status = 'warning'
+          }
+        } else if (route?.type?.toLowerCase().includes("ph")) {
+          if (parseFloat(rawWater) < 6.5 || parseFloat(rawWater) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(sf) < 6.5 || parseFloat(sf) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(acf) < 6.5 || parseFloat(acf) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(resin) < 6.5 || parseFloat(resin) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (parseFloat(um5) < 6.5 || parseFloat(um5) > 8.5) {
+            updatedWarningCount++;
+          }
+          if (updatedWarningCount > 0) {
+            status = 'warning'
+          }
+        }
+        if (route?.item?.status == 'pending') {
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: "Add Treatment",
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type,
+            sf: sf,
+            acf: acf,
+            resin: resin,
+            um5: um5,
+            raw_water: rawWater,
+            remark: other
+          })
+
+        } else {
+          const changes = [
+            route?.item?.raw_water != rawWater ? `Raw Water from ${route?.item?.raw_water} to ${rawWater}` : '',
+            route?.item?.sf != sf ? `SF from ${route?.item?.sf} to ${sf}` : '',
+            route?.item?.acf != acf ? `ACF from ${route?.item?.acf} to ${acf}` : '',
+            route?.item?.resin != resin ? `Resin from ${route?.item?.resin} to ${resin}` : '',
+            route?.item?.um5 != um5 ? `5µm from ${route?.item?.um5} to ${um5}` : '',
+            route?.item?.remark != other ? `Remark from ${route?.item?.remark == null ? '' : route?.item?.remark} to ${other}` : ''
+          ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+          entity = PreTreatmentListItemModel.create({
+            id: route?.item?.id,
+            warning_count: updatedWarningCount,
+            status: status,
+            action: `has modified ${actionString}`,
+            pre_treatment_id: route?.item?.pre_treatment_id,
+            pre_treatment_type: route?.item?.pre_treatment_type, sf: sf,
+            acf: acf,
+            resin: resin,
+            um5: um5,
+            raw_water: rawWater,
+            remark: other
+          })
         }
       }
-
-      setForm({
-        sf1: route?.item?.sf,
-        acf1: route?.item?.acf,
-        resin: route?.item?.resin,
-        fiveMm: route?.item?.um5,
-        remarks: route?.item?.remark,
-        raw_water: route?.item?.raw_water,
-        air_released: airReleased,
-      })
-      setRoute({
-        sf1: route?.item?.sf,
-        acf1: route?.item?.acf,
-        resin: route?.item?.resin,
-        fiveMm: route?.item?.um5,
-        remarks: route?.item?.remark,
-        raw_water: route?.item?.raw_water,
-        air_released: {
-          sf: route?.item?.sf == 1 ? true : false ?? null,
-          acf: route?.item?.acf == 1 ? true : false ?? null,
-          resin: route?.item?.resin == 1 ? true : false ?? null,
-        },
-      })
-
-      setErrors({
-        sf1: !route?.item?.sf,
-        acf1: !route?.item?.acf,
-        resin: !route?.item?.resin,
-        fiveMm: !route?.item?.um5,
-        remarks: !route?.item?.remark,
-        raw_water: !route?.item?.raw_water,
-        air_released: false,
-      })
-    }, [route])
+      try {
+        setLoading(true)
+        await (preWaterTreatmentStore
+          .addPretreatments(entity)
+          .savePreWtp().then()
+          .catch((e) => console.log(e)))
+        {
+          Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'ជោគជ័យ',
+            textBody: 'រក្សាទុកបានជោគជ័យ',
+            // button: 'close',
+            autoClose: 100
+          })
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "បរាជ័យ",
+          textBody: "សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ",
+          button: "បិទ",
+          // autoClose: 500,
+        })
+      } finally {
+        route?.onBack()
+        setLoading(false)
+      }
+    }
 
     return (
       <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
@@ -592,7 +431,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             <ActivityIndicator color="#8CC8FF" size={35} />
             <View style={{ marginVertical: 15 }}></View>
             <Text whiteColor textAlign={"center"}>
-              Scanning ...
+              Saving record ...
             </Text>
           </View>
         )}
@@ -601,494 +440,410 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             <ActivityIndicator color="#8CC8FF" size={35} />
             <View style={{ marginVertical: 15 }}></View>
             <Text whiteColor textAlign={"center"}>
-              Saving record ...
+              Scanning ...
             </Text>
           </View>
         )}
         <ScrollView>
           <View style={$outerContainer}>
             <View style={[$horizon, { justifyContent: "space-between" }]}>
-              {/* {route?.type?.toLowerCase().includes("air") ? (
-                <></>
-              ) : route?.type?.toLowerCase().includes("tds") ? (
-                <Text errorColor semibold body1>
-                  {`* ${translate("preWaterTreatment.warningLevel")} ( > 300 ppm ) `}
-                </Text>
-              ) : route?.type?.toLowerCase().includes("ph") ? (
-                <Text errorColor semibold body1>
-                  {`* ${translate("preWaterTreatment.warningLevel")}( 6.5 - 8.5  ) `}
-                </Text>
-              ) : (
-                <Text errorColor semibold body1>
-                  {`* ${translate("preWaterTreatment.warningLevel")}( 0.1 - 0.3 Mpa ) `}
-                </Text>
-              )} */}
-
-              {route?.isvalidDate && route?.item?.assign_to_user && route?.isValidShift && (
-                <ActivityBar
-                  direction="end"
-                  disable
-                  onScanCamera={onlaunchCamera}
-                  onAttachment={onlaunchGallery}
-                  onActivity={() => setShowlog(true)}
-                />
-              )}
             </View>
+            {route?.type?.toLowerCase().includes("pressure") ?
+              <View>
+                <View style={main}>
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>SF</Text>
+                        {(parseFloat(sf) < 0.1 || parseFloat(sf) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
 
-            {route?.type?.toLowerCase().includes("air") ? (
-              <>
-                <View style={{ gap: 15 }}>
-                  <View style={[$horizon]}>
-                    <View style={{ marginVertical: 25, flex: 1 }}>
-                      <Text body1 semibold style={{ marginBottom: 15 }}>
-                        Air Released SF
-                        {form.air_released.sf && (
-                          <View style={{ alignItems: "center" }}>
-                            <BadgeWarning value={"!"} status="warning" />
-                          </View>
-                        )}
-                      </Text>
-
-                      <Text body1 semibold>
-                        <Text errorColor>* </Text> SF
-                      </Text>
-
-                      <View style={[$horizon, { marginTop: 20 }]}>
-                        <TouchableOpacity
-                          disabled={!isEditable}
-                          style={$horizon}
-                          onPress={() => {
-                            setForm((pre) => ({
-                              ...pre,
-                              air_released: { ...pre.air_released, sf: true },
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={
-                              form?.air_released?.sf === null
-                                ? "unchecked"
-                                : form?.air_released?.sf === true
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setForm((pre) => ({
-                                ...pre,
-                                air_released: { ...pre.air_released, sf: true },
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>Yes </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          disabled={!isEditable}
-                          style={$horizon}
-                          onPress={() => {
-                            // setErrors((pre) => ({ ...pre, air_release: false }))
-                            setForm((pre) => ({
-                              ...pre,
-                              air_released: { ...pre.air_released, sf: false },
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={
-                              form?.air_released?.sf === null
-                                ? "unchecked"
-                                : form?.air_released?.sf === false
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setForm((pre) => ({
-                                ...pre,
-                                air_released: { ...pre.air_released, sf: false },
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>No</Text>
-                        </TouchableOpacity>
                       </View>
-                    </View>
-                    <View style={{ marginVertical: 25, flex: 1 }}>
-                      <Text body1 semibold style={{ marginBottom: 15 }}>
-                        Air Released ACF
-                        {form.air_released.acf && (
-                          <View>
-                            <BadgeWarning value={"!"} status="warning" />
-                          </View>
-                        )}
-                      </Text>
-                      <Text body1 semibold>
-                        <Text errorColor>* </Text> ACF
-                      </Text>
-
-                      <View style={[$horizon, { marginTop: 20 }]}>
-                        <TouchableOpacity
-                          disabled={!isEditable}
-                          style={$horizon}
-                          onPress={() => {
-                            setForm((pre) => ({
-                              ...pre,
-                              air_released: { ...pre.air_released, acf: true },
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={
-                              form.air_released?.acf == null
-                                ? "unchecked"
-                                : form?.air_released?.acf === "true" ||
-                                  form.air_released?.acf === true
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setForm((pre) => ({
-                                ...pre,
-                                air_released: { ...pre.air_released, acf: true },
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>Yes </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          disabled={!isEditable}
-                          style={$horizon}
-                          onPress={() => {
-                            // setErrors((pre) => ({ ...pre, air_release: false }))
-                            setForm((pre) => ({
-                              ...pre,
-                              air_released: { ...pre.air_released, acf: false },
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={
-                              form.air_released?.acf == null
-                                ? "unchecked"
-                                : form?.air_released?.acf === "false" ||
-                                  form.air_released?.acf === false
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setForm((pre) => ({
-                                ...pre,
-                                air_released: { ...pre.air_released, acf: false },
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>No</Text>
-                        </TouchableOpacity>
-                      </View>
-                      {/* <View style={[$horizon, { marginVertical: 15 }]}>
-                        <View style={{ width: 300 }}>
-                          <CustomInput
-                            showIcon={false}
-                            onChangeText={(text) => {
-                              setForm((pre) => ({ ...pre, remarks: text.toString() }))
-                            }}
-                            label="Remark"
-                            errormessage={""}
-                          />
-                        </View>
-                      </View> */}
-                    </View>
-                    <View style={{ marginVertical: 25, flex: 1 }}>
-                      <Text body1 semibold style={{ marginBottom: 15 }}>
-                        Air Released Resin
-                        {form.air_released.resin && (
-                          <View>
-                            <BadgeWarning value={"!"} status="warning" />
-                          </View>
-                        )}
-                      </Text>
-                      <Text body1 semibold>
-                        <Text errorColor>* </Text> Resin
-                      </Text>
-
-                      <View style={[$horizon, { marginTop: 20 }]}>
-                        <TouchableOpacity
-                          style={$horizon}
-                          disabled={!isEditable}
-                          onPress={() => {
-                            setForm((pre) => ({
-                              ...pre,
-                              air_released: { ...pre.air_released, resin: true },
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={
-                              form.air_released?.resin == null
-                                ? "unchecked"
-                                : form?.air_released?.resin === "true" ||
-                                  form.air_released?.resin === true
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setForm((pre) => ({
-                                ...pre,
-                                air_released: { ...pre.air_released, resin: true },
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>Yes </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={$horizon}
-                          disabled={!isEditable}
-                          onPress={() => {
-                            // setErrors((pre) => ({ ...pre, air_release: false }))
-                            setForm((pre) => ({
-                              ...pre,
-                              air_released: { ...pre.air_released, resin: false },
-                            }))
-                          }}
-                        >
-                          <Checkbox
-                            disabled={!isEditable}
-                            status={
-                              form.air_released?.resin == null
-                                ? "unchecked"
-                                : form?.air_released?.resin === "false" ||
-                                  form.air_released?.resin === false
-                                ? "checked"
-                                : "unchecked"
-                            }
-                            onPress={() => {
-                              setForm((pre) => ({
-                                ...pre,
-                                air_released: { ...pre.air_released, resin: false },
-                              }))
-                            }}
-                            color="#0081F8"
-                          />
-                          <Text>No</Text>
-                        </TouchableOpacity>
-                      </View>
-                      {/* <View style={[$horizon, { marginVertical: 15 }]}>
-                        <View style={{ width: 300 }}>
-                          <CustomInput
-                            showIcon={false}
-                            onChangeText={(text) => {
-                              setForm((pre) => ({ ...pre, remarks: text.toString() }))
-                            }}
-                            label="Remark"
-                            errormessage={""}
-                          />
-                        </View>
-                      </View> */}
-                    </View>
-                  </View>
-                  <View style={$width}>
-                    <CustomInput
-                      disabled={isEditable}
-                      showAsterick={false}
-                      showIcon={false}
-                      onChangeText={(text) => {
-                        form.remarks !== ""
-                          ? setErrors((pre) => ({ ...pre, remarks: false }))
-                          : setErrors((pre) => ({ ...pre, remarks: true }))
-                        setForm((pre) => ({ ...pre, remarks: text.toString() }))
-                      }}
-                      label="Remarks"
-                      value={form.remarks}
-                      errormessage={""}
-                    />
-                  </View>
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={$horizon}>
-                  <View style={$width}>
-                    <CustomInput
-                      disabled={isEditable}
-                      showIcon={false}
-                      value={form.sf1?.toString()}
-                      warning={
-                        form.sf1 === null
-                          ? false
-                          : route?.type?.toLowerCase().includes("ph")
-                          ? +form?.sf1 < 6.5 || +form?.sf1 > 8.5
-                          : route?.type?.toLowerCase().includes("pressure")
-                          ? +form.sf1 < 0.1 || +form?.sf1 > 0.3
-                          : +form?.sf1 > 300
-                      }
-                      keyboardType="decimal-pad"
-                      onChangeText={(text) => {
-                        form.sf1 !== ""
-                          ? setErrors((pre) => ({ ...pre, sf1: false }))
-                          : setErrors((pre) => ({ ...pre, sf1: true }))
-
-                        setForm((pre) => ({ ...pre, sf1: text.toString() }))
-                      }}
-                      onBlur={() => {
-                        form.sf1 !== ""
-                          ? setErrors((pre) => ({ ...pre, sf1: false }))
-                          : setErrors((pre) => ({ ...pre, sf1: true }))
-                      }}
-                      label="SF"
-                      errormessage={errors.sf1 ? "សូមជ្រើសរើស SF" : ""}
-                    />
-                  </View>
-                  <View style={$width}>
-                    <CustomInput
-                      disabled={isEditable}
-                      keyboardType="decimal-pad"
-                      showIcon={false}
-                      value={form.acf1}
-                      warning={
-                        form.acf1 === null
-                          ? false
-                          : route?.type?.toLowerCase().includes("ph")
-                          ? +form?.acf1 < 6.5 || +form?.acf1 > 8.5
-                          : route?.type?.toLowerCase().includes("pressure")
-                          ? +form.acf1 < 0.1 || +form?.acf1 > 0.3
-                          : +form?.acf1 > 300
-                      }
-                      onChangeText={(text) => {
-                        form.acf1 !== ""
-                          ? setErrors((pre) => ({ ...pre, acf1: false }))
-                          : setErrors((pre) => ({ ...pre, acf1: true }))
-                        setForm((pre) => ({ ...pre, acf1: text.toString() }))
-                      }}
-                      onBlur={() => {
-                        form.acf1 !== ""
-                          ? setErrors((pre) => ({ ...pre, acf1: false }))
-                          : setErrors((pre) => ({ ...pre, acf1: true }))
-                      }}
-                      label="ACF"
-                      errormessage={errors.acf1 ? "សូមជ្រើសរើស ACF" : ""}
-                    />
-                  </View>
-                  {route?.type?.toLowerCase().includes("ph") && (
-                    <View style={$width}>
-                      <CustomInput
-                        disabled={isEditable}
+                      <TextInput
                         keyboardType="decimal-pad"
-                        showIcon={false}
-                        value={form.raw_water}
-                        warning={
-                          form.raw_water && route?.type?.toLowerCase().includes("ph")
-                            ? +form?.raw_water < 6.5 || +form?.raw_water > 8.5
-                            : route?.type?.toLowerCase().includes("pressure")
-                            ? +form.raw_water < 0.1 || +form?.raw_water > 0.3
-                            : +form?.raw_water > 300
-                        }
-                        onChangeText={(text) => {
-                          form.raw_water !== ""
-                            ? setErrors((pre) => ({ ...pre, raw_water: false }))
-                            : setErrors((pre) => ({ ...pre, raw_water: true }))
-                          setForm((pre) => ({ ...pre, raw_water: text.toString() }))
-                        }}
-                        onBlur={() => {
-                          form.raw_water !== ""
-                            ? setErrors((pre) => ({ ...pre, raw_water: false }))
-                            : setErrors((pre) => ({ ...pre, raw_water: true }))
-                        }}
-                        label="Raw Water"
-                        errormessage={errors.raw_water ? "សូមជ្រើសរើស Raw Water" : ""}
-                      />
+                        value={sf}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setSf(text)}>
+                      </TextInput>
+                      {sf == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF</Text>
+                        : <></>}
                     </View>
-                  )}
+                  </View >
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
+                        {(parseFloat(acf) < 0.1 || parseFloat(acf) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={acf}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setacf(text)}>
+                      </TextInput>
+                      {acf == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF</Text>
+                        : <></>}
+                    </View>
+                  </View>
                 </View>
+                <View style={main}>
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
+                        {(parseFloat(resin) < 0.1 || parseFloat(resin) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={resin}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setResin(text)}>
+                      </TextInput>
+                      {resin == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Resin</Text>
+                        : <></>}
+                    </View>
+                  </View >
+                  <View style={sub}>
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>5µm</Text>
+                        {(parseFloat(um5) < 0.1 || parseFloat(um5) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                      </View>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        value={um5}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setum5(text)}>
+                      </TextInput>
+                      {um5 == '' ?
+                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 5µm</Text>
+                        : <></>}
+                    </View>
+                  </View >
+                </View>
+                <View style={{ flex: 1 }}>
 
-                <View style={$horizon}>
-                  <View style={$width}>
-                    <CustomInput
-                      disabled={isEditable}
-                      keyboardType="decimal-pad"
-                      showIcon={false}
-                      warning={
-                        form.resin === null
-                          ? false
-                          : route?.type?.toLowerCase().includes("ph")
-                          ? +form?.resin < 6.5 || +form?.resin > 8.5
-                          : route?.type?.toLowerCase().includes("pressure")
-                          ? +form.resin < 0.1 || +form?.resin > 0.3
-                          : +form?.resin > 300
-                      }
-                      onChangeText={(text) => {
-                        form.resin !== ""
-                          ? setErrors((pre) => ({ ...pre, resin: false }))
-                          : setErrors((pre) => ({ ...pre, resin: true }))
-                        setForm((pre) => ({ ...pre, resin: text.toString() }))
-                      }}
-                      onBlur={() => {
-                        form.resin !== ""
-                          ? setErrors((pre) => ({ ...pre, resin: false }))
-                          : setErrors((pre) => ({ ...pre, resin: true }))
-                      }}
-                      label="Resin"
-                      value={form.resin}
-                      errormessage={errors.resin ? "សូមជ្រើសរើស resin" : ""}
-                    />
+                  <View style={{ marginRight: 10 }}>
+                    <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                      <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                    </View>
+                    <TextInput
+                      value={other}
+                      readOnly={!isEdit}
+                      style={[styles.input, { width: '100%' }]}
+                      placeholder="Please Enter"
+                      onChangeText={(text) => setOther(text)}>
+                    </TextInput>
                   </View>
-                  <View style={$width}>
-                    <CustomInput
-                      disabled={isEditable}
-                      keyboardType="decimal-pad"
-                      showIcon={false}
-                      value={form.fiveMm}
-                      onChangeText={(text) => {
-                        form.fiveMm !== ""
-                          ? setErrors((pre) => ({ ...pre, fiveMm: false }))
-                          : setErrors((pre) => ({ ...pre, fiveMm: true }))
-                        setForm((pre) => ({ ...pre, fiveMm: text.toString() }))
-                      }}
-                      onBlur={() => {
-                        form.fiveMm !== ""
-                          ? setErrors((pre) => ({ ...pre, fiveMm: false }))
-                          : setErrors((pre) => ({ ...pre, fiveMm: true }))
-                      }}
-                      warning={
-                        form.fiveMm === null
-                          ? false
-                          : route?.type?.toLowerCase().includes("ph")
-                          ? +form?.fiveMm < 6.5 || +form?.fiveMm > 8.5
-                          : route?.type?.toLowerCase().includes("pressure")
-                          ? +form.fiveMm < 0.1 || +form?.fiveMm > 0.3
-                          : +form?.fiveMm > 300
-                      }
-                      label="5Mm"
-                      errormessage={errors.fiveMm ? "សូមជ្រើសរើស 5Mm" : ""}
-                    />
-                  </View>
-                  {/* <View style={$width}>
-                    <CustomInput
-                      showIcon={false}
-                      onChangeText={(text) => {
-                        form.remarks !== ""
-                          ? setErrors((pre) => ({ ...pre, remarks: false }))
-                          : setErrors((pre) => ({ ...pre, remarks: true }))
-                        setForm((pre) => ({ ...pre, remarks: text.toString() }))
-                      }}
-                      label="Remark"
-                      value={form.remarks}
-                      errormessage={""}
-                    />
-                  </View> */}
                 </View>
-              </>
-            )}
+              </View>
+
+              : (route?.type?.toLowerCase().includes("air")) ?
+                <>
+                  <View style={{ gap: 15 }}>
+                    <View style={[$horizon]}>
+                      <View style={{ marginVertical: 25, flex: 1 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>SF</Text>
+                          {(airSF) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <View style={{ flexDirection: 'row' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                airSF === null
+                                  ? "unchecked"
+                                  : airSF == 1
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setAirSF(1)
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>Yes </Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                airSF === null
+                                  ? "unchecked"
+                                  : airSF == 0
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setAirSF(0)
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>No </Text>
+                          </View>
+
+                        </View>
+                        {airSF == null ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស SF</Text>
+                          : <></>}
+
+                      </View>
+                      <View style={{ marginVertical: 25, flex: 1 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
+                          {(airACF) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <View style={{ flexDirection: 'row' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                airACF === null
+                                  ? "unchecked"
+                                  : airACF == 1
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setAirACF(1)
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>Yes </Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                airACF === null
+                                  ? "unchecked"
+                                  : airACF == 0
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setAirACF(0)
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>No </Text>
+                          </View>
+
+                        </View>
+                        {airACF == null ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស ACF</Text>
+                          : <></>}
+                      </View>
+                      <View style={{ marginVertical: 25, flex: 1 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
+                          {(airResin) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <View style={{ flexDirection: 'row' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                airResin === null
+                                  ? "unchecked"
+                                  : airResin == 1
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setAirResin(1)
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>Yes </Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                airResin === null
+                                  ? "unchecked"
+                                  : airResin == 0
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setAirResin(0)
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>No </Text>
+                          </View>
+
+                        </View>
+                        {airResin == null ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Resin</Text>
+                          : <></>}
+                      </View>
+                    </View>
+                    <View style={{ flex: 1 }}>
+
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                        </View>
+                        <TextInput
+                          value={other}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setOther(text)}>
+                        </TextInput>
+                      </View>
+                    </View>
+                  </View>
+                </>
+                : (route?.type?.toLowerCase().includes("tds") || route?.type?.toLowerCase().includes("ph")) ?
+                  <View>
+                    <View style={main}>
+                      <View style={sub}>
+                        <View style={{ marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                            <Text style={{ marginRight: 5, fontSize: 16 }}>Raw Water</Text>
+                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(rawWater) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(rawWater) < 6.5 || parseFloat(rawWater) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                          </View>
+                          <TextInput
+                            keyboardType="decimal-pad"
+                            value={rawWater}
+                            readOnly={!isEdit}
+                            style={[styles.input, { width: '100%' }]}
+                            placeholder="Please Enter"
+                            onChangeText={(text) => setRawWater(text)}>
+                          </TextInput>
+                          {rawWater == '' ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Raw Water</Text>
+                            : <></>}
+                        </View>
+                      </View >
+                      <View style={sub}>
+                        <View style={{ marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                            <Text style={{ marginRight: 5, fontSize: 16 }}>SF</Text>
+                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(sf) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(sf) < 6.5 || parseFloat(sf) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                          </View>
+                          <TextInput
+                            keyboardType="decimal-pad"
+                            value={sf}
+                            readOnly={!isEdit}
+                            style={[styles.input, { width: '100%' }]}
+                            placeholder="Please Enter"
+                            onChangeText={(text) => setSf(text)}>
+                          </TextInput>
+                          {sf == '' ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF</Text>
+                            : <></>}
+                        </View>
+                      </View>
+                    </View>
+                    <View style={main}>
+                      <View style={sub}>
+                        <View style={{ marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                            <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
+                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(acf) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(acf) < 6.5 || parseFloat(acf) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                          </View>
+                          <TextInput
+                            keyboardType="decimal-pad"
+                            value={acf}
+                            readOnly={!isEdit}
+                            style={[styles.input, { width: '100%' }]}
+                            placeholder="Please Enter"
+                            onChangeText={(text) => setacf(text)}>
+                          </TextInput>
+                          {acf == '' ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF</Text>
+                            : <></>}
+                        </View>
+                      </View >
+                      <View style={sub}>
+                        <View style={{ marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                            <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
+                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(resin) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(resin) < 6.5 || parseFloat(resin) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                          </View>
+                          <TextInput
+                            keyboardType="decimal-pad"
+                            value={resin}
+                            readOnly={!isEdit}
+                            style={[styles.input, { width: '100%' }]}
+                            placeholder="Please Enter"
+                            onChangeText={(text) => setResin(text)}>
+                          </TextInput>
+                          {resin == '' ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Resin</Text>
+                            : <></>}
+                        </View>
+                      </View >
+
+                    </View>
+                    <View style={main}>
+                      <View style={sub}>
+                        <View style={{ marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                            <Text style={{ marginRight: 5, fontSize: 16 }}>5µm</Text>
+                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(um5) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(um5) < 6.5 || parseFloat(um5) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                          </View>
+                          <TextInput
+                            keyboardType="decimal-pad"
+                            value={um5}
+                            readOnly={!isEdit}
+                            style={[styles.input, { width: '100%' }]}
+                            placeholder="Please Enter"
+                            onChangeText={(text) => setum5(text)}>
+                          </TextInput>
+                          {um5 == '' ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 5µm</Text>
+                            : <></>}
+                        </View>
+                      </View >
+                      <View style={sub}>
+                        <View style={{ marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                            <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                          </View>
+                          <TextInput
+                            value={other}
+                            readOnly={!isEdit}
+                            style={[styles.input, { width: '100%' }]}
+                            placeholder="Please Enter"
+                            onChangeText={(text) => setOther(text)}>
+                          </TextInput>
+                        </View>
+                      </View >
+                    </View>
+                  </View>
+                  : <></>}
           </View>
         </ScrollView>
-
         <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} />
       </KeyboardAvoidingView>
     )
@@ -1114,4 +869,15 @@ const $horizon: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: 15,
+}
+
+const main: ViewStyle = {
+  flexDirection: 'row',
+  width: '97%',
+  marginBottom: 40
+}
+
+const sub: ViewStyle = {
+  width: '50%',
+  margin: 10
 }

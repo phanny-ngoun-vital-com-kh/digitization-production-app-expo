@@ -8,4 +8,12 @@ export const styles = StyleSheet.create({
         justifyContent:"center"
      
       },
+      input:{
+        borderWidth: 1, 
+        backgroundColor: '#fff', 
+        borderColor: '#f1f1f1', 
+        height: 47, 
+        borderRadius: 3, 
+        padding:10,
+      },
 })

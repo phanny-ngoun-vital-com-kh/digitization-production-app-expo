@@ -31,10 +31,14 @@ import { AddTransferRequestFormScreen } from "app/screens/inventory-transfer-req
 import { InventoryTransferRequestProductionScreen } from "app/screens/inventory-transfer-request-production"
 import { InventoryTransferRequestWarehouseScreen } from "app/screens/inventory-transfer-request-warehouse"
 import { InventoryTransferScreen } from "app/screens/inventory-transfer"
+import { HACCPMonitoringOzoneFormEntryRO1Screen } from "app/screens/haccp-monitoring-ozone/form-entry-RO1"
+import { HACCPMonitoringOzoneFormEntryRO2Screen } from "app/screens/haccp-monitoring-ozone/form-entry-RO2"
+import { HACCPMonitoringOzoneFormEntryRO4Screen } from "app/screens/haccp-monitoring-ozone/form-entry-RO4"
 import { api } from "app/services/api"
 import { AddTransferScreen } from "app/screens/inventory-transfer-request-warehouse/add-transfer"
 import { Treatment } from "app/models/water-treatment/water-treatment-model"
 import * as Screens from "app/screens"
+import { HACCPMonitoringOzoneFormEntryScreen } from "app/screens/haccp-monitoring-ozone/form-entry-Ozone"
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
  * as well as what properties (if any) they might take when navigating to them.
@@ -85,6 +89,11 @@ export type AppStackParamList = {
   LineDs: undefined
   DailyDs: undefined
   ScanMachine: undefined
+  HACCPMonitoringOzone:undefined
+  HACCPMonitoringOzoneFormEntryRO1:undefined
+  HACCPMonitoringOzoneFormEntryRO2:undefined
+  HACCPMonitoringOzoneFormEntryRO4: undefined
+  HACCPMonitoringOzoneFormEntry:undefined
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -281,7 +290,7 @@ const AppStack = observer(function AppStack(props: {
             component={Screens.HccpMonitorScreen}
             options={{
               headerShown: true,
-              title: "HCCP Monitor",
+              title: "HACCP Monitor",
             }}
           />
           <Stack.Screen name="HaccpLineForm" component={Screens.HaccpLineFormScreen} />
@@ -357,6 +366,46 @@ const AppStack = observer(function AppStack(props: {
             options={{
               headerShown: true,
               title: "Current Count",
+            }}
+          />
+          <Stack.Screen
+            name="HACCPMonitoringOzone"
+            component={Screens.HACCPMonitoringOzoneScreen}
+            options={{
+              headerShown: true,
+              title: "HACCP Monitoring Ozone",
+            }}
+          />
+          <Stack.Screen
+            name="HACCPMonitoringOzoneFormEntryRO1"
+            component={HACCPMonitoringOzoneFormEntryRO1Screen}
+            options={{
+              headerShown: true,
+              title: "HACCP Monitoring Ozone FormEntry RO1",
+            }}
+          />
+           <Stack.Screen
+            name="HACCPMonitoringOzoneFormEntryRO2"
+            component={HACCPMonitoringOzoneFormEntryRO2Screen}
+            options={{
+              headerShown: true,
+              title: "HACCP Monitoring Ozone FormEntry RO2",
+            }}
+          />
+           <Stack.Screen
+            name="HACCPMonitoringOzoneFormEntryRO4"
+            component={HACCPMonitoringOzoneFormEntryRO4Screen}
+            options={{
+              headerShown: true,
+              title: "HACCP Monitoring Ozone FormEntry RO3",
+            }}
+          />
+          <Stack.Screen
+            name="HACCPMonitoringOzoneFormEntry"
+            component={HACCPMonitoringOzoneFormEntryScreen}
+            options={{
+              headerShown: true,
+              title: "HACCP Monitoring Ozone FormEntry",
             }}
           />
 

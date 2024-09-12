@@ -170,7 +170,7 @@ export const PreWaterDsScreen: FC<PreWaterDsScreenProps> = observer(function Pre
       const normal_percentage = ((total_normal_count / totalMachines) * 100).toFixed(2)
       const pending_percentages = 100 - (+warning_percentages + +normal_percentage)
 
-      setPercentages(+normal_percentage)
+      setPercentages(+warning_percentages)
 
       setPieData([
         {

@@ -8,25 +8,29 @@ import styles from "../../../screens/wtp-control-screen/water-treatment-plan/sty
 import { Dropdown } from "react-native-element-dropdown"
 import moment from "moment"
 import { translate } from "../../../i18n"
+import { HACCPMonitoringOzoneSystem } from "app/models/haccp-monitoring-ozone/haccp-monitoring-ozone-model"
 type HeaderProps = {
   currDate: Date
   isLoading?: boolean
   showDate: boolean
   dateValue: any
-  selectedLine: string
-  selectedWtp: any
-  enableWTP: boolean
+  selectedLine?: string
+  selectedWtp?: any
+  enableWTP?: boolean
+  enableHaccpOzone: boolean
   showLine: boolean
-  onSelectLine: (item: string) => void
+  onSelectLine?: (item: string) => void
   onSelectWtp: (item: string) => void
   onPressdate: () => void
   onChangeDate: (e: DateTimePickerEvent, v: Date | undefined) => void
+  haccpOzoneData:HACCPMonitoringOzoneSystem[]
 }
 const HeaderBar = ({
   currDate,
   showDate,
   showLine = true,
   enableWTP = false,
+  enableHaccpOzone = false,
   dateValue,
   selectedWtp,
   selectedLine,
@@ -35,6 +39,7 @@ const HeaderBar = ({
   onSelectWtp,
   onChangeDate,
   isLoading = false,
+  haccpOzoneData
 }: HeaderProps) => {
   const lines = [
     { name: "line 1", value: 1 },
@@ -75,15 +80,15 @@ const HeaderBar = ({
           {translate("wtpcommon.todayTask")}
         </Text>
         <Text body2>
-          {moment(currDate).format("LL")}
+          {dateValue?.toDateString() || moment(currDate).format("LL")}
 
           {/* {
               clock
             } */}
         </Text>
       </View>
- 
-   
+
+
 
 
 
@@ -102,7 +107,7 @@ const HeaderBar = ({
             // onSelect={onSelectLine}
             search
             value={selectedLine}
-            onChangeText={(text: any) => {}}
+            onChangeText={(text: any) => { }}
             onChange={(item) => {
               onSelectLine(item)
             }}
@@ -125,7 +130,30 @@ const HeaderBar = ({
 
             search
             value={selectedWtp}
-            onChangeText={(text: any) => {}}
+            onChangeText={(text: any) => { }}
+            onChange={(item) => {
+              onSelectWtp(item)
+            }}
+          />
+        )}
+
+        {enableHaccpOzone && (
+          <Dropdown
+            style={[styles.dropdown, { width: 300 }]}
+            data={haccpOzoneData}
+            disable={isLoading}
+            labelField="ozone"
+            valueField="ozone"
+            // placeholder={translate("preWaterTreatment.selectTreatment")}
+            itemTextStyle={$fontSelected}
+            // closeModalWhenSelectedItem
+            selectedTextStyle={$fontSelected}
+            placeholderStyle={$fontSelected}
+            // onSelect={setSelected}
+
+            search
+            value={selectedWtp}
+            onChangeText={(text: any) => { }}
             onChange={(item) => {
               onSelectWtp(item)
             }}

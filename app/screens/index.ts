@@ -21,3 +21,5 @@ export * from "./(dashboard)/pre-water"
 export * from "./(dashboard)/haccp-line"
 export * from "./(dashboard)/daily-water"
 export * from "./scan-test/index"
+export * from "./haccp-monitoring-ozone"
+

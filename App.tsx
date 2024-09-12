@@ -127,7 +127,7 @@ function IgniteApp() {
   return <>
     <App hideSplashScreen={SplashScreen.hideAsync} />
     <NotificSoundModal
-      color={remsg?.notification.title == 'New Transfer Request' || remsg?.notification.title == 'Rejected' ? "red" : 'green'}
+      color={remsg?.notification.title == 'New Transfer Request' || remsg?.notification.title == 'Rejected' ||remsg?.notification.title.startsWith('Critical') ? "red" : 'green'}
       message={remsg?.notification.body}
       title={remsg?.notification.title}
       onClose={() => setNotiVisible(false)}

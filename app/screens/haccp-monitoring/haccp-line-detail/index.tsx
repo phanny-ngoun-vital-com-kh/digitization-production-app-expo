@@ -26,6 +26,7 @@ import moment from "moment"
 import ActivityModal from "app/components/v2/ActivitylogModal"
 import { translate } from "../../../i18n"
 import BadgeWarning from "app/components/v2/Badgewarn"
+import IconAntDesign from "react-native-vector-icons/AntDesign"
 
 interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> { }
 
@@ -39,7 +40,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     const { colors } = useTheme()
     const [haccpLine, setHaccpline] = useState<HaccpListType[]>([])
     const [filterLines, setFilterLines] = useState<HaccpListType[]>([])
-    const lineStatus = ["normal", "pending", "warning"]
+    const lineStatus = ["normal", "warning"]
     const [roles, setRoles] = useState([""])
     const [isAssign, setAssign] = useState(false)
     const [selectedStatus, setSelectStatus] = useState("all")
@@ -47,35 +48,33 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     const getRouteLine = () => route?.title.split(" ")[1]
     const [visible, setVisible] = useState(false)
     const [showActivitylog, setShowActivitylog] = useState(false)
+    const [isEdit, setIsEdit] = useState()
     const showModal = () => {
       setVisible(true)
     }
     const hideModal = () => setVisible(false)
 
+     useEffect(() => {
+      const role = async () => {
+        try {
+          const rs = await authStore.getUserInfo();
+          const admin=rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
+          const edit = (route?.isvalidDate || route?.assign) || admin
+          setIsEdit(edit)
+          // Modify the list based on the user's role
+          // setGetRole(rs)
+        } catch (e) {
+          console.log(e);
+        }
+      };
+      role();
+    }, []);
+
     useLayoutEffect(() => {
       navigation.setOptions({
         title: route?.title,
         headerRight: () =>
-          !route?.isvalidDate || !isAssign ? (
-            <View style={[$containerHorizon, { gap: 5 }]}>
-              {
-                !route?.isvalidDate && <Icon name="close" size={20} color={"#FF0000"} />
-
-              }
-
-              <Text errorColor semibold>
-
-                {
-                  !route?.isvalidDate && translate("haccpMonitoring.shiftEnded")
-
-
-
-
-                }
-
-              </Text>
-            </View>
-          ) : (
+          (isEdit) ? (
             <TouchableOpacity
               style={{ flexDirection: "row", alignItems: "center" }}
               onPress={() => {
@@ -99,9 +98,29 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
 
               </Text>
             </TouchableOpacity>
+            
+          ) : (
+            <View style={[$containerHorizon, { gap: 5 }]}>
+              {
+                !route?.isvalidDate && <Icon name="close" size={20} color={"#FF0000"} />
+
+              }
+
+              <Text errorColor semibold>
+
+                {
+                  !route?.isvalidDate && translate("haccpMonitoring.shiftEnded")
+
+
+
+
+                }
+
+              </Text>
+            </View>
           ),
       })
-    }, [navigation, route, isAssign])
+    }, [navigation, route, isAssign,isEdit])
 
     const fetchLinesTable = async () => {
       try {
@@ -218,8 +237,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       switch (status) {
         case "Normal":
           return translate("haccpMonitoring.normal")
-        case "Pending":
-          return translate("haccpMonitoring.pending")
+        // case "Pending":
+        //   return translate("haccpMonitoring.pending")
         case "Warning":
           return translate("haccpMonitoring.warning")
         default:
@@ -242,29 +261,49 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
       >
         <DataTable style={{ margin: 10, marginTop: 0 }}>
           <DataTable.Row key={1}>
-            <DataTable.Cell style={{ flex: 0.4 }}>{index + 1}</DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.7 }}>
-              <Text style={{ marginRight: 15 }}>{moment(item.time).format("LTS")}</Text>
+              <Text style={{  }}>{moment(item.time).format("LTS")}</Text>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.9 }}>
-              <Text style={{ marginLeft: 18 }}>{item?.side_wall ?? "N/A"} % </Text>
+            <DataTable.Cell style={{ flex: 0.8 }}>
+              <Text style={{  }}>{item?.side_wall ?? "N/A"} % </Text>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 1 }}>
-              <Text style={{ marginLeft: 20 }}>{item?.air_pressure ?? "N/A"} bar </Text>
+            <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text style={{  }}>{item?.air_pressure ?? "N/A"} bar </Text>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.55 }}>
-              <Text style={{ marginRight: 10 }}>
+            <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text style={{  }}>{item?.temperature_preform ?? "N/A"} ℃</Text>
+            </DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text style={{  }}>
                 {item?.treated_water_pressure ?? "N/A"} bar/flow
               </Text>
             </DataTable.Cell>
 
-            <DataTable.Cell style={{ flex: 0.9 }}>
-              <Text style={{ marginLeft: 44 }}>{item?.temperature_preform ?? "N/A"} ℃</Text>
+            <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text style={{ }}>{item?.fg ?? "N/A"}ppm</Text>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.55 }}>
-              <Text style={{ marginRight: 20 }}>{item?.fg ?? "N/A"} ppm</Text>
+            <DataTable.Cell style={{ flex: 0.7}}>
+                  <Text style={{  }}>{item?.activity_control == 1 ? (
+                    <>
+                      Under Control <IconAntDesign name="check" color={"green"} size={15} />
+                    </>
+                  ) : item?.activity_control == 0 ? 
+                  (
+                    <>
+                      Over Control <IconAntDesign name="close" color={"red"} size={15} /> 
+                    </>
+                  )
+                  : ""}
+                  </Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text style={{ }}>{item?.take_action ?? "N/A"}</Text>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.9 }}>
+            <DataTable.Cell style={{ flex: 0.5 }}>
+              <Text style={{ }}>{item?.done_by ?? "N / A"}</Text>
+            </DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.5 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                 <View
                   style={{
@@ -283,9 +322,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 </Text>
               </View>
             </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.9 }}>
-              <Text style={{ marginLeft: 20 }}>{item?.done_by ?? "N / A"}</Text>
-            </DataTable.Cell>
+            
           </DataTable.Row>
         </DataTable>
       </TouchableOpacity>
@@ -312,17 +349,40 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
               <DataTable.Row key={1}>
                 <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 15 }}>{moment(item?.time).format("LTS")}</Text>
+                  <Text style={{  }}>{moment(item?.time).format("LTS")}</Text>
                 </DataTable.Cell>
 
-                <DataTable.Cell style={{ flex: 0.8 }}>
-                  <Text style={{ marginLeft: 70 }}>{item?.water_pressure ?? "N/A"}</Text>
+                <DataTable.Cell style={{ flex: 0.6 }}>
+                  <Text style={{ }}>{item?.water_pressure ?? "N/A"}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 30 }}>{item?.nozzles_rinser ?? "N/A"}</Text>
+                <Text style={{  }}>{(item?.nozzles_rinser) == '1' ? <IconAntDesign name="check" color={"green"} size={15} /> : item?.nozzles_rinser == '0' ? <IconAntDesign name="close" color={"red"} size={15} /> : ""}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 40 }}>{item?.fg ?? "N/A"}</Text>
+                  <Text style={{  }}>{item?.fg ?? "N/A"}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text style={{  }}>{item?.smell == 1 ? <IconAntDesign name="check" color={"green"} size={15} /> : item?.smell == 0 ? <IconAntDesign name="close" color={"red"} size={15} /> : ""}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.9 }}>
+                  <Text style={{  }}>{item?.activity_control == 1 ? (
+                    <>
+                      Under Control <IconAntDesign name="check" color={"green"} size={15} />
+                    </>
+                  ) : item?.activity_control == 0 ? 
+                  (
+                    <>
+                      Over Control <IconAntDesign name="close" color={"red"} size={15} /> 
+                    </>
+                  )
+                  : ""}
+                  </Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.6 }}>
+                  <Text style={{  }}> {item?.take_action ?? "N/A"} </Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text style={{ }}>{item?.done_by ?? "N/A"}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -353,12 +413,8 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
 
                   </View>
                 </DataTable.Cell>
-                <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ marginLeft: 8 }}>{item?.done_by ?? "N/A"}</Text>
-                </DataTable.Cell>
-                <DataTable.Cell style={{ flex: 0.6 }}>
-                  <Text style={{ marginRight: 0 }}> {item?.take_action ?? "N/A"} </Text>
-                </DataTable.Cell>
+                
+                
               </DataTable.Row>
             </View>
           </TouchableOpacity>
@@ -437,31 +493,38 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 </View>
                 <DataTable style={{ margin: 10, marginTop: 0 }}>
                   <DataTable.Header>
-                    <DataTable.Title style={{ flex: 0.4 }} textStyle={styles.textHeader}>
+                    <DataTable.Title style={{ flex: 0.25 }} textStyle={styles.textHeader}>
                       No
                     </DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                       Time
                     </DataTable.Title>
-                    <DataTable.Title style={{ flex: 1 }} textStyle={styles.textHeader}>
+                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
                       Water Pressure
                     </DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                       Nozzie Rinser
                     </DataTable.Title>
 
-                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                       FG
                     </DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
-                      Status
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      Smell
                     </DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                    <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                      Control
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
+                      Take Action
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                       Done by
                     </DataTable.Title>
-                    <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>
-                      Instruction
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      Status
                     </DataTable.Title>
+                
                   </DataTable.Header>
                 </DataTable>
 
@@ -578,33 +641,41 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
 
               <DataTable style={{ margin: 10, marginTop: 5 }}>
                 <DataTable.Header>
-                  <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                  <DataTable.Title style={{ flex: 0.25 }} textStyle={styles.textHeader}>
                     No
                   </DataTable.Title>
                   <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
                     Time
                   </DataTable.Title>
-                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                  <DataTable.Title style={{ flex: 0.8 }} textStyle={styles.textHeader}>
                     Side Wall
                   </DataTable.Title>
-                  <DataTable.Title style={{ flex: 1 }} textStyle={styles.textHeader}>
+                  <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
                     Air Pressure
                   </DataTable.Title>
-                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
-                    Treated Water
-                  </DataTable.Title>
-                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                  <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
                     Temperature
                   </DataTable.Title>
-                  <DataTable.Title style={{ flex: 0.55 }} textStyle={styles.textHeader}>
+                  <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                    Treated Water
+                  </DataTable.Title>
+                  
+                  <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
                     FG
                   </DataTable.Title>
-                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
-                    Status
+                  <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                    Control
                   </DataTable.Title>
-                  <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                  <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
+                    Take Action
+                  </DataTable.Title>
+                  <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                     Done by
                   </DataTable.Title>
+                  <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                    Status
+                  </DataTable.Title>
+                 
                 </DataTable.Header>
               </DataTable>
 

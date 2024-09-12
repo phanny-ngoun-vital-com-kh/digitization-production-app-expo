@@ -44,9 +44,9 @@ export const PreWaterTreatmentStoreModel = types
         }
       },
       getSelectedPretreatment: async (
-        time = "2024-05-20",
-        pre_treatment_id = "d0474edf-40a3-4cbe-8b09-ed6715278226",
-        pre_treatment_type = "Water Treatment Plant 3",
+        time :string,
+        pre_treatment_id :string,
+        pre_treatment_type :string,
       ) => {
         // console.log(assign_date, pre_treatment_type)
         const rs = await prewaterTreatmentApi.getPreWTPByDate({

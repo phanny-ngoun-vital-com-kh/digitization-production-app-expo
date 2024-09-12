@@ -21,13 +21,12 @@ const BadgeTriangle = (
         justifyContent: "flex-end",
         height: 50,
         alignItems: "center",
-        right: -90,
+        right: -95,
         top: -40,
-
-        transform: [{ rotate: "45deg" }],
+        transform: [{ rotate: "41deg" }],
       }}
     >
-      <Text whiteColor style={{ marginBottom: 10, marginRight: 14 }} caption2>
+      <Text whiteColor style={{ marginTop:'auto', marginBottom:'auto'}} caption2>
   
         {label}
       </Text>

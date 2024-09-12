@@ -66,13 +66,13 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
     const [machineSnapshot, setMachineSnapshot] = useState<PreWaterTreatment[] | null>([])
     const { colors } = useTheme()
     const [selectedShift, setSelectedShift] = useState({
-      item: "7:00",
+      item: "",
       index: 0,
       pre_treatment_id: "",
     })
     const [selectedWTP, setSelectedWTP] = useState({
-      name: "",
-      value: "",
+      name: "Water Treatment Plant 2",
+      value: 1,
     })
     const [assignUser, setAssignUser] = useState<{
       id: number | null
@@ -168,7 +168,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
           pre_treatment_type: assignUser?.pretreatment_type ?? "",
           pre_treatment_id: assignUser?.treatment_id,
         })
-        refetchAssign()
+        refresh()
       } catch (error) {
         console.log(error.message)
         Dialog.show({
@@ -180,7 +180,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
       }
     }
     const invalidDate = (created_date: any) =>
-      moment(Date.now()).format("LL") === moment(created_date).format("LL")
+      moment(Date.now()).format("YYYY-MM-DD") === moment.utc(created_date).format("YYYY-MM-DD")
 
     const isValidShift = (time: any) =>
       getCurrentTime() > cleanTimeCurrent(!time.includes("(") ? time : time?.split(" ")[1]) &&
@@ -218,7 +218,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                     pretreatment_type: item?.pre_treatment_type,
                   }))
                 }}
-                validDate={invalidDate(item?.createdDate)}
+                validDate={invalidDate(item?.assign_date)}
                 validShift={isValidShift(item?.time)}
                 created_date={item?.assign_date}
                 machine_type={subitem?.control}
@@ -265,9 +265,9 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                     {
                       type: subitem?.control,
                       onBack: onSendback,
-                      isValidShift: true,
+                      isValidShift: shift === -1 ? true : false,
 
-                      isvalidDate: true,
+                      isvalidDate:moment(Date.now()).format("LL") === moment(item?.assign_date).format("LL"),
 
                       item: {
                         ...subitem,
@@ -288,81 +288,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
       fetchWtp(selectedShift?.item, selectedShift.index?.toString(), selectedWTP.name)
     }
 
-    const refetchAssign = async () => {
-      try {
-        setLoading(true)
-
-        const result = await preWaterTreatmentStore.getListPreTreatment(
-          datePicker.value ?? "",
-          selectedWTP?.name,
-        )
-
-        const sortedResult = result?.sort((a, b) => (a.id > b.id ? 1 : -1))
-
-        fetchWtpbyTime(
-          selectedShift.item,
-          sortedResult[selectedShift.index]?.pre_treatment_id,
-          result[selectedShift.index]?.pre_treatment_type,
-        )
-
-        const foundwarning = []
-
-        for (const item of sortedResult) {
-          const count = item.pretreatmentlist.filter((subitem) => {
-            return subitem?.warning_count > 0
-          }).length
-          if (count) {
-            foundwarning.push(item?.time)
-          }
-        }
-
-        const indexFound = schedules.findIndex((s) => foundwarning?.includes(s.time))
-        const times = sortedResult.map((item) => item?.time)
-        const pre_types = sortedResult.map((item) => item?.pre_treatment_id) as []
-
-        if (indexFound >= 0) {
-          setSchedules((pre) => {
-            return pre.map((item, index) => {
-              if (index === indexFound) {
-                item.isWarning = true
-              }
-
-              if (times.includes(item.time)) {
-                const foundIndex = times.findIndex((subitem) => subitem === item.time)
-
-                item.pre_treatment_id = pre_types[foundIndex]
-              }
-              return item
-            })
-          })
-        } else {
-          setSchedules((pre) => {
-            return pre.map((item, index) => {
-              if (times.includes(item.time)) {
-                const foundIndex = times.findIndex((subitem) => subitem === item.time)
-
-                item.pre_treatment_id = pre_types[foundIndex]
-              }
-              return item
-            })
-          })
-        }
-        setWtp(sortedResult)
-        // setSchedule(pre=>())
-      } catch (error: unknown) {
-        console.log(error.message)
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "បរាជ័យ",
-          textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
-          button: "បិទ",
-        })
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    const fetchWtp = async (time: string, index: string, type) => {
+    const fetchWtp = async (time: string, index: string, type:string) => {
       try {
         getCurrentUserName()
         setQuery("")
@@ -371,7 +297,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
         setRefreshing(true)
 
         const result = await preWaterTreatmentStore.getListPreTreatment(
-          datePicker.value ?? "",
+          datePicker.value ?? '',
           selectedWTP?.name,
         )
 
@@ -393,11 +319,15 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
           }
           return minutesA - minutesB
         })
-
+        
         if (result?.length > 0) {
-          setSelectedShift((pre) => ({ ...pre }))
-
-          fetchWtpbyTime(time, sortedResult[index]?.pre_treatment_id, type)
+          const item = result.find(a => a.time === time);
+          if(!item){
+            setRefreshing(false)
+            return
+          }
+          setSelectedShift((pre) => ({ ...pre}))
+          fetchWtpbyTime(time, item.pre_treatment_id, type)
           // setLoading(false)
         } else {
           setSelectedShift((pre) => ({ ...pre }))
@@ -415,12 +345,12 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
             foundwarning.push(item?.time)
           }
         }
-
         const indexFound = schedules.findIndex((s) => foundwarning?.includes(s.time))
         const times = sortedResult.map((item) => item?.time)
         const pre_types = sortedResult.map((item) => item?.pre_treatment_id) as []
 
         if (indexFound >= 0) {
+          console.log(indexFound,'indexFound')
           setSchedules((pre) => {
             return pre.map((item, index) => {
               if (index === indexFound) {
@@ -437,6 +367,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
           })
         } else {
           setSchedules((pre) => {
+            console.log('indexFound',indexFound)
             return pre.map((item, index) => {
               if (times.includes(item.time)) {
                 const foundIndex = times.findIndex((subitem) => subitem === item.time)
@@ -455,7 +386,7 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "បរាជ័យ",
-          textBody: "បញ្ហាបច្ចេកទេសនៅលើ server",
+          textBody: "បញ្ហាបច្ចេកទេសនៅលើ hiserver",
           button: "បិទ",
         })
       }
@@ -493,7 +424,10 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
           pre_treatment_id,
           pre_treatment_type,
         )
-
+        // console.log('time',time)
+        // console.log('pre_treatment_id',pre_treatment_id)
+        // console.log('pre_treatment_type',pre_treatment_type)
+        // console.log(result)
         const [allprogress] = result?.map((item) => item?.pretreatmentlist) as []
         const selectProgress = allprogress?.filter((item) => item?.status !== "pending")
         const pretreatmentlist = result?.map((item) => item?.pretreatmentlist)[0]
@@ -529,7 +463,6 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
 
           return
         }
-
         setSelectedShift((pre) => ({ ...pre, item: result?.time, index: result?.index }))
 
         setSchedules([
@@ -542,7 +475,8 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
         ]) //
 
         setSelectProgess(0)
-
+        // console.log(selectedWTP)
+        // console.log('me',result?.time, result?.index, selectedWTP.name)
         fetchWtp(result?.time, result?.index, selectedWTP.name)
       }
     }, [datePicker.value, selectedWTP.value, cancelDate])
@@ -650,19 +584,21 @@ export const PrewaterTreatmentScreen: FC<PrewaterTreatmentScreenProps> = observe
                         setSelectTime([])
                         setSelectedShift({
                           item: item.time,
-                          index: index.toString(),
+                          index: index,
                           pre_treatment_id: item.pre_treatment_id,
+                          
                         })
                         fetchWtpbyTime(
                           item.time,
-                          wtp![index]?.pre_treatment_id,
+                          item.pre_treatment_id,
 
                           selectedWTP.name,
                         )
+                        console.log(item.isWarning)
 
                         setSelectProgess(0)
                       }}
-                      isWarning={item.isWarning && selectedShift?.item != item.time}
+                      isWarning={item.isWarning }
                       progressValue={selectProgess ?? 0}
                       time={item?.time?.trim()}
                       isSelected={selectedShift?.item === item.time}

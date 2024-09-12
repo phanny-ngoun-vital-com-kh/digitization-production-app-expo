@@ -147,7 +147,7 @@ const MachinePanel = ({
           <View
             style={[
               $containerHorizon,
-              { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15,gap:25 },
+              { justifyContent: "center", alignItems: "center", marginBottom: 20, marginTop: 15, gap: 25 },
             ]}
           >
             <TouchableOpacity
@@ -174,10 +174,10 @@ const MachinePanel = ({
         ) : (
           <BadgeOutofdate placeholder={
 
-            
+
             translate("wtpcommon.outDate")
-          
-          
+
+
           } />
         )
       ) : validDate && validShift === -1 ? (

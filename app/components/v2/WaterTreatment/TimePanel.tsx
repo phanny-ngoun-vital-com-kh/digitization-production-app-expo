@@ -6,7 +6,7 @@ import {translate} from "../../../i18n/translate"
 import { TimePanelProps } from "./type"
 import BadgeTriangle from "../BadgeV2"
 const TimePanel = ({
-  time = "  7: 00",
+  time = "",
   progressValue = 1,
   isSelected = false,
   bgColor = "#0081F8",
