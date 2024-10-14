@@ -11,6 +11,7 @@ import { useStores } from "app/models"
 import { HaccpLines } from "app/models/haccp-monitoring/haccp-lines-store"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
 import ProgressBar from "react-native-animated-progress";
+import { ScrollView } from "react-native"
 
 interface HccpMonitorScreenProps extends AppStackScreenProps<"HccpMonitor"> { }
 
@@ -44,9 +45,9 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
   }
 
   const line = [
-    // {
-    //   name: 'Line 1'
-    // },
+    {
+      name: 'Line Barrel'
+    },
     {
       name: 'Line 2'
     },
@@ -62,6 +63,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
     {
       name: 'Line 6'
     }
+    
   ]
 
   const handleRefresh = () => {
@@ -129,7 +131,8 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
         </View>
 
         <Divider style={styles.divider_space} />
-        <View style={{ marginTop: 15, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+        <ScrollView style={{marginBottom:'5%'}}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
           {line.map((it, index) => {
             const filteredData = waterLines.filter(i => i.line === it.name);
             const total = filteredData[0]?.haccplist.length || 0;
@@ -150,7 +153,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
                     marginTop: 40,
                     borderStyle: 'solid',
                     backgroundColor: 'white',
-                    height: '38%',
+                    // height: '38%',
                     borderWidth: 3,
                     borderColor: filteredData[0] !== undefined ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0)',
                     shadowColor: filteredData[0] !== undefined ? 'green' : '',
@@ -196,6 +199,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginVertical: 10,
+                        flexWrap: 'wrap',
                       }}
                     >
                       <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', }}>
@@ -220,7 +224,7 @@ export const HccpMonitorScreen: FC<HccpMonitorScreenProps> = observer(function H
           })}
 
         </View>
-
+        </ScrollView>
       </View>
     </View>
   )

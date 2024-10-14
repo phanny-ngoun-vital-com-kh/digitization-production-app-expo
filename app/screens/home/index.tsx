@@ -44,38 +44,13 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               navigation: "InventoryTransfer",
               iconname: "warehouse",
               icontype: "MaterialCommunityIcons",
-            },
-            // {
-            //   id: 3,
-            //   name: "Water Treatment Control",
-            //   subname: "Water Treatment  List",
-            //   navigation: "WaterTreatmentControlList",
-            //   iconname: "water",
-            //   icontype: "MaterialCommunityIcons",
-            // },
-            // {
-            //   id: 4,
-            //   name: "HACCP Monitoring",
-            //   subname: "HACCP Monitoring List",
-            //   navigation: "HccpMonitor",
-            //   iconname: "alert-octagon",
-            //   icontype: "MaterialCommunityIcons",
-            // },
-            // {
-            //   id: 5,
-            //   name: "Dashboard",
-            //   subname: "Overview and Analytic",
-            //   navigation: "Dashboard",
-            //   iconname: "view-dashboard-outline",
-            //   icontype: "MaterialCommunityIcons",
-            // },
-
-            // Add other items as needed
+            }
           ]
           setList(updatedList)
         } else if (
           rs.data.authorities.includes("ROLE_PROD_PRO_ADMIN") ||
-          rs.data.authorities.includes("ROLE_PROD_PRO_USER")
+          rs.data.authorities.includes("ROLE_PROD_PRO_USER") ||
+          rs.data.authorities.includes("ROLE_PROD_WTP_ADMIN") 
         ) {
           const updatedList = [
             {
@@ -96,23 +71,31 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
             },
             {
               id: 3,
-              name: "Water Treatment Control",
-              subname: "Water Treatment  List",
-              navigation: "WaterTreatmentControlList",
-              iconname: "water",
+              name: "Daily Pre Water Control",
+              subname: "Pre-water treatment control record",
+              navigation: "PrewaterTreatment",
+              iconname: "water-check",
               icontype: "MaterialCommunityIcons",
             },
+            // {
+            //   id: 3,
+            //   name: "Water Treatment Control",
+            //   subname: "Water Treatment List",
+            //   navigation: "WaterTreatmentControlList",
+            //   iconname: "water",
+            //   icontype: "MaterialCommunityIcons",
+            // },
             {
               id: 4,
-              name: "HACCP Monitoring",
-              subname: "HACCP Monitoring List",
+              name: "HACCP Monitoring Line",
+              subname: "HACCP Monitoring Line List",
               navigation: "HccpMonitor",
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
             },
             {
               id: 5,
-              name: "HACCP Monitoring Ozone",
+              name: "HACCP Monitoring of WTP",
               subname: "HACCP Monitoring Ozone List",
               navigation: "HACCPMonitoringOzone",
               iconname: "alert-octagon",
@@ -129,43 +112,43 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           ]
           setList(updatedList)
         } else if (
-          rs.data.authorities.includes("ROLE_PROD_DWT_USER") ||
-          rs.data.authorities.includes("ROLE_PROD_PWT_USER")
+          rs.data.authorities.includes("ROLE_PROD_WTP_USER")
         ) {
           const updatedList = [
+            // {
+            //   id: 1,
+            //   name: "Water Treatment Control",
+            //   subname: "Water Treatment  List",
+            //   navigation: "WaterTreatmentControlList",
+            //   iconname: "water",
+            //   icontype: "MaterialCommunityIcons",
+            // },
             {
               id: 1,
-              name: "Water Treatment Control",
-              subname: "Water Treatment  List",
-              navigation: "WaterTreatmentControlList",
-              iconname: "water",
+              name: "Daily Pre Water Control",
+              subname: "Pre-water treatment control record",
+              navigation: "PrewaterTreatment",
+              iconname: "water-check",
               icontype: "MaterialCommunityIcons",
             },
             {
               id: 2,
-              name: "Dashboard",
-              subname: "Overview and Analytic",
-              navigation: "Dashboard",
-              iconname: "view-dashboard-outline",
-              icontype: "MaterialCommunityIcons",
-            },
-          ]
-          setList(updatedList)
-        }
-        else if (
-          rs.data.authorities.includes("ROLE_PROD_HACCP_USER")
-        ) {
-          const updatedList = [
-            {
-              id: 1,
-              name: "HACCP Monitoring",
-              subname: "HACCP Monitoring List",
+              name: "HACCP Monitoring Line",
+              subname: "HACCP Monitoring Line List",
               navigation: "HccpMonitor",
               iconname: "alert-octagon",
               icontype: "MaterialCommunityIcons",
             },
             {
-              id: 2,
+              id: 3,
+              name: "HACCP Monitoring of WTP",
+              subname: "HACCP Monitoring Ozone List",
+              navigation: "HACCPMonitoringOzone",
+              iconname: "alert-octagon",
+              icontype: "MaterialCommunityIcons",
+            },
+            {
+              id: 4,
               name: "Dashboard",
               subname: "Overview and Analytic",
               navigation: "Dashboard",

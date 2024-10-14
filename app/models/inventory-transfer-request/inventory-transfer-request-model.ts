@@ -77,8 +77,10 @@ export const ActivitiesModel = types
                     self.remark,
                     self.transfer_request
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)
@@ -125,8 +127,10 @@ export const ProvidedListModel = types
                     self.activities_name,
                     self.action,
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)

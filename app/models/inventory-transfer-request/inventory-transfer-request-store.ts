@@ -39,8 +39,10 @@ export const InventoryTransferRequestModel = types.model("InventoryTransferReque
                     self.state,
                     self.statusChange
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)
@@ -57,8 +59,10 @@ export const InventoryTransferRequestModel = types.model("InventoryTransferReque
                     self.activities_name,
                     self.action,
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)
@@ -132,18 +136,11 @@ export const TransferRequestModel = types
                     self.transfer_type,
                     self.activities,
                     self.items,
-                    // self.taxDate,
-                    // self.fromWarehouse,
-                    // self.toWarehouse,
-                    // self.apiReferenceNo,
-                    // self.vendorCode,
-                    // self.vendorName,
-                    // self.productionOfficer,
-                    // self.comments,
-                    // self.transferRequestDetails
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)
@@ -201,8 +198,10 @@ export const SAPTransferRequestModel = types
                     self.transfer_request,
                     self.transferRequestDetails
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok') {
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)
@@ -259,8 +258,10 @@ export const ProvidedModel = types
                     self.activities_name,
                     self.action
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)

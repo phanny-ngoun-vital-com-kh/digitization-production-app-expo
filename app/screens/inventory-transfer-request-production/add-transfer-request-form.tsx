@@ -172,15 +172,6 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
     { id: '2', name: 'S2' }
   ]
 
-  // const line = [
-  //   { id: '1', name: 'Line 1' },
-  //   { id: '2', name: 'Line 2' },
-  //   { id: '3', name: 'Line 3' },
-  //   { id: '4', name: 'Line 4' },
-  //   { id: '5', name: 'Line 5' },
-  //   { id: '6', name: 'Line 6' }
-  // ]
-
   async function sendNotification(title, body, deviceTokens, sound = 'default') {
     const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
 
@@ -274,26 +265,17 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
       items: newItem,
     })
     try {
-      await (inventoryRequestStore
+      const save = await (inventoryRequestStore
         .addTransferRequest(data)
         .savetransferrequest()
         .then()
         .catch((e) => console.log(e)))
-      {
-        // setNotiVisible(true)
-        // sendNotification(allFcm, 'New Transfer Request', 'You have new transfer request from ' + getLine);
+      if (save == 'Success'){
         sendNotification('New Transfer Request', 'You have new transfer request from ' + getLine, allFcm)
-        // droplineRef.current.reset();
-        // droptypeRef.current.reset();
-        // dropshiftRef.current.reset();
-        // dropfromwarehouseRef.current.reset();
-        // droptowarehouseRef.current.reset();
         setIsSubmit(true)
         setModalSubmitVisible(false)
         setTansferType('PM/RM')
-        // setGetLine('')
         setGetShift('')
-
         setPostingDate(currentDate);
         setDueDate(currentDate)
         setWarehouseTendency('')
@@ -305,15 +287,19 @@ export const AddTransferRequestFormScreen: FC<AddTransferRequestFormProps> = obs
         setGetLine('')
         setNewItem([])
         setListItem([])
-        // setAllFcm([])
-        // navigation.goBack()
-
         Dialog.show({
           type: ALERT_TYPE.SUCCESS,
           title: 'ជោគជ័យ',
           textBody: 'រក្សាទុកបានជោគជ័យ',
           // button: 'close',
           autoClose: 100
+        })
+      }else {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'បរាជ័យ',
+          textBody: "សូមព្យាយាមម្ដងទៀត",
+          autoClose: 100,
         })
       }
     } catch (error) {

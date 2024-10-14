@@ -16,7 +16,7 @@ import { Text } from "app/components/v2"
 import ActivityBar from "app/components/v2/WaterTreatment/ActivityBar"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import CustomInput from "app/components/v2/DailyPreWater/CustomInput"
-import { Checkbox, Divider } from "react-native-paper"
+import { Checkbox, Divider, Provider } from "react-native-paper"
 import { useStores } from "app/models"
 import { PreTreatmentListItemModel } from "app/models/pre-water-treatment/pre-water-treatment-model"
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification"
@@ -26,6 +26,7 @@ import BadgeWarning from "app/components/v2/Badgewarn"
 import { ImagetoText, getResultImageCamera, getResultImageGallery } from "app/utils-v2/ocr"
 import { translate } from "../../../i18n/translate"
 import IconAntDesign from "react-native-vector-icons/AntDesign"
+import AlertDialog from "app/components/v2/AlertDialog"
 
 interface PreWaterForm1ScreenProps extends AppStackScreenProps<"PreWaterForm1"> { }
 
@@ -39,6 +40,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     const route = useRoute().params
     const [image, setImage] = useState(null)
     const [showLog, setShowlog] = useState<boolean>(false)
+    const [visible, setVisible] = useState<{ visible: boolean }>({ visible: false })
     const [sf, setSf] = useState(route?.item?.sf || '')
     const [acf, setacf] = useState(route?.item?.acf || '')
     const [resin, setResin] = useState(route?.item?.resin || '')
@@ -48,9 +50,9 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     const [airACF, setAirACF] = useState(route?.item?.acf != null ? parseFloat(route?.item?.acf) : null)
     const [airResin, setAirResin] = useState(route?.item?.resin != null ? parseFloat(route?.item?.resin) : null)
     const [rawWater, setRawWater] = useState(route?.item?.raw_water || '')
-    const assignedUsers = route?.item?.assign_to_user.split(' ');
+    const assignedUsers = route?.item?.assign_to_user?.split(' ');
     const [isEdit, setIsEdit] = useState()
-    const isUserAssigned = assignedUsers.includes(authStore?.userLogin);
+    const isUserAssigned = assignedUsers?.includes(authStore?.userLogin);
     // const isEdit = (route?.isvalidDate && isUserAssigned && route?.isValidShift)
     const [form, setForm] = useState({
       sf: "",
@@ -78,13 +80,14 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
       remarks: true,
       air_released: false,
     })
-    
+
     useEffect(() => {
       const role = async () => {
         try {
           const rs = await authStore.getUserInfo();
-          const admin=rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
-          const edit = (route?.isvalidDate && isUserAssigned && route?.isValidShift) || admin
+          const admin = rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
+          const adminWTP = rs.data.authorities.includes('ROLE_PROD_WTP_ADMIN')
+          const edit = (route?.isvalidDate && isUserAssigned && route?.isValidShift) || admin || adminWTP
           setIsEdit(edit)
           // Modify the list based on the user's role
           // setGetRole(rs)
@@ -98,6 +101,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     useLayoutEffect(() => {
       navigation.setOptions({
         headerShown: true,
+        headerBackVisible: false,
         title: route?.type,
 
         headerTitle: (props) => (
@@ -125,7 +129,55 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             </Text>
           </TouchableOpacity>
         ),
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => {
+              const change1 =
+                ((route?.item?.sf == null ? "" : route?.item?.sf) !== (sf)) ||
+                ((route?.item?.acf == null ? "" : route?.item?.acf) !== (acf)) ||
+                ((route?.item?.resin == null ? "" : route?.item?.resin) !== (resin)) ||
+                ((route?.item?.um5 == null ? "" : route?.item?.um5) !== (um5)) ||
+                ((route?.item?.remark == null ? "" : route?.item?.remark) !== other);
 
+              const change2 =
+                (route?.item?.sf?.toString() !== airSF?.toString()) ||
+                (route?.item?.acf?.toString() !== airACF?.toString()) ||
+                (route?.item?.resin?.toString() !== airResin?.toString()) ||
+                ((route?.item?.remark == null ? "" : route?.item?.remark) !== other);
+
+              const change3 =
+                ((route?.item?.raw_water == null ? "" : route?.item?.raw_water) !== (rawWater)) ||
+                ((route?.item?.sf == null ? "" : route?.item?.sf) !== (sf)) ||
+                ((route?.item?.acf == null ? "" : route?.item?.acf) !== (acf)) ||
+                ((route?.item?.resin == null ? "" : route?.item?.resin) !== (resin)) ||
+                ((route?.item?.um5 == null ? "" : route?.item?.um5) !== (um5)) ||
+                ((route?.item?.remark == null ? "" : route?.item?.remark) !== other);
+
+              if (route?.type?.toLowerCase().includes("pressure")) {
+                if (change1) {
+                  setVisible({ visible: true })
+                } else {
+                  navigation.goBack()
+                }
+              } else if (route?.type?.toLowerCase().includes("air")) {
+                if (change2) {
+                  setVisible({ visible: true })
+                } else {
+                  navigation.goBack()
+                }
+              } else if (route?.type?.toLowerCase().includes("tds") || route?.type?.toLowerCase().includes("ph")) {
+                if (change3) {
+                  setVisible({ visible: true })
+                } else {
+                  navigation.goBack()
+                }
+              }
+            }}
+            style={{ flexDirection: "row", alignItems: "center", marginRight: 30 }}
+          >
+            <Icon name="arrow-back-sharp" size={24} />
+          </TouchableOpacity>
+        ),
         headerRight: () =>
 
           (isEdit) ? (
@@ -146,7 +198,7 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             </>
           ),
       })
-    }, [form, route, errors, oldRoute, isEditable, sf, acf, resin, um5, other, airACF, airResin, airSF, rawWater,isEdit])
+    }, [form, route, errors, oldRoute, isEditable, sf, acf, resin, um5, other, airACF, airResin, airSF, rawWater, isEdit])
 
     const alert = (title: string, textBody: string) => {
       Dialog.show({
@@ -397,11 +449,11 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
       }
       try {
         setLoading(true)
-        await (preWaterTreatmentStore
+        const rs = await (preWaterTreatmentStore
           .addPretreatments(entity)
           .savePreWtp().then()
           .catch((e) => console.log(e)))
-        {
+        if (rs == 'Success') {
           Dialog.show({
             type: ALERT_TYPE.SUCCESS,
             title: 'ជោគជ័យ',
@@ -409,12 +461,21 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
             // button: 'close',
             autoClose: 100
           })
+          navigation.goBack()
+        } else {
+          Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "បរាជ័យ",
+            textBody: "សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ",
+            button: "បិទ",
+            // autoClose: 500,
+          })
         }
       } catch (error) {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "បរាជ័យ",
-          textBody: "សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ",
+          textBody: "បរាជ័យ",
           button: "បិទ",
           // autoClose: 500,
         })
@@ -425,407 +486,283 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
     }
 
     return (
-      <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
-        {isloading && (
-          <View style={styles.overlay}>
-            <ActivityIndicator color="#8CC8FF" size={35} />
-            <View style={{ marginVertical: 15 }}></View>
-            <Text whiteColor textAlign={"center"}>
-              Saving record ...
-            </Text>
-          </View>
-        )}
-        {isScanning && (
-          <View style={styles.overlay}>
-            <ActivityIndicator color="#8CC8FF" size={35} />
-            <View style={{ marginVertical: 15 }}></View>
-            <Text whiteColor textAlign={"center"}>
-              Scanning ...
-            </Text>
-          </View>
-        )}
-        <ScrollView>
-          <View style={$outerContainer}>
-            <View style={[$horizon, { justifyContent: "space-between" }]}>
+      <Provider>
+        <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
+          {isloading && (
+            <View style={styles.overlay}>
+              <ActivityIndicator color="#8CC8FF" size={35} />
+              <View style={{ marginVertical: 15 }}></View>
+              <Text whiteColor textAlign={"center"}>
+                Saving record ...
+              </Text>
             </View>
-            {route?.type?.toLowerCase().includes("pressure") ?
-              <View>
-                <View style={main}>
-                  <View style={sub}>
-                    <View style={{ marginRight: 10 }}>
-                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                        <Text style={{ marginRight: 5, fontSize: 16 }}>SF</Text>
-                        {(parseFloat(sf) < 0.1 || parseFloat(sf) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-
-                      </View>
-                      <TextInput
-                        keyboardType="decimal-pad"
-                        value={sf}
-                        readOnly={!isEdit}
-                        style={[styles.input, { width: '100%' }]}
-                        placeholder="Please Enter"
-                        onChangeText={(text) => setSf(text)}>
-                      </TextInput>
-                      {sf == '' ?
-                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF</Text>
-                        : <></>}
-                    </View>
-                  </View >
-                  <View style={sub}>
-                    <View style={{ marginRight: 10 }}>
-                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                        <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
-                        {(parseFloat(acf) < 0.1 || parseFloat(acf) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                      </View>
-                      <TextInput
-                        keyboardType="decimal-pad"
-                        value={acf}
-                        readOnly={!isEdit}
-                        style={[styles.input, { width: '100%' }]}
-                        placeholder="Please Enter"
-                        onChangeText={(text) => setacf(text)}>
-                      </TextInput>
-                      {acf == '' ?
-                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF</Text>
-                        : <></>}
-                    </View>
-                  </View>
-                </View>
-                <View style={main}>
-                  <View style={sub}>
-                    <View style={{ marginRight: 10 }}>
-                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                        <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
-                        {(parseFloat(resin) < 0.1 || parseFloat(resin) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                      </View>
-                      <TextInput
-                        keyboardType="decimal-pad"
-                        value={resin}
-                        readOnly={!isEdit}
-                        style={[styles.input, { width: '100%' }]}
-                        placeholder="Please Enter"
-                        onChangeText={(text) => setResin(text)}>
-                      </TextInput>
-                      {resin == '' ?
-                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Resin</Text>
-                        : <></>}
-                    </View>
-                  </View >
-                  <View style={sub}>
-                    <View style={{ marginRight: 10 }}>
-                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                        <Text style={{ marginRight: 5, fontSize: 16 }}>5µm</Text>
-                        {(parseFloat(um5) < 0.1 || parseFloat(um5) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                      </View>
-                      <TextInput
-                        keyboardType="decimal-pad"
-                        value={um5}
-                        readOnly={!isEdit}
-                        style={[styles.input, { width: '100%' }]}
-                        placeholder="Please Enter"
-                        onChangeText={(text) => setum5(text)}>
-                      </TextInput>
-                      {um5 == '' ?
-                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 5µm</Text>
-                        : <></>}
-                    </View>
-                  </View >
-                </View>
-                <View style={{ flex: 1 }}>
-
-                  <View style={{ marginRight: 10 }}>
-                    <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                      <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
-                    </View>
-                    <TextInput
-                      value={other}
-                      readOnly={!isEdit}
-                      style={[styles.input, { width: '100%' }]}
-                      placeholder="Please Enter"
-                      onChangeText={(text) => setOther(text)}>
-                    </TextInput>
-                  </View>
-                </View>
+          )}
+          {isScanning && (
+            <View style={styles.overlay}>
+              <ActivityIndicator color="#8CC8FF" size={35} />
+              <View style={{ marginVertical: 15 }}></View>
+              <Text whiteColor textAlign={"center"}>
+                Scanning ...
+              </Text>
+            </View>
+          )}
+          <ScrollView>
+            <View style={$outerContainer}>
+              <View style={[$horizon, { justifyContent: "space-between" }]}>
               </View>
-
-              : (route?.type?.toLowerCase().includes("air")) ?
-                <>
-                  <View style={{ gap: 15 }}>
-                    <View style={[$horizon]}>
-                      <View style={{ marginVertical: 25, flex: 1 }}>
+              {route?.type?.toLowerCase().includes("pressure") ?
+                <View>
+                  <View style={main}>
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
                         <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                           <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
                           <Text style={{ marginRight: 5, fontSize: 16 }}>SF</Text>
-                          {(airSF) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                        </View>
-                        <View style={{ flexDirection: 'row' }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
-                            <Checkbox
-                              disabled={!isEdit}
-                              status={
-                                airSF === null
-                                  ? "unchecked"
-                                  : airSF == 1
-                                    ? "checked"
-                                    : "unchecked"
-                              }
-                              onPress={() => {
-                                setAirSF(1)
-                              }}
-                              color="#0081F8"
-                            />
-                            <Text>Yes </Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Checkbox
-                              disabled={!isEdit}
-                              status={
-                                airSF === null
-                                  ? "unchecked"
-                                  : airSF == 0
-                                    ? "checked"
-                                    : "unchecked"
-                              }
-                              onPress={() => {
-                                setAirSF(0)
-                              }}
-                              color="#0081F8"
-                            />
-                            <Text>No </Text>
-                          </View>
+                          {(parseFloat(sf) < 0.1 || parseFloat(sf) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
 
-                        </View>
-                        {airSF == null ?
-                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស SF</Text>
-                          : <></>}
-
-                      </View>
-                      <View style={{ marginVertical: 25, flex: 1 }}>
-                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                          <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
-                          {(airACF) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                        </View>
-                        <View style={{ flexDirection: 'row' }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
-                            <Checkbox
-                              disabled={!isEdit}
-                              status={
-                                airACF === null
-                                  ? "unchecked"
-                                  : airACF == 1
-                                    ? "checked"
-                                    : "unchecked"
-                              }
-                              onPress={() => {
-                                setAirACF(1)
-                              }}
-                              color="#0081F8"
-                            />
-                            <Text>Yes </Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Checkbox
-                              disabled={!isEdit}
-                              status={
-                                airACF === null
-                                  ? "unchecked"
-                                  : airACF == 0
-                                    ? "checked"
-                                    : "unchecked"
-                              }
-                              onPress={() => {
-                                setAirACF(0)
-                              }}
-                              color="#0081F8"
-                            />
-                            <Text>No </Text>
-                          </View>
-
-                        </View>
-                        {airACF == null ?
-                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស ACF</Text>
-                          : <></>}
-                      </View>
-                      <View style={{ marginVertical: 25, flex: 1 }}>
-                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                          <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
-                          {(airResin) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                        </View>
-                        <View style={{ flexDirection: 'row' }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
-                            <Checkbox
-                              disabled={!isEdit}
-                              status={
-                                airResin === null
-                                  ? "unchecked"
-                                  : airResin == 1
-                                    ? "checked"
-                                    : "unchecked"
-                              }
-                              onPress={() => {
-                                setAirResin(1)
-                              }}
-                              color="#0081F8"
-                            />
-                            <Text>Yes </Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Checkbox
-                              disabled={!isEdit}
-                              status={
-                                airResin === null
-                                  ? "unchecked"
-                                  : airResin == 0
-                                    ? "checked"
-                                    : "unchecked"
-                              }
-                              onPress={() => {
-                                setAirResin(0)
-                              }}
-                              color="#0081F8"
-                            />
-                            <Text>No </Text>
-                          </View>
-
-                        </View>
-                        {airResin == null ?
-                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Resin</Text>
-                          : <></>}
-                      </View>
-                    </View>
-                    <View style={{ flex: 1 }}>
-
-                      <View style={{ marginRight: 10 }}>
-                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                          <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
                         </View>
                         <TextInput
-                          value={other}
+                          keyboardType="decimal-pad"
+                          value={sf}
                           readOnly={!isEdit}
                           style={[styles.input, { width: '100%' }]}
                           placeholder="Please Enter"
-                          onChangeText={(text) => setOther(text)}>
+                          onChangeText={(text) => setSf(text)}>
                         </TextInput>
+                        {sf == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
+                          {(parseFloat(acf) < 0.1 || parseFloat(acf) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={acf}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setacf(text)}>
+                        </TextInput>
+                        {acf == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF</Text>
+                          : <></>}
                       </View>
                     </View>
                   </View>
-                </>
-                : (route?.type?.toLowerCase().includes("tds") || route?.type?.toLowerCase().includes("ph")) ?
-                  <View>
-                    <View style={main}>
-                      <View style={sub}>
-                        <View style={{ marginRight: 10 }}>
-                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                            <Text style={{ marginRight: 5, fontSize: 16 }}>Raw Water</Text>
-                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(rawWater) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(rawWater) < 6.5 || parseFloat(rawWater) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-
-                          </View>
-                          <TextInput
-                            keyboardType="decimal-pad"
-                            value={rawWater}
-                            readOnly={!isEdit}
-                            style={[styles.input, { width: '100%' }]}
-                            placeholder="Please Enter"
-                            onChangeText={(text) => setRawWater(text)}>
-                          </TextInput>
-                          {rawWater == '' ?
-                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Raw Water</Text>
-                            : <></>}
+                  <View style={main}>
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
+                          {(parseFloat(resin) < 0.1 || parseFloat(resin) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                         </View>
-                      </View >
-                      <View style={sub}>
-                        <View style={{ marginRight: 10 }}>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={resin}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setResin(text)}>
+                        </TextInput>
+                        {resin == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Resin</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                    <View style={sub}>
+                      <View style={{ marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>5µm</Text>
+                          {(parseFloat(um5) < 0.1 || parseFloat(um5) > 0.3) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                        </View>
+                        <TextInput
+                          keyboardType="decimal-pad"
+                          value={um5}
+                          readOnly={!isEdit}
+                          style={[styles.input, { width: '100%' }]}
+                          placeholder="Please Enter"
+                          onChangeText={(text) => setum5(text)}>
+                        </TextInput>
+                        {um5 == '' ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 5µm</Text>
+                          : <></>}
+                      </View>
+                    </View >
+                  </View>
+                  <View style={{ flex: 1 }}>
+
+                    <View style={{ marginRight: 10 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                        <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                      </View>
+                      <TextInput
+                        value={other}
+                        readOnly={!isEdit}
+                        style={[styles.input, { width: '100%' }]}
+                        placeholder="Please Enter"
+                        onChangeText={(text) => setOther(text)}>
+                      </TextInput>
+                    </View>
+                  </View>
+                </View>
+
+                : (route?.type?.toLowerCase().includes("air")) ?
+                  <>
+                    <View style={{ gap: 15 }}>
+                      <View style={[$horizon]}>
+                        <View style={{ marginVertical: 25, flex: 1 }}>
                           <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                             <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
                             <Text style={{ marginRight: 5, fontSize: 16 }}>SF</Text>
-                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(sf) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(sf) < 6.5 || parseFloat(sf) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            {(airSF) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                           </View>
-                          <TextInput
-                            keyboardType="decimal-pad"
-                            value={sf}
-                            readOnly={!isEdit}
-                            style={[styles.input, { width: '100%' }]}
-                            placeholder="Please Enter"
-                            onChangeText={(text) => setSf(text)}>
-                          </TextInput>
-                          {sf == '' ?
-                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF</Text>
+                          <View style={{ flexDirection: 'row' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                              <Checkbox
+                                disabled={!isEdit}
+                                status={
+                                  airSF === null
+                                    ? "unchecked"
+                                    : airSF == 1
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setAirSF(1)
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>Yes </Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <Checkbox
+                                disabled={!isEdit}
+                                status={
+                                  airSF === null
+                                    ? "unchecked"
+                                    : airSF == 0
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setAirSF(0)
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>No </Text>
+                            </View>
+
+                          </View>
+                          {airSF == null ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស SF</Text>
                             : <></>}
+
                         </View>
-                      </View>
-                    </View>
-                    <View style={main}>
-                      <View style={sub}>
-                        <View style={{ marginRight: 10 }}>
+                        <View style={{ marginVertical: 25, flex: 1 }}>
                           <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                             <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
                             <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
-                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(acf) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(acf) < 6.5 || parseFloat(acf) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            {(airACF) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                           </View>
-                          <TextInput
-                            keyboardType="decimal-pad"
-                            value={acf}
-                            readOnly={!isEdit}
-                            style={[styles.input, { width: '100%' }]}
-                            placeholder="Please Enter"
-                            onChangeText={(text) => setacf(text)}>
-                          </TextInput>
-                          {acf == '' ?
-                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF</Text>
+                          <View style={{ flexDirection: 'row' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                              <Checkbox
+                                disabled={!isEdit}
+                                status={
+                                  airACF === null
+                                    ? "unchecked"
+                                    : airACF == 1
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setAirACF(1)
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>Yes </Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <Checkbox
+                                disabled={!isEdit}
+                                status={
+                                  airACF === null
+                                    ? "unchecked"
+                                    : airACF == 0
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setAirACF(0)
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>No </Text>
+                            </View>
+
+                          </View>
+                          {airACF == null ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស ACF</Text>
                             : <></>}
                         </View>
-                      </View >
-                      <View style={sub}>
-                        <View style={{ marginRight: 10 }}>
+                        <View style={{ marginVertical: 25, flex: 1 }}>
                           <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                             <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
                             <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
-                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(resin) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(resin) < 6.5 || parseFloat(resin) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            {(airResin) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                           </View>
-                          <TextInput
-                            keyboardType="decimal-pad"
-                            value={resin}
-                            readOnly={!isEdit}
-                            style={[styles.input, { width: '100%' }]}
-                            placeholder="Please Enter"
-                            onChangeText={(text) => setResin(text)}>
-                          </TextInput>
-                          {resin == '' ?
-                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Resin</Text>
-                            : <></>}
-                        </View>
-                      </View >
+                          <View style={{ flexDirection: 'row' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                              <Checkbox
+                                disabled={!isEdit}
+                                status={
+                                  airResin === null
+                                    ? "unchecked"
+                                    : airResin == 1
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setAirResin(1)
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>Yes </Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <Checkbox
+                                disabled={!isEdit}
+                                status={
+                                  airResin === null
+                                    ? "unchecked"
+                                    : airResin == 0
+                                      ? "checked"
+                                      : "unchecked"
+                                }
+                                onPress={() => {
+                                  setAirResin(0)
+                                }}
+                                color="#0081F8"
+                              />
+                              <Text>No </Text>
+                            </View>
 
-                    </View>
-                    <View style={main}>
-                      <View style={sub}>
-                        <View style={{ marginRight: 10 }}>
-                          <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                            <Text style={{ marginRight: 5, fontSize: 16 }}>5µm</Text>
-                            {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(um5) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(um5) < 6.5 || parseFloat(um5) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                           </View>
-                          <TextInput
-                            keyboardType="decimal-pad"
-                            value={um5}
-                            readOnly={!isEdit}
-                            style={[styles.input, { width: '100%' }]}
-                            placeholder="Please Enter"
-                            onChangeText={(text) => setum5(text)}>
-                          </TextInput>
-                          {um5 == '' ?
-                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 5µm</Text>
+                          {airResin == null ?
+                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Resin</Text>
                             : <></>}
                         </View>
-                      </View >
-                      <View style={sub}>
+                      </View>
+                      <View style={{ flex: 1 }}>
+
                         <View style={{ marginRight: 10 }}>
                           <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                             <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
@@ -838,14 +775,147 @@ export const PreWaterForm1Screen: FC<PreWaterForm1ScreenProps> = observer(
                             onChangeText={(text) => setOther(text)}>
                           </TextInput>
                         </View>
-                      </View >
+                      </View>
                     </View>
-                  </View>
-                  : <></>}
-          </View>
-        </ScrollView>
-        <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} />
-      </KeyboardAvoidingView>
+                  </>
+                  : (route?.type?.toLowerCase().includes("tds") || route?.type?.toLowerCase().includes("ph")) ?
+                    <View>
+                      <View style={main}>
+                        <View style={sub}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Raw Water</Text>
+                              {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(rawWater) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(rawWater) < 6.5 || parseFloat(rawWater) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              keyboardType="decimal-pad"
+                              value={rawWater}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setRawWater(text)}>
+                            </TextInput>
+                            {rawWater == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Raw Water</Text>
+                              : <></>}
+                          </View>
+                        </View >
+                        <View style={sub}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>SF</Text>
+                              {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(sf) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(sf) < 6.5 || parseFloat(sf) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <TextInput
+                              keyboardType="decimal-pad"
+                              value={sf}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setSf(text)}>
+                            </TextInput>
+                            {sf == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ SF</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={main}>
+                        <View style={sub}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>ACF</Text>
+                              {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(acf) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(acf) < 6.5 || parseFloat(acf) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <TextInput
+                              keyboardType="decimal-pad"
+                              value={acf}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setacf(text)}>
+                            </TextInput>
+                            {acf == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ ACF</Text>
+                              : <></>}
+                          </View>
+                        </View >
+                        <View style={sub}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Resin</Text>
+                              {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(resin) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(resin) < 6.5 || parseFloat(resin) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <TextInput
+                              keyboardType="decimal-pad"
+                              value={resin}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setResin(text)}>
+                            </TextInput>
+                            {resin == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Resin</Text>
+                              : <></>}
+                          </View>
+                        </View >
+
+                      </View>
+                      <View style={main}>
+                        <View style={sub}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>5µm</Text>
+                              {(route?.type?.toLowerCase().includes("tds")) && (parseFloat(um5) > 300) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (route?.type?.toLowerCase().includes("ph")) && (parseFloat(um5) < 6.5 || parseFloat(um5) > 8.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <TextInput
+                              keyboardType="decimal-pad"
+                              value={um5}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setum5(text)}>
+                            </TextInput>
+                            {um5 == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ 5µm</Text>
+                              : <></>}
+                          </View>
+                        </View >
+                        <View style={sub}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                            </View>
+                            <TextInput
+                              value={other}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setOther(text)}>
+                            </TextInput>
+                          </View>
+                        </View >
+                      </View>
+                    </View>
+                    : <></>}
+            </View>
+          </ScrollView>
+          <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} />
+          <AlertDialog
+            visible={visible.visible}
+            content="អ្នកមិនទាន់បានរក្សាទុកទេ, ច្បាស់ទេថានឹងចាក់ចេញ?"
+            hideDialog={() => setVisible({ visible: false })}
+            onPositive={() => navigation.goBack()}
+            onNegative={() => setVisible({ visible: false })}
+          />
+        </KeyboardAvoidingView>
+      </Provider>
     )
   },
 )

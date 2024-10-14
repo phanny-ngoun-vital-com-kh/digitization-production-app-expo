@@ -355,7 +355,6 @@ export const WaterTreatmentScreen: FC<WaterTreatmentScreenProps> = observer(
     }
     const fetchScehdules = async () => {
       try {
-        console.log("pull refresh ")
         setLoading(true)
         setRefreshing(true)
         getCurrentUserName()

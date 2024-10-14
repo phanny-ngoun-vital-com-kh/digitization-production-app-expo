@@ -36,8 +36,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = observer(function Dashb
       },
       {
         id: 3,
-        name: "HACCP monitoring",
-        subname: "HACCP Monitoring Dashboard",
+        name: "HACCP Monitoring Line",
+        subname: "HACCP Monitoring Line Dashboard",
         navigation: "LineDs",
         iconname: "alert-octagon",
         icontype: "MaterialCommunityIcons",

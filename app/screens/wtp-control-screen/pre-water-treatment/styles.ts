@@ -78,4 +78,11 @@ export default StyleSheet.create({
     borderWidth: 1,
     borderColor: "#EFEBEB",
   },
+  PlantPanel: {
+    width: 10,
+    height: 10,
+    borderRadius: 100,
+    marginRight: 5,
+    alignItems: "center",
+  },
 })

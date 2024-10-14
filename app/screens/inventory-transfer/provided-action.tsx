@@ -252,22 +252,30 @@ const ProvidedAction: React.FC<ModalProps> = ({ isVisible, onClose, provided, tr
                 action: `Rejected Transfer ${transferIndex}`
 
             })
-            await inventoryRequestStore.upstatus(providedstatus).updatestatus()
-            // setRejectNotiVisible(true)
-            sendNotification('Rejected', 'Your Transfer has been reject', Fcm)
-            onSuccess(true)
-            setNewItem(null)
-            setModalRejectVisible(false)
-            setGetRemarkReject('')
-            transferIndex=0
-            onClose()
-            Dialog.show({
-                type: ALERT_TYPE.SUCCESS,
-                title: 'ជោគជ័យ',
-                textBody: 'រក្សាទុកបានជោគជ័យ',
-                // button: 'close',
-                autoClose: 100
-            })
+            const rs = await inventoryRequestStore.upstatus(providedstatus).updatestatus()
+            if(rs == 'Success'){
+                sendNotification('Rejected', 'Your Transfer has been reject', Fcm)
+                onSuccess(true)
+                setNewItem(null)
+                setModalRejectVisible(false)
+                setGetRemarkReject('')
+                transferIndex=0
+                onClose()
+                Dialog.show({
+                    type: ALERT_TYPE.SUCCESS,
+                    title: 'ជោគជ័យ',
+                    textBody: 'រក្សាទុកបានជោគជ័យ',
+                    // button: 'close',
+                    autoClose: 100
+                })
+            }else {
+                Dialog.show({
+                  type: ALERT_TYPE.DANGER,
+                  title: 'បរាជ័យ',
+                  textBody: "សូមព្យាយាមម្ដងទៀត",
+                  autoClose: 100,
+                })
+              }
         } catch (e:any) {
             console.log(e)
             Dialog.show({

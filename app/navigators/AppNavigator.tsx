@@ -290,7 +290,7 @@ const AppStack = observer(function AppStack(props: {
             component={Screens.HccpMonitorScreen}
             options={{
               headerShown: true,
-              title: "HACCP Monitor",
+              title: "HACCP Monitoring Line",
             }}
           />
           <Stack.Screen name="HaccpLineForm" component={Screens.HaccpLineFormScreen} />

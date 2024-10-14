@@ -9,7 +9,7 @@ import NotificSoundModal from "app/components/v2/NotificSoundModal"
 import { useEffect } from "react"
 import { Platform } from "react-native"
 import * as Notifications from 'expo-notifications';
-import * as Permissions from 'expo-permissions';
+// import * as Permissions from 'expo-permissions';
 
 SplashScreen.preventAutoHideAsync()
 
@@ -34,23 +34,23 @@ function IgniteApp() {
       }
     };
 
-    const requestPermissions = async () => {
-      console.log('Requesting notification permissions...');
-      const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-      if (status !== 'granted') {
-        const { status: newStatus } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-        if (newStatus !== 'granted') {
-          console.warn('Notification permissions not granted');
-        } else {
-          console.log('Notification permissions granted');
-        }
-      } else {
-        console.log('Notification permissions already granted');
-      }
-    };
+    // const requestPermissions = async () => {
+    //   console.log('Requesting notification permissions...');
+    //   const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+    //   if (status !== 'granted') {
+    //     const { status: newStatus } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+    //     if (newStatus !== 'granted') {
+    //       console.warn('Notification permissions not granted');
+    //     } else {
+    //       console.log('Notification permissions granted');
+    //     }
+    //   } else {
+    //     console.log('Notification permissions already granted');
+    //   }
+    // };
 
     setupNotificationChannel();
-    requestPermissions();
+    // requestPermissions();
   }, []);
   const authStatus = messaging().requestPermission()
   const enabled =

@@ -123,8 +123,11 @@ export const HACCPMonitoringOzoneListModel = types
                     self.haccp_ozone_id,
                     self.warning_count
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return('Success')
+                }
+                    
                 else {
                     console.log('Error')
                     throw Error(rs.kind)

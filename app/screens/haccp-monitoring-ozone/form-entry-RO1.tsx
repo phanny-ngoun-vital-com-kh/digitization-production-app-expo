@@ -22,6 +22,8 @@ import { Text } from "app/components/v2"
 import IconAntDesign from "react-native-vector-icons/AntDesign"
 import { RouteParams } from "./form-data"
 import { HACCPMonitoringOzoneListModel } from "app/models/haccp-monitoring-ozone/haccp-monitoring-ozone-model"
+import AlertDialog from "app/components/v2/AlertDialog"
+import { Provider } from "react-native-paper"
 
 interface HACCPMonitoringOzoneFormEntryRO1Props extends AppStackScreenProps<"HACCPMonitoringOzoneFormEntryRO1"> { }
 export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneFormEntryRO1Props> = observer(
@@ -43,13 +45,15 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
         const [recycle, setRecycle] = useState(route?.subItem.recycle || '')
         const [permeate, setPermeate] = useState(route?.subItem.permeate || '')
         const [feed, setFeed] = useState(route?.subItem.feed || '')
+        const [visible, setVisible] = useState<{ visible: boolean }>({ visible: false })
 
         useEffect(() => {
             const role = async () => {
                 try {
                     const rs = await authStore.getUserInfo();
                     const admin = rs?.data.authorities?.includes('ROLE_PROD_PRO_ADMIN')
-                    const edit = (route?.invalidDate && isUserAssigned && route?.isValidShift) || admin
+                    const adminWTP = rs.data.authorities.includes('ROLE_PROD_WTP_ADMIN')
+                    const edit = (route?.invalidDate && isUserAssigned && route?.isValidShift) || admin || adminWTP
                     setIsEdit(edit)
                     // Modify the list based on the user's role
                     // setGetRole(rs)
@@ -64,6 +68,65 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
             navigation.setOptions({
                 headerShown: true,
                 title: route?.subItem.control,
+
+                headerLeft: () => (
+                    <TouchableOpacity
+                        onPress={() => {
+                            const change1 =
+                                ((route?.subItem?.feed_array1 == null ? "" : route?.subItem?.feed_array1) != feedArray1) ||
+                                ((route?.subItem?.feed_array2 == null ? "" : route?.subItem?.feed_array2) != feedArray2) ||
+                                ((route?.subItem?.concentrate == null ? "" : route?.subItem?.concentrate) != concentrate) ||
+                                ((route?.subItem?.remark == null ? "" : route?.subItem?.remark) != remark)
+
+                            const change2 =
+                                ((route?.subItem?.array1 == null ? "" : route?.subItem?.array1) != array1) ||
+                                ((route?.subItem?.array2 == null ? "" : route?.subItem?.array2) != array2) ||
+                                ((route?.subItem?.remark == null ? "" : route?.subItem?.remark) != remark)
+
+                            const change3 =
+                                ((route?.subItem?.feed_ro == null ? "" : route?.subItem?.feed_ro) != feedRO) ||
+                                ((route?.subItem?.recycle == null ? "" : route?.subItem?.recycle) != recycle) ||
+                                ((route?.subItem?.concentrate == null ? "" : route?.subItem?.concentrate) != concentrate) ||
+                                ((route?.subItem?.permeate == null ? "" : route?.subItem?.permeate) != permeate) ||
+                                ((route?.subItem?.remark == null ? "" : route?.subItem?.remark) != remark)
+
+                            const change4 =
+                                ((route?.subItem?.feed == null ? "" : route?.subItem?.feed) != feed) ||
+                                ((route?.subItem?.concentrate == null ? "" : route?.subItem?.concentrate) != concentrate) ||
+                                ((route?.subItem?.permeate == null ? "" : route?.subItem?.permeate) != permeate) ||
+                                ((route?.subItem?.remark == null ? "" : route?.subItem?.remark) != remark)
+
+                            if (route?.subItem.control?.toLowerCase().includes("pressure")) {
+                                if (change1) {
+                                    setVisible({ visible: true })
+                                } else {
+                                    navigation.goBack()
+                                }
+                            } else if (route?.subItem.control?.toLowerCase().includes("δp")) {
+                                if (change2) {
+                                    setVisible({ visible: true })
+                                } else {
+                                    navigation.goBack()
+                                }
+                            } else if (route?.subItem.control?.toLowerCase().includes("flow rate")) {
+                                if (change3) {
+                                    setVisible({ visible: true })
+                                } else {
+                                    navigation.goBack()
+                                }
+                            } else if (route?.subItem.control?.toLowerCase().includes("ph") || route?.subItem.control?.toLowerCase().includes("tds")) {
+                                if (change4) {
+                                    setVisible({ visible: true })
+                                } else {
+                                    navigation.goBack()
+                                }
+                            }
+                        }}
+                        style={{ flexDirection: "row", alignItems: "center", marginRight: 30 }}
+                    >
+                        <Icon name="arrow-back-sharp" size={24} />
+                    </TouchableOpacity>
+                ),
 
                 headerRight: () => (
                     (isEdit) ? (
@@ -80,7 +143,7 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                         : <></>
                 ),
             })
-        }, [navigation, route, isEdit, feedArray1, feedArray2, concentrate, remark, array1, array2, feedRO, permeate, recycle,feed])
+        }, [navigation, route, isEdit, feedArray1, feedArray2, concentrate, remark, array1, array2, feedRO, permeate, recycle, feed])
 
         const alert = (title: string, textBody: string) => {
             Dialog.show({
@@ -348,11 +411,11 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
             }
             try {
                 setLoading(true)
-                await (haccpMonitoringOzoneStore
+                const rs = await (haccpMonitoringOzoneStore
                     .addHACCPList(entity)
                     .saveHaccpList().then()
                     .catch((e) => console.log(e)))
-                {
+                if (rs == 'Success') {
                     Dialog.show({
                         type: ALERT_TYPE.SUCCESS,
                         title: 'ជោគជ័យ',
@@ -360,12 +423,21 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                         // button: 'close',
                         autoClose: 100
                     })
+                    navigation.goBack()
+                } else {
+                    Dialog.show({
+                        type: ALERT_TYPE.DANGER,
+                        title: "បរាជ័យ",
+                        textBody: "សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ",
+                        button: "បិទ",
+                        // autoClose: 500,
+                    })
                 }
             } catch (error) {
                 Dialog.show({
                     type: ALERT_TYPE.DANGER,
                     title: "បរាជ័យ",
-                    textBody: "សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ",
+                    textBody: "បរាជ័យ",
                     button: "បិទ",
                     // autoClose: 500,
                 })
@@ -375,126 +447,41 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
             }
         }
         return (
-            <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
-                {isloading && (
-                    <View style={styles.overlay}>
-                        <ActivityIndicator color="#8CC8FF" size={35} />
-                        <View style={{ marginVertical: 15 }}></View>
-                        <Text whiteColor textAlign={"center"}>
-                            Saving record ...
-                        </Text>
-                    </View>
-                )}
+            <Provider>
+                <KeyboardAvoidingView behavior={"padding"} keyboardVerticalOffset={100} style={[$root]}>
+                    {isloading && (
+                        <View style={styles.overlay}>
+                            <ActivityIndicator color="#8CC8FF" size={35} />
+                            <View style={{ marginVertical: 15 }}></View>
+                            <Text whiteColor textAlign={"center"}>
+                                Saving record ...
+                            </Text>
+                        </View>
+                    )}
 
-                <ScrollView>
-                    <View style={$outerContainer}>
-                        {route?.subItem.control?.toLowerCase().includes("pressure") ?
-                            <View>
-                                <View style={main}>
-                                    <View style={sub}>
-                                        <View style={{ marginRight: 10 }}>
-                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Feed Array 1</Text>
-                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 15.0 bar)"}</Text>
-                                                {(parseFloat(feedArray1) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                                            </View>
-                                            <TextInput
-                                                keyboardType="decimal-pad"
-                                                value={feedArray1}
-                                                readOnly={!isEdit}
-                                                style={[styles.input, { width: '100%' }]}
-                                                placeholder="Please Enter"
-                                                onChangeText={(text) => setFeedArray1(text)}>
-                                            </TextInput>
-                                            {feedArray1 == '' ?
-                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed Array 1</Text>
-                                                : <></>}
-                                        </View>
-                                    </View >
-                                    <View style={sub}>
-                                        <View style={{ marginRight: 10 }}>
-                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Feed Array 2</Text>
-                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 15.0 bar)"}</Text>
-                                                {(parseFloat(feedArray2) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                                            </View>
-                                            <TextInput
-                                                keyboardType="decimal-pad"
-                                                value={feedArray2}
-                                                readOnly={!isEdit}
-                                                style={[styles.input, { width: '100%' }]}
-                                                placeholder="Please Enter"
-                                                onChangeText={(text) => setFeedArray2(text)}>
-                                            </TextInput>
-                                            {feedArray2 == '' ?
-                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed Array 2</Text>
-                                                : <></>}
-                                        </View>
-                                    </View >
-                                </View>
-                                <View style={main}>
-                                    <View style={sub}>
-                                        <View style={{ marginRight: 10 }}>
-                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Concentrate</Text>
-                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 15.0 bar)"}</Text>
-                                                {(parseFloat(concentrate) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                                            </View>
-                                            <TextInput
-                                                keyboardType="decimal-pad"
-                                                value={concentrate}
-                                                readOnly={!isEdit}
-                                                style={[styles.input, { width: '100%' }]}
-                                                placeholder="Please Enter"
-                                                onChangeText={(text) => setConcentrate(text)}>
-                                            </TextInput>
-                                            {concentrate == '' ?
-                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Concentrate</Text>
-                                                : <></>}
-                                        </View>
-                                    </View >
-                                    <View style={sub}>
-                                        <View style={{ marginRight: 10 }}>
-                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Remark</Text>
-                                            </View>
-                                            <TextInput
-                                                value={remark}
-                                                readOnly={!isEdit}
-                                                style={[styles.input, { width: '100%' }]}
-                                                placeholder="Please Enter"
-                                                onChangeText={(text) => (setRemark(text), console.log(text))}>
-                                            </TextInput>
-                                        </View>
-                                    </View >
-                                </View>
-
-                            </View>
-
-                            : (route?.subItem.control?.toLowerCase().includes("δp")) ?
+                    <ScrollView>
+                        <View style={$outerContainer}>
+                            {route?.subItem.control?.toLowerCase().includes("pressure") ?
                                 <View>
                                     <View style={main}>
                                         <View style={sub}>
                                             <View style={{ marginRight: 10 }}>
                                                 <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                     <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                    <Text style={{ marginRight: 5, fontSize: 16 }}>Array 1</Text>
-                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 3.5 bar)"}</Text>
-                                                    {(parseFloat(array1) > 3.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                    <Text style={{ marginRight: 5, fontSize: 16 }}>Feed Array 1</Text>
+                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 15.0 bar)"}</Text>
+                                                    {(parseFloat(feedArray1) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                                                 </View>
                                                 <TextInput
                                                     keyboardType="decimal-pad"
-                                                    value={array1}
+                                                    value={feedArray1}
                                                     readOnly={!isEdit}
                                                     style={[styles.input, { width: '100%' }]}
                                                     placeholder="Please Enter"
-                                                    onChangeText={(text) => setArray1(text)}>
+                                                    onChangeText={(text) => setFeedArray1(text)}>
                                                 </TextInput>
-                                                {array1 == '' ?
-                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Array 1</Text>
+                                                {feedArray1 == '' ?
+                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed Array 1</Text>
                                                     : <></>}
                                             </View>
                                         </View >
@@ -502,26 +489,47 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                                             <View style={{ marginRight: 10 }}>
                                                 <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                     <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                    <Text style={{ marginRight: 5, fontSize: 16 }}>Array 2</Text>
-                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 3.5 bar)"}</Text>
-                                                    {(parseFloat(array2) > 3.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                    <Text style={{ marginRight: 5, fontSize: 16 }}>Feed Array 2</Text>
+                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 15.0 bar)"}</Text>
+                                                    {(parseFloat(feedArray2) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                                                 </View>
                                                 <TextInput
                                                     keyboardType="decimal-pad"
-                                                    value={array2}
+                                                    value={feedArray2}
                                                     readOnly={!isEdit}
                                                     style={[styles.input, { width: '100%' }]}
                                                     placeholder="Please Enter"
-                                                    onChangeText={(text) => setArray2(text)}>
+                                                    onChangeText={(text) => setFeedArray2(text)}>
                                                 </TextInput>
-                                                {array2 == '' ?
-                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Array 2</Text>
+                                                {feedArray2 == '' ?
+                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed Array 2</Text>
                                                     : <></>}
                                             </View>
                                         </View >
                                     </View>
-                                    <View >
-                                        <View style={{ flex: 1 }}>
+                                    <View style={main}>
+                                        <View style={sub}>
+                                            <View style={{ marginRight: 10 }}>
+                                                <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                                                    <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                                    <Text style={{ marginRight: 5, fontSize: 16 }}>Concentrate</Text>
+                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 15.0 bar)"}</Text>
+                                                    {(parseFloat(concentrate) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                </View>
+                                                <TextInput
+                                                    keyboardType="decimal-pad"
+                                                    value={concentrate}
+                                                    readOnly={!isEdit}
+                                                    style={[styles.input, { width: '100%' }]}
+                                                    placeholder="Please Enter"
+                                                    onChangeText={(text) => setConcentrate(text)}>
+                                                </TextInput>
+                                                {concentrate == '' ?
+                                                    <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Concentrate</Text>
+                                                    : <></>}
+                                            </View>
+                                        </View >
+                                        <View style={sub}>
                                             <View style={{ marginRight: 10 }}>
                                                 <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                     <Text style={{ marginRight: 5, fontSize: 16 }}>Remark</Text>
@@ -531,35 +539,35 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                                                     readOnly={!isEdit}
                                                     style={[styles.input, { width: '100%' }]}
                                                     placeholder="Please Enter"
-                                                    onChangeText={(text) => setRemark(text)}>
+                                                    onChangeText={(text) => (setRemark(text), console.log(text))}>
                                                 </TextInput>
                                             </View>
                                         </View >
                                     </View>
 
-
                                 </View>
-                                : (route?.subItem.control?.toLowerCase().includes("flow rate")) ?
+
+                                : (route?.subItem.control?.toLowerCase().includes("δp")) ?
                                     <View>
                                         <View style={main}>
                                             <View style={sub}>
                                                 <View style={{ marginRight: 10 }}>
                                                     <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                         <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 16 }}>Feed RO</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 16 m³/h)"}</Text>
-                                                        {(parseFloat(feedRO) > 16) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                        <Text style={{ marginRight: 5, fontSize: 16 }}>Array 1</Text>
+                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 3.5 bar)"}</Text>
+                                                        {(parseFloat(array1) > 3.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                                                     </View>
                                                     <TextInput
                                                         keyboardType="decimal-pad"
-                                                        value={feedRO}
+                                                        value={array1}
                                                         readOnly={!isEdit}
                                                         style={[styles.input, { width: '100%' }]}
                                                         placeholder="Please Enter"
-                                                        onChangeText={(text) => setFeedRO(text)}>
+                                                        onChangeText={(text) => setArray1(text)}>
                                                     </TextInput>
-                                                    {feedRO == '' ?
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed RO</Text>
+                                                    {array1 == '' ?
+                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Array 1</Text>
                                                         : <></>}
                                                 </View>
                                             </View >
@@ -567,64 +575,20 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                                                 <View style={{ marginRight: 10 }}>
                                                     <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                         <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 16 }}>Recycle</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 4 m³/h)"}</Text>
-                                                        {(parseFloat(recycle) > 3.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                        <Text style={{ marginRight: 5, fontSize: 16 }}>Array 2</Text>
+                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 3.5 bar)"}</Text>
+                                                        {(parseFloat(array2) > 3.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                                                     </View>
                                                     <TextInput
                                                         keyboardType="decimal-pad"
-                                                        value={recycle}
+                                                        value={array2}
                                                         readOnly={!isEdit}
                                                         style={[styles.input, { width: '100%' }]}
                                                         placeholder="Please Enter"
-                                                        onChangeText={(text) => setRecycle(text)}>
+                                                        onChangeText={(text) => setArray2(text)}>
                                                     </TextInput>
-                                                    {recycle == '' ?
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Recycle</Text>
-                                                        : <></>}
-                                                </View>
-                                            </View >
-                                        </View>
-                                        <View style={main}>
-                                            <View style={sub}>
-                                                <View style={{ marginRight: 10 }}>
-                                                    <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                                                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 16 }}>Concentrate</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 4 m³/h)"}</Text>
-                                                        {(parseFloat(concentrate) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                                                    </View>
-                                                    <TextInput
-                                                        keyboardType="decimal-pad"
-                                                        value={concentrate}
-                                                        readOnly={!isEdit}
-                                                        style={[styles.input, { width: '100%' }]}
-                                                        placeholder="Please Enter"
-                                                        onChangeText={(text) => setConcentrate(text)}>
-                                                    </TextInput>
-                                                    {concentrate == '' ?
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Concentrate</Text>
-                                                        : <></>}
-                                                </View>
-                                            </View>
-                                            <View style={sub}>
-                                                <View style={{ marginRight: 10 }}>
-                                                    <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                                                        <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 16 }}>Permeate</Text>
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(8 - 10 m³/h)"}</Text>
-                                                        {(parseFloat(permeate) < 8 || parseFloat(permeate) > 10) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                                                    </View>
-                                                    <TextInput
-                                                        keyboardType="decimal-pad"
-                                                        value={permeate}
-                                                        readOnly={!isEdit}
-                                                        style={[styles.input, { width: '100%' }]}
-                                                        placeholder="Please Enter"
-                                                        onChangeText={(text) => setPermeate(text)}>
-                                                    </TextInput>
-                                                    {permeate == '' ?
-                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Permeate</Text>
+                                                    {array2 == '' ?
+                                                        <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Array 2</Text>
                                                         : <></>}
                                                 </View>
                                             </View >
@@ -648,27 +612,27 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
 
 
                                     </View>
-                                    : (route?.subItem.control?.toLowerCase().includes("ph")) || (route?.subItem.control?.toLowerCase().includes("tds")) ?
+                                    : (route?.subItem.control?.toLowerCase().includes("flow rate")) ?
                                         <View>
                                             <View style={main}>
                                                 <View style={sub}>
                                                     <View style={{ marginRight: 10 }}>
                                                         <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                             <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                            <Text style={{ marginRight: 5, fontSize: 16 }}>Feed</Text>
-                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {(route?.subItem.control?.toLowerCase().includes("ph")) ? "(6.5 - 8.5)" : (route?.subItem.control?.toLowerCase().includes("tds")) ? "(< 300 ppm)" : ""}</Text>
-                                                            {(parseFloat(feed) < 6.5 || parseFloat(feed) > 8.5) && (route?.subItem.control?.toLowerCase().includes("ph")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (parseFloat(feed) > 300) && (route?.subItem.control?.toLowerCase().includes("tds")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                            <Text style={{ marginRight: 5, fontSize: 16 }}>Feed RO</Text>
+                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 16 m³/h)"}</Text>
+                                                            {(parseFloat(feedRO) > 16) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                                                         </View>
                                                         <TextInput
                                                             keyboardType="decimal-pad"
-                                                            value={feed}
+                                                            value={feedRO}
                                                             readOnly={!isEdit}
                                                             style={[styles.input, { width: '100%' }]}
                                                             placeholder="Please Enter"
-                                                            onChangeText={(text) => setFeed(text)}>
+                                                            onChangeText={(text) => setFeedRO(text)}>
                                                         </TextInput>
-                                                        {feed == '' ?
-                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed</Text>
+                                                        {feedRO == '' ?
+                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed RO</Text>
                                                             : <></>}
                                                     </View>
                                                 </View >
@@ -676,9 +640,53 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                                                     <View style={{ marginRight: 10 }}>
                                                         <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                             <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                                            <Text style={{ marginRight: 5, fontSize: 16 }}>Recycle</Text>
+                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 4 m³/h)"}</Text>
+                                                            {(parseFloat(recycle) > 3.5) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                        </View>
+                                                        <TextInput
+                                                            keyboardType="decimal-pad"
+                                                            value={recycle}
+                                                            readOnly={!isEdit}
+                                                            style={[styles.input, { width: '100%' }]}
+                                                            placeholder="Please Enter"
+                                                            onChangeText={(text) => setRecycle(text)}>
+                                                        </TextInput>
+                                                        {recycle == '' ?
+                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Recycle</Text>
+                                                            : <></>}
+                                                    </View>
+                                                </View >
+                                            </View>
+                                            <View style={main}>
+                                                <View style={sub}>
+                                                    <View style={{ marginRight: 10 }}>
+                                                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                                                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                                            <Text style={{ marginRight: 5, fontSize: 16 }}>Concentrate</Text>
+                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(< 4 m³/h)"}</Text>
+                                                            {(parseFloat(concentrate) > 15.0) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                        </View>
+                                                        <TextInput
+                                                            keyboardType="decimal-pad"
+                                                            value={concentrate}
+                                                            readOnly={!isEdit}
+                                                            style={[styles.input, { width: '100%' }]}
+                                                            placeholder="Please Enter"
+                                                            onChangeText={(text) => setConcentrate(text)}>
+                                                        </TextInput>
+                                                        {concentrate == '' ?
+                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Concentrate</Text>
+                                                            : <></>}
+                                                    </View>
+                                                </View>
+                                                <View style={sub}>
+                                                    <View style={{ marginRight: 10 }}>
+                                                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                                                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
                                                             <Text style={{ marginRight: 5, fontSize: 16 }}>Permeate</Text>
-                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {(route?.subItem.control?.toLowerCase().includes("ph")) ? "(> 6.2)" : (route?.subItem.control?.toLowerCase().includes("tds")) ? "(< 30 ppm)" : ""}</Text>
-                                                            {(parseFloat(permeate) < 6.2) && (route?.subItem.control?.toLowerCase().includes("ph")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (parseFloat(permeate) > 30) && (route?.subItem.control?.toLowerCase().includes("tds")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {"(8 - 10 m³/h)"}</Text>
+                                                            {(parseFloat(permeate) < 8 || parseFloat(permeate) > 10) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
                                                         </View>
                                                         <TextInput
                                                             keyboardType="decimal-pad"
@@ -694,29 +702,8 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                                                     </View>
                                                 </View >
                                             </View>
-                                            <View style={main}>
-                                                <View style={sub}>
-                                                    <View style={{ marginRight: 10 }}>
-                                                        <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
-                                                            <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                                                            <Text style={{ marginRight: 5, fontSize: 16 }}>Concentrate</Text>
-                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {(route?.subItem.control?.toLowerCase().includes("ph")) ? "(5.0 - 9.0)" : (route?.subItem.control?.toLowerCase().includes("tds")) ? "(< 1000 ppm)" : ""}</Text>
-                                                            {(parseFloat(concentrate) < 5.0 || parseFloat(concentrate) > 9.0) && (route?.subItem.control?.toLowerCase().includes("ph")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (parseFloat(concentrate) > 1000) && (route?.subItem.control?.toLowerCase().includes("tds")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
-                                                        </View>
-                                                        <TextInput
-                                                            keyboardType="decimal-pad"
-                                                            value={concentrate}
-                                                            readOnly={!isEdit}
-                                                            style={[styles.input, { width: '100%' }]}
-                                                            placeholder="Please Enter"
-                                                            onChangeText={(text) => setConcentrate(text)}>
-                                                        </TextInput>
-                                                        {concentrate == '' ?
-                                                            <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Concentrate</Text>
-                                                            : <></>}
-                                                    </View>
-                                                </View >
-                                                <View style={sub}>
+                                            <View >
+                                                <View style={{ flex: 1 }}>
                                                     <View style={{ marginRight: 10 }}>
                                                         <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                                                             <Text style={{ marginRight: 5, fontSize: 16 }}>Remark</Text>
@@ -732,12 +719,105 @@ export const HACCPMonitoringOzoneFormEntryRO1Screen: FC<HACCPMonitoringOzoneForm
                                                 </View >
                                             </View>
 
+
                                         </View>
-                                        : <></>}
-                    </View>
-                </ScrollView>
-                {/* <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} /> */}
-            </KeyboardAvoidingView>
+                                        : (route?.subItem.control?.toLowerCase().includes("ph")) || (route?.subItem.control?.toLowerCase().includes("tds")) ?
+                                            <View>
+                                                <View style={main}>
+                                                    <View style={sub}>
+                                                        <View style={{ marginRight: 10 }}>
+                                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                                                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Feed</Text>
+                                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {(route?.subItem.control?.toLowerCase().includes("ph")) ? "(6.5 - 8.5)" : (route?.subItem.control?.toLowerCase().includes("tds")) ? "(< 300 ppm)" : ""}</Text>
+                                                                {(parseFloat(feed) < 6.5 || parseFloat(feed) > 8.5) && (route?.subItem.control?.toLowerCase().includes("ph")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (parseFloat(feed) > 300) && (route?.subItem.control?.toLowerCase().includes("tds")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                            </View>
+                                                            <TextInput
+                                                                keyboardType="decimal-pad"
+                                                                value={feed}
+                                                                readOnly={!isEdit}
+                                                                style={[styles.input, { width: '100%' }]}
+                                                                placeholder="Please Enter"
+                                                                onChangeText={(text) => setFeed(text)}>
+                                                            </TextInput>
+                                                            {feed == '' ?
+                                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Feed</Text>
+                                                                : <></>}
+                                                        </View>
+                                                    </View >
+                                                    <View style={sub}>
+                                                        <View style={{ marginRight: 10 }}>
+                                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                                                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Permeate</Text>
+                                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {(route?.subItem.control?.toLowerCase().includes("ph")) ? "(> 6.2)" : (route?.subItem.control?.toLowerCase().includes("tds")) ? "(< 30 ppm)" : ""}</Text>
+                                                                {(parseFloat(permeate) < 6.2) && (route?.subItem.control?.toLowerCase().includes("ph")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (parseFloat(permeate) > 30) && (route?.subItem.control?.toLowerCase().includes("tds")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                            </View>
+                                                            <TextInput
+                                                                keyboardType="decimal-pad"
+                                                                value={permeate}
+                                                                readOnly={!isEdit}
+                                                                style={[styles.input, { width: '100%' }]}
+                                                                placeholder="Please Enter"
+                                                                onChangeText={(text) => setPermeate(text)}>
+                                                            </TextInput>
+                                                            {permeate == '' ?
+                                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Permeate</Text>
+                                                                : <></>}
+                                                        </View>
+                                                    </View >
+                                                </View>
+                                                <View style={main}>
+                                                    <View style={sub}>
+                                                        <View style={{ marginRight: 10 }}>
+                                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                                                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Concentrate</Text>
+                                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}> {(route?.subItem.control?.toLowerCase().includes("ph")) ? "(5.0 - 9.0)" : (route?.subItem.control?.toLowerCase().includes("tds")) ? "(< 1000 ppm)" : ""}</Text>
+                                                                {(parseFloat(concentrate) < 5.0 || parseFloat(concentrate) > 9.0) && (route?.subItem.control?.toLowerCase().includes("ph")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : (parseFloat(concentrate) > 1000) && (route?.subItem.control?.toLowerCase().includes("tds")) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                                                            </View>
+                                                            <TextInput
+                                                                keyboardType="decimal-pad"
+                                                                value={concentrate}
+                                                                readOnly={!isEdit}
+                                                                style={[styles.input, { width: '100%' }]}
+                                                                placeholder="Please Enter"
+                                                                onChangeText={(text) => setConcentrate(text)}>
+                                                            </TextInput>
+                                                            {concentrate == '' ?
+                                                                <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Concentrate</Text>
+                                                                : <></>}
+                                                        </View>
+                                                    </View >
+                                                    <View style={sub}>
+                                                        <View style={{ marginRight: 10 }}>
+                                                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                                                                <Text style={{ marginRight: 5, fontSize: 16 }}>Remark</Text>
+                                                            </View>
+                                                            <TextInput
+                                                                value={remark}
+                                                                readOnly={!isEdit}
+                                                                style={[styles.input, { width: '100%' }]}
+                                                                placeholder="Please Enter"
+                                                                onChangeText={(text) => setRemark(text)}>
+                                                            </TextInput>
+                                                        </View>
+                                                    </View >
+                                                </View>
+
+                                            </View>
+                                            : <></>}
+                        </View>
+                    </ScrollView>
+                    <AlertDialog
+                        visible={visible.visible}
+                        content="អ្នកមិនទាន់បានរក្សាទុកទេ, ច្បាស់ទេថានឹងចាក់ចេញ?"
+                        hideDialog={() => setVisible({ visible: false })}
+                        onPositive={() => navigation.goBack()}
+                        onNegative={() => setVisible({ visible: false })} isLoading={false} />
+                    {/* <ActivityModal log={activities} onClose={() => setShowlog(false)} isVisible={showLog} /> */}
+                </KeyboardAvoidingView>
+            </Provider>
         )
     },
 )

@@ -10,6 +10,7 @@ const ApiURL = {
   getWtpbyDate: "get_pre_treatment_by_date_time",
   getCtlActivity: "get-control-activities",
   assignMachine: "assign-self-pre",
+  getPlant:'get_plant'
 }
 
 export class PreWaterTreatmentApi extends BaseApi {
@@ -142,9 +143,15 @@ export class PreWaterTreatmentApi extends BaseApi {
       return { kind: "bad-data" }
     }
   }
-  // async saveActivityes() {
-  //   return
-  // }
+  async getPlant(){
+    try{
+      const rs = await this.requestService.list(ApiURL.getPlant)
+      return DataResponse(rs)
+    }catch (e: any) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data" }
+    }
+  }
 }
 
 export const prewaterTreatmentApi = new PreWaterTreatmentApi()

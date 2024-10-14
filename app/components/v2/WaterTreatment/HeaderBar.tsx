@@ -24,6 +24,7 @@ type HeaderProps = {
   onPressdate: () => void
   onChangeDate: (e: DateTimePickerEvent, v: Date | undefined) => void
   haccpOzoneData:HACCPMonitoringOzoneSystem[]
+  preData:[{id:number,plant:string}]
 }
 const HeaderBar = ({
   currDate,
@@ -39,7 +40,8 @@ const HeaderBar = ({
   onSelectWtp,
   onChangeDate,
   isLoading = false,
-  haccpOzoneData
+  haccpOzoneData,
+  preData
 }: HeaderProps) => {
   const lines = [
     { name: "line 1", value: 1 },
@@ -117,7 +119,7 @@ const HeaderBar = ({
         {enableWTP && (
           <Dropdown
             style={[styles.dropdown, { width: 230 }]}
-            data={wtps}
+            data={preData.map(r => ({ name: r.plant, value: r.plant }))}
             disable={isLoading}
             labelField="name"
             valueField="value"

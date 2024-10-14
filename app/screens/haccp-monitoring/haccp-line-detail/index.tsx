@@ -27,6 +27,7 @@ import ActivityModal from "app/components/v2/ActivitylogModal"
 import { translate } from "../../../i18n"
 import BadgeWarning from "app/components/v2/Badgewarn"
 import IconAntDesign from "react-native-vector-icons/AntDesign"
+import { cleanTimeCurrent, getCurrentTime } from "app/utils-v2/getCurrTime"
 
 interface DailyHaccpLineDetailScreenProps extends AppStackScreenProps<"DailyHaccpLineDetail"> { }
 
@@ -54,12 +55,13 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     }
     const hideModal = () => setVisible(false)
 
-     useEffect(() => {
+    useEffect(() => {
       const role = async () => {
         try {
           const rs = await authStore.getUserInfo();
-          const admin=rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
-          const edit = (route?.isvalidDate || route?.assign) || admin
+          const admin = rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
+          const adminWTP = rs.data.authorities.includes('ROLE_PROD_WTP_ADMIN')
+          const edit = (route?.isvalidDate || route?.assign) || admin || adminWTP
           setIsEdit(edit)
           // Modify the list based on the user's role
           // setGetRole(rs)
@@ -73,54 +75,54 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     useLayoutEffect(() => {
       navigation.setOptions({
         title: route?.title,
-        headerRight: () =>
-          (isEdit) ? (
-            <TouchableOpacity
-              style={{ flexDirection: "row", alignItems: "center" }}
-              onPress={() => {
-                navigation.navigate("HaccpLineForm", {
-                  line: getRouteLine(),
-                  onRefresh: handleRefresh,
-                  haccp_id: route?.line?.haccp_id,
-                  assign: isAssign,
-                  isvalidDate: route?.isvalidDate,
-                  id: route?.id,
-                })
-              }}
-            >
-              <Icon name="plus" size={25} color={"#0081F8"} />
-              <Text style={{ fontSize: 16, color: "#0081F8" }} semibold >
+        // headerRight: () =>
+        //   (isEdit) ? (
+        //     <TouchableOpacity
+        //       style={{ flexDirection: "row", alignItems: "center" }}
+        //       onPress={() => {
+        //         navigation.navigate("HaccpLineForm", {
+        //           line: getRouteLine(),
+        //           onRefresh: handleRefresh,
+        //           haccp_id: route?.line?.haccp_id,
+        //           assign: isAssign,
+        //           isvalidDate: route?.isvalidDate,
+        //           id: route?.id,
+        //         })
+        //       }}
+        //     >
+        //       <Icon name="plus" size={25} color={"#0081F8"} />
+        //       <Text style={{ fontSize: 16, color: "#0081F8" }} semibold >
 
 
-                {
-                  translate("haccpMonitoring.addNew")
-                }
+        //         {
+        //           translate("haccpMonitoring.addNew")
+        //         }
 
-              </Text>
-            </TouchableOpacity>
-            
-          ) : (
-            <View style={[$containerHorizon, { gap: 5 }]}>
-              {
-                !route?.isvalidDate && <Icon name="close" size={20} color={"#FF0000"} />
+        //       </Text>
+        //     </TouchableOpacity>
 
-              }
+        //   ) : (
+        //     <View style={[$containerHorizon, { gap: 5 }]}>
+        //       {
+        //         !route?.isvalidDate && <Icon name="close" size={20} color={"#FF0000"} />
 
-              <Text errorColor semibold>
+        //       }
 
-                {
-                  !route?.isvalidDate && translate("haccpMonitoring.shiftEnded")
+        //       <Text errorColor semibold>
 
-
+        //         {
+        //           !route?.isvalidDate && translate("haccpMonitoring.shiftEnded")
 
 
-                }
 
-              </Text>
-            </View>
-          ),
+
+        //         }
+
+        //       </Text>
+        //     </View>
+        //   ),
       })
-    }, [navigation, route, isAssign,isEdit])
+    }, [navigation, route, isAssign, isEdit])
 
     const fetchLinesTable = async () => {
       try {
@@ -132,9 +134,9 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
         })
 
         const [haccp] = result?.map((line) => line?.haccplist)
-        const data = haccp.sort((a, b) => b.id - a.id)
-        setHaccpline(data)
-        setFilterLines(data)
+        // const data = haccp.sort((a, b) => b.id - a.id)
+        setHaccpline(haccp)
+        setFilterLines(haccp)
       } catch (error) {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
@@ -232,7 +234,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
     useEffect(() => {
       setAssign(route?.assign)
     }, [route])
-    const getMachineStatus = (status: any) => (status === "normal" ? "#0081F8" : "#FF0000")
+    const getMachineStatus = (status: any) => (status === "normal" ? "#0081F8" : status === 'pending' ? colors.primary : "#FF0000")
     const getStatusInKhmer = (status: string) => {
       switch (status) {
         case "Normal":
@@ -245,6 +247,40 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           return translate("haccpMonitoring.normal")
       }
     }
+
+    const timeRanges = {
+      "07:00": "09:00",
+      "09:00": "11:00",
+      "11:00": "13:00",
+      "13:00": "15:00",
+      "15:00": "17:00",
+      "17:00": "19:00",
+      "19:00": "21:00",
+      "21:00": "23:00",
+      "23:00": "01:00",
+      "03:00": "05:00"
+    };
+
+    const isValidShift = (startTime: any) => {
+      const cleanedStartTime = cleanTimeCurrent(startTime);
+      const cleanedEndTime = timeRanges[cleanedStartTime];
+
+      if (!cleanedEndTime) {
+        throw new Error('Invalid start time provided.');
+      }
+
+      const currentTime = getCurrentTime();
+      const isAfterStartTime = currentTime >= cleanedStartTime;
+      const isBeforeEndTime = currentTime <= cleanedEndTime;
+
+      // Handle time wrapping (e.g., 23:00 to 03:00)
+      const isValid = cleanedStartTime > cleanedEndTime
+        ? (currentTime >= cleanedStartTime || currentTime <= cleanedEndTime)
+        : isAfterStartTime && isBeforeEndTime;
+
+      return isValid;
+    };
+
     const rendertableLine456 = ({ item, index }: { item: HaccpListType; index: number }) => (
       <TouchableOpacity
         onPress={() =>
@@ -255,6 +291,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
 
             assign: isAssign,
             isvalidDate: moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+            isValidTime: isValidShift(item.time),
             onRefresh: handleRefresh,
           })
         }
@@ -263,53 +300,49 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
           <DataTable.Row key={1}>
             <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.7 }}>
-              <Text style={{  }}>{moment(item.time).format("LTS")}</Text>
+              <Text primaryColor>{(item.time)}</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.8 }}>
-              <Text style={{  }}>{item?.side_wall ?? "N/A"} % </Text>
+              <Text>{item?.side_wall ? `${item?.side_wall} %` : '-'}</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.7 }}>
-              <Text style={{  }}>{item?.air_pressure ?? "N/A"} bar </Text>
+              <Text>{item?.air_pressure ? `${item?.air_pressure} bar` : '-'} </Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.7 }}>
-              <Text style={{  }}>{item?.temperature_preform ?? "N/A"} ℃</Text>
+              <Text>{item?.temperature_preform ? `${item?.temperature_preform} ℃` : '-'}</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.7 }}>
-              <Text style={{  }}>
-                {item?.treated_water_pressure ?? "N/A"} bar/flow
+              <Text>{item?.treated_water_pressure ? `${item?.treated_water_pressure} bar/flow` : '-'}</Text>
+            </DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text>{item?.fg ? `${item?.fg} ppm` : '-'}</Text>
+            </DataTable.Cell>
+            <DataTable.Cell style={{ flex: 0.7 }}>
+              <Text>{item?.activity_control == 1 ? (
+                <>
+                  Under Control <IconAntDesign name="check" color={"green"} size={15} />
+                </>
+              ) : item?.activity_control == 0 ?
+                (
+                  <>
+                    Over Control <IconAntDesign name="close" color={"red"} size={15} />
+                  </>
+                )
+                : "-"}
               </Text>
             </DataTable.Cell>
-
             <DataTable.Cell style={{ flex: 0.7 }}>
-              <Text style={{ }}>{item?.fg ?? "N/A"}ppm</Text>
-            </DataTable.Cell>
-            <DataTable.Cell style={{ flex: 0.7}}>
-                  <Text style={{  }}>{item?.activity_control == 1 ? (
-                    <>
-                      Under Control <IconAntDesign name="check" color={"green"} size={15} />
-                    </>
-                  ) : item?.activity_control == 0 ? 
-                  (
-                    <>
-                      Over Control <IconAntDesign name="close" color={"red"} size={15} /> 
-                    </>
-                  )
-                  : ""}
-                  </Text>
-                </DataTable.Cell>
-                <DataTable.Cell style={{ flex: 0.7 }}>
-              <Text style={{ }}>{item?.take_action ?? "N/A"}</Text>
-            </DataTable.Cell>
+              <Text> {item?.take_action !== '' ? item?.take_action : '-'} </Text>            </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.5 }}>
-              <Text style={{ }}>{item?.done_by ?? "N / A"}</Text>
+              <Text>{item?.done_by ?? "-"}</Text>
             </DataTable.Cell>
             <DataTable.Cell style={{ flex: 0.5 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                 <View
                   style={{
                     backgroundColor: getMachineStatus(item?.status),
-                    width: 15,
-                    height: 15,
+                    width: 10,
+                    height: 10,
                     borderRadius: 100,
                   }}
                 ></View>
@@ -322,7 +355,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 </Text>
               </View>
             </DataTable.Cell>
-            
+
           </DataTable.Row>
         </DataTable>
       </TouchableOpacity>
@@ -341,6 +374,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 assign: isAssign,
                 isvalidDate:
                   moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                isValidTime: isValidShift(item.time),
                 onRefresh: handleRefresh,
               })
             }
@@ -349,48 +383,52 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
               <DataTable.Row key={1}>
                 <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{  }}>{moment(item?.time).format("LTS")}</Text>
+                  <Text primaryColor>{(item.time)}</Text>
                 </DataTable.Cell>
 
                 <DataTable.Cell style={{ flex: 0.6 }}>
-                  <Text style={{ }}>{item?.water_pressure ?? "N/A"}</Text>
+                  <Text>{item?.water_pressure ? `${item?.water_pressure} bar` : '-'}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                <Text style={{  }}>{(item?.nozzles_rinser) == '1' ? <IconAntDesign name="check" color={"green"} size={15} /> : item?.nozzles_rinser == '0' ? <IconAntDesign name="close" color={"red"} size={15} /> : ""}</Text>
+                  <Text>{(item?.nozzles_rinser) == '1' ? <IconAntDesign name="check" color={"green"} size={15} /> : item?.nozzles_rinser == '0' ? <IconAntDesign name="close" color={"red"} size={15} /> : "-"}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{  }}>{item?.fg ?? "N/A"}</Text>
+                  <Text>{item?.fg ? `${item?.fg} ppm` : '-'}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{  }}>{item?.smell == 1 ? <IconAntDesign name="check" color={"green"} size={15} /> : item?.smell == 0 ? <IconAntDesign name="close" color={"red"} size={15} /> : ""}</Text>
+                  <Text>{item?.smell == 1 ? <IconAntDesign name="check" color={"green"} size={15} /> : item?.smell == 0 ? <IconAntDesign name="close" color={"red"} size={15} /> : "-"}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.9 }}>
-                  <Text style={{  }}>{item?.activity_control == 1 ? (
+                  <Text>{item?.activity_control == 1 ? (
                     <>
                       Under Control <IconAntDesign name="check" color={"green"} size={15} />
                     </>
-                  ) : item?.activity_control == 0 ? 
-                  (
-                    <>
-                      Over Control <IconAntDesign name="close" color={"red"} size={15} /> 
-                    </>
-                  )
-                  : ""}
+                  ) : item?.activity_control == 0 ?
+                    (
+                      <>
+                        Over Control <IconAntDesign name="close" color={"red"} size={15} />
+                      </>
+                    )
+                    : "-"}
                   </Text>
                 </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.6 }}>
-                  <Text style={{  }}> {item?.take_action ?? "N/A"} </Text>
-                </DataTable.Cell>
+                  <Text> {item?.take_action !== '' ? item?.take_action : '-'} </Text>                </DataTable.Cell>
                 <DataTable.Cell style={{ flex: 0.5 }}>
-                  <Text style={{ }}>{item?.done_by ?? "N/A"}</Text>
+                  <Text>{item?.done_by ?? "-"}</Text>
                 </DataTable.Cell>
+                {route?.title == 'Line 3' ?
+                  <DataTable.Cell style={{ flex: 0.5 }}>
+                    <Text>{item?.opo ?? "-"}</Text>
+                  </DataTable.Cell>
+                  : <></>}
                 <DataTable.Cell style={{ flex: 0.5 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     <View
                       style={{
                         backgroundColor: getMachineStatus(item?.status),
-                        width: 15,
-                        height: 15,
+                        width: 10,
+                        height: 10,
                         borderRadius: 100,
                       }}
                     >
@@ -413,8 +451,108 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
 
                   </View>
                 </DataTable.Cell>
-                
-                
+
+
+              </DataTable.Row>
+            </View>
+          </TouchableOpacity>
+        </DataTable>
+      )
+    }
+
+    const rendertableLineBarrel = ({ item, index }: { item: HaccpListType; index: number }) => {
+      return (
+        <DataTable style={{ margin: 10, marginTop: 0 }}>
+          <TouchableOpacity
+            activeOpacity={0.25}
+            onPress={() =>
+              navigation.navigate("HaccpLineForm", {
+                line: route?.line?.line?.split(" ")[1],
+                haccp_id: item?.haccp_id,
+                item: item,
+                assign: isAssign,
+                isvalidDate:
+                  moment(Date.now()).format("LL") === moment(item?.createdDate).format("LL"),
+                isValidTime: isValidShift(item.time),
+                onRefresh: handleRefresh,
+              })
+            }
+          >
+            <View>
+              <DataTable.Row key={1}>
+                <DataTable.Cell style={{ flex: 0.25 }}>{index + 1}</DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text primaryColor>{(item.time)}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text>{item?.uv_lamp ?? '-'}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text>{item?.temperature ? `${item?.temperature} °C` : '-'}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.6 }}>
+                  <Text>{item?.water_pressure ? `${item?.water_pressure} bar` : '-'}</Text>
+                </DataTable.Cell>
+
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text>{item?.fg ? `${item?.fg} ppm` : '-'}</Text>
+                </DataTable.Cell>
+
+                <DataTable.Cell style={{ flex: 0.9 }}>
+                  <Text>{item?.activity_control == 1 ? (
+                    <>
+                      Under Control <IconAntDesign name="check" color={"green"} size={15} />
+                    </>
+                  ) : item?.activity_control == 0 ?
+                    (
+                      <>
+                        Over Control <IconAntDesign name="close" color={"red"} size={15} />
+                      </>
+                    )
+                    : "-"}
+                  </Text>
+                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.6 }}>
+                  <Text> {item?.take_action !== '' ? item?.take_action : '-'} </Text>                </DataTable.Cell>
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <Text>{item?.done_by ?? "-"}</Text>
+                </DataTable.Cell>
+                {route?.title == 'Line 3' ?
+                  <DataTable.Cell style={{ flex: 0.5 }}>
+                    <Text>{item?.opo ?? "-"}</Text>
+                  </DataTable.Cell>
+                  : <></>}
+                <DataTable.Cell style={{ flex: 0.5 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    <View
+                      style={{
+                        backgroundColor: getMachineStatus(item?.status),
+                        width: 10,
+                        height: 10,
+                        borderRadius: 100,
+                      }}
+                    >
+
+
+                    </View>
+                    <Text
+                      style={{ marginLeft: 5 }}
+                      errorColor={item?.status === "warning"}
+                      primaryColor
+                      semibold
+                      caption1
+                    >
+                      {item?.status === "normal"
+                        ? "Normal"
+                        : item?.status === "warning"
+                          ? item?.warning_count + " warnings"
+                          : "Pending"}
+                    </Text>
+
+                  </View>
+                </DataTable.Cell>
+
+
               </DataTable.Row>
             </View>
           </TouchableOpacity>
@@ -432,7 +570,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                   style={[$containerHorizon, { marginBottom: 20, justifyContent: "space-between" }]}
                 >
                   <View style={[$containerHorizon, { gap: 25, marginLeft: 20 }]}>
-                    <TouchableOpacity style={{}} onPress={handleSorting}>
+                    <TouchableOpacity onPress={handleSorting}>
                       <Icon name="up" size={15} color={"black"} />
                       <Icon name="down" size={15} color={"black"} />
                     </TouchableOpacity>
@@ -521,10 +659,15 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                     <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                       Done by
                     </DataTable.Title>
+                    {route?.title == 'Line 3' ?
+                      <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                        OPO
+                      </DataTable.Title>
+                      : <></>}
                     <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                       Status
                     </DataTable.Title>
-                
+
                   </DataTable.Header>
                 </DataTable>
 
@@ -569,6 +712,155 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
         </PaperProvider>
       )
     }
+
+    if (getRouteLine() == 'Barrel') {
+      return (
+        <PaperProvider>
+          <Portal>
+            <View style={$root}>
+              <View style={$outerContainer}>
+                <View
+                  style={[$containerHorizon, { marginBottom: 20, justifyContent: "space-between" }]}
+                >
+                  <View style={[$containerHorizon, { gap: 25, marginLeft: 20 }]}>
+                    <TouchableOpacity onPress={handleSorting}>
+                      <Icon name="up" size={15} color={"black"} />
+                      <Icon name="down" size={15} color={"black"} />
+                    </TouchableOpacity>
+                    <StateButton
+                      onPress={() => setSelectStatus("all")}
+                      isSelected={selectedStatus?.toLowerCase() === "all"}
+                      placeholder={translate("wtpcommon.all")}
+                      color={"green"}
+                    />
+                    {lineStatus.map((item, index) => (
+                      <View key={index.toString()}>
+                        <StateButton
+                          onPress={() => setSelectStatus(item)}
+                          isSelected={item.toLowerCase() === selectedStatus.toLowerCase()}
+                          // placeholder={item[0].toUpperCase() + item.slice(1)}
+                          placeholder={getStatusInKhmer(item[0].toUpperCase() + item.slice(1))}
+                          color={
+                            item === "pending"
+                              ? "#777777"
+                              : item === "warning"
+                                ? "#FF0000"
+                                : colors.primary
+                          }
+                        />
+                      </View>
+                    ))}
+                  </View>
+                  <View style={{ gap: 10 }}>
+                    {!route?.isvalidDate ? (
+                      <></>
+                    ) : (
+                      <StateButton
+                        onPress={showModal}
+                        isSelected={selectedStatus?.toLowerCase() === "all"}
+                        placeholder={
+                          isAssign
+                            ? translate("wtpcommon.unassignMyTask")
+                            : translate("wtpcommon.enrollMyTask")
+                        }
+                        color={isAssign ? "#D32600" : "#0081F8"}
+                      >
+                        <Icon color={"white"} size={20} name="close" />
+                      </StateButton>
+                    )}
+                    <StateButton
+                      onPress={() => {
+                        setShowActivitylog(true)
+
+                        setRoles(route?.line?.assign_to?.split(" "))
+                      }}
+                      isSelected={true}
+                      placeholder={translate("wtpcommon.viewAssignment")}
+                      color={"#0081F8"}
+                    >
+                      <Icon color={"white"} size={20} name="search1" />
+                    </StateButton>
+                  </View>
+                </View>
+                <DataTable style={{ margin: 10, marginTop: 0 }}>
+                  <DataTable.Header>
+                    <DataTable.Title style={{ flex: 0.25 }} textStyle={styles.textHeader}>
+                      No
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      Time
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      UV Lamp
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      Temperature
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
+                      O₃ water pressure
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      FG [O₃]
+                    </DataTable.Title>
+
+                    <DataTable.Title style={{ flex: 0.9 }} textStyle={styles.textHeader}>
+                      Activities Control
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.6 }} textStyle={styles.textHeader}>
+                      Take Action
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      Done by
+                    </DataTable.Title>
+                    <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
+                      Status
+                    </DataTable.Title>
+
+                  </DataTable.Header>
+                </DataTable>
+
+                <FlatList
+                  data={filterLines || haccpLine}
+                  refreshControl={
+                    <RefreshControl
+                      colors={["#0081F8"]}
+                      refreshing={loading}
+                      onRefresh={handleRefresh}
+                    />
+                  }
+                  ListEmptyComponent={
+                    <EmptyFallback placeholder={translate("wtpcommon.noRecordFound")} />
+                  }
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={rendertableLineBarrel}
+                />
+              </View>
+            </View>
+            <ActivityModal
+              title="Users"
+              type="roles"
+              log={roles}
+              isVisible={showActivitylog}
+              onClose={() => {
+                setShowActivitylog(false)
+              }}
+            />
+            <AlertDialog
+              visible={visible}
+              content={
+                isAssign
+                  ? translate("haccpMonitoring.positive")
+                  : translate("haccpMonitoring.negative")
+              }
+              hideDialog={hideModal}
+              onPositive={onEnrollTask}
+              onNegative={() => setVisible(false)}
+            />
+          </Portal>
+        </PaperProvider>
+      )
+    }
+
     return (
       <PaperProvider>
         <Portal>
@@ -578,7 +870,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                 style={[$containerHorizon, { marginBottom: 20, justifyContent: "space-between" }]}
               >
                 <View style={[$containerHorizon, { marginBottom: 20, gap: 25 }]}>
-                  <TouchableOpacity style={{}} onPress={handleSorting}>
+                  <TouchableOpacity onPress={handleSorting}>
                     <Icon name="up" size={15} color={"black"} />
                     <Icon name="down" size={15} color={"black"} />
                   </TouchableOpacity>
@@ -659,7 +951,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                   <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
                     Treated Water
                   </DataTable.Title>
-                  
+
                   <DataTable.Title style={{ flex: 0.7 }} textStyle={styles.textHeader}>
                     FG
                   </DataTable.Title>
@@ -675,7 +967,7 @@ export const DailyHaccpLineDetailScreen: FC<DailyHaccpLineDetailScreenProps> = o
                   <DataTable.Title style={{ flex: 0.5 }} textStyle={styles.textHeader}>
                     Status
                   </DataTable.Title>
-                 
+
                 </DataTable.Header>
               </DataTable>
 

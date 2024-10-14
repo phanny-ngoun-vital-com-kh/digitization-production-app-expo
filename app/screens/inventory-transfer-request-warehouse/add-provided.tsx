@@ -71,7 +71,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
             supplier: it.supplier,
             total: (totalProvidedValues[it.item_code] == undefined ? '0' : totalProvidedValues[it.item_code].toString()),
             is_receive: ' ',
-            itemReceive:  0
+            itemReceive: 0
         })))
     }, [isVisible == true])
 
@@ -166,22 +166,30 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
                 activities_name: 'Transfer',
                 action: `Add Transfer ${transferIndex + 1}`
             })
-            await inventoryRequestStore.addProvided(data).saveprovided().then().catch((e) => console.log(e))
-            // setNotiVisible(true)
-            {
-                transfer_type == 'PM/RM' ?
-                    sendNotification('Transfer', 'Warehouse Tranfer the Item', Fcm)
-                    : ''
+            const rs = await inventoryRequestStore.addProvided(data).saveprovided().then().catch((e) => console.log(e))
+            if (rs == 'Success') {
+                {
+                    transfer_type == 'PM/RM' ?
+                        sendNotification('Transfer', 'Warehouse Tranfer the Item', Fcm)
+                        : ''
+                }
+                onClose()
+                setNewItem([])
+                Dialog.show({
+                    type: ALERT_TYPE.SUCCESS,
+                    title: 'ជោគជ័យ',
+                    textBody: 'រក្សាទុកបានជោគជ័យ',
+                    // button: 'close',
+                    autoClose: 100
+                })
+            } else {
+                Dialog.show({
+                    type: ALERT_TYPE.DANGER,
+                    title: 'បរាជ័យ',
+                    textBody: "សូមព្យាយាមម្ដងទៀត",
+                    autoClose: 100,
+                })
             }
-            onClose()
-            setNewItem([])
-            Dialog.show({
-                type: ALERT_TYPE.SUCCESS,
-                title: 'ជោគជ័យ',
-                textBody: 'រក្សាទុកបានជោគជ័យ',
-                // button: 'close',
-                autoClose: 100
-            })
         } catch (e) {
             setLoading(false)
             Dialog.show({
@@ -204,7 +212,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
             onRequestClose={onClose}
         >
             <View style={styles.modalcontainer}>
-                <View style={[styles.model,{maxHeight:'85%',}]}>
+                <View style={[styles.model, { maxHeight: '85%', }]}>
                     {/* <Text>{data.map(v=>v.item_code)}</Text> */}
                     <ScrollView>
                         <DataTable style={{ marginTop: '5%' }}>
@@ -225,7 +233,7 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
                                     <DataTable.Cell style={{ flex: 0.3 }} textStyle={styles.textHeader}>{index + 1}</DataTable.Cell>
                                     <DataTable.Cell style={{ flex: 0.8 }} textStyle={styles.textHeader}>{i.item_code}</DataTable.Cell>
                                     <DataTable.Cell style={{ flex: 0.8 }}><Text style={[styles.textHeader, { marginTop: 10, marginBottom: 10 }]}>{i.item_name}</Text></DataTable.Cell>
-                                    <DataTable.Cell style={{ flex: 0.6,marginLeft:30 }} textStyle={styles.textHeader}>{i.quantity}</DataTable.Cell>
+                                    <DataTable.Cell style={{ flex: 0.6, marginLeft: 30 }} textStyle={styles.textHeader}>{i.quantity}</DataTable.Cell>
                                     <DataTable.Cell style={{ flex: 0.6 }} textStyle={styles.textHeader}>{totalProvidedValues[i.item_code]}</DataTable.Cell>
                                     <DataTable.Cell style={{ flex: 0.6 }} textStyle={styles.textHeader}>{i.uom}</DataTable.Cell>
                                     <DataTable.Cell style={{ flex: 0.9 }} textStyle={styles.textHeader}>
@@ -309,15 +317,15 @@ const ModalAddProvided: React.FC<ModalProps> = ({ isVisible, onClose, data, tend
                             )}
                         </DataTable>
                     </ScrollView>
-                    <View style={{ marginTop: '5%', flexDirection: 'row', width: '100%'}}>
+                    <View style={{ marginTop: '5%', flexDirection: 'row', width: '100%' }}>
                         <Button style={[styles.button_cancel, { marginRight: 10 }]} styleText={{ color: 'black' }} onPress={onClose}>Cancel</Button>
                         <Button style={styles.button} onPress={() => { submit() }} disabled={loading}>{loading ? (
                             <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                                <Text style={{ fontSize: 18, color:'#fff' }}>Submit  </Text>
+                                <Text style={{ fontSize: 18, color: '#fff' }}>Submit  </Text>
                                 <ActivityIndicator color="white" />
                             </View>
                         ) : (
-                            <Text style={{ fontSize: 18,color:'#fff'  }}>Submit</Text>
+                            <Text style={{ fontSize: 18, color: '#fff' }}>Submit</Text>
                         )}</Button>
                     </View>
                 </View>

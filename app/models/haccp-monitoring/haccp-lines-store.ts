@@ -62,6 +62,16 @@ export const HaccpMonitoringStoreModel = types
           throw Error(rs.kind)
         }
       },
+      getLineActivitiesLog: async (haccp_id: string) => {
+        const rs = await haccpMonitorApi.getLineActivities(haccp_id)
+
+        if (rs.kind === "ok") {
+          return rs?.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
       saveSelfEnroll: async (
         id: string,
         haccp_id: string,

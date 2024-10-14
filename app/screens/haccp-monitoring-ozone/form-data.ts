@@ -6,7 +6,6 @@ export interface RouteParams {
       assign_date: string;
       assign_to: string;
       haccp_ozone_type:string
-      // Other fields of item...
     };
     subItem: {
         id: number,

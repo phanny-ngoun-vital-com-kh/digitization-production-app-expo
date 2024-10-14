@@ -26,6 +26,8 @@ export type MachinePanelProps = {
   assign_to_user: string
   warning_count?: string | number
   created_date: string | Date | undefined
+  timeRanges:{},
+  selectTime:string
 }
 
 export type MACHINE_STATE = "normal" | "pending" | "warning"

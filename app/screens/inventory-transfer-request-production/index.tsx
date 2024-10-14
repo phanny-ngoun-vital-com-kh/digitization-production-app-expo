@@ -86,30 +86,6 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
 
   }, [state])
 
-  // useEffect(() => {
-  //   // Simulate an asynchronous data loading process (e.g., API call)
-  //   const fetchData = async (showLoading = false) => {
-  //     try {
-  //       showLoading ? setLoading(true) : setRefreshing(true)
-
-  //       // Simulate API call delay
-  //       await new Promise((resolve) => setTimeout(resolve));
-
-  //       // Update the data in the state
-  //       // Replace this with your actual data fetching logic
-  //       selectedItem
-  //     } catch (error) {
-  //       showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', error.message)
-  //     } finally {
-  //       showLoading ? setLoading(false) : setRefreshing(false)
-  //     }
-  //   };
-
-  //   if (selectedItem !== null) {
-  //     fetchData();
-  //   }
-  // }, [selectedItem]);
-
   useEffect(() => {
     const getToken = async () => {
       const data = (await inventoryRequestStore.getMobileUserList())
@@ -197,6 +173,7 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
 
   const approve = async () => {
     try {
+      setLoading(true)
       const data = SAPTransferRequestModel.create({
         id: selectedItem.id,
         postingDate: moment(selectedItem.posting_date).local().startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
@@ -217,12 +194,13 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
         transferRequestDetails: itemlist
       })
 
-      if (inventoryRequestStore
+      const rs = await (inventoryRequestStore
         .addSapTr(data)
         .savetosap()
         .then()
         .catch((e) => console.log(e))
-      ) {
+      )
+      if (rs == 'Success') {
         setNotiVisible(true)
         sendNotification('Approved', 'Prodution approved your transfer request', requesterFcm)
         sendNotification('New Transfer Request', 'You have new transfer reuquest', wareAdmFcm)
@@ -240,6 +218,13 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
           // button: 'close',
           autoClose: 100
         })
+      } else {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'បរាជ័យ',
+          textBody: "សូមព្យាយាមម្ដងទៀត",
+          autoClose: 100,
+        })
       }
     } catch (e: any) {
       showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', e.message)
@@ -250,8 +235,9 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
 
   const reject = async () => {
     try {
+      setLoading(true)
       const data = InventoryTransferRequestModel.create({
-        id: selectedItem.id,
+        id: selectedItem?.id,
         remark: getRemarkReject,
         state: "rejected",
         statusChange: "transfer-request-reject"
@@ -260,36 +246,51 @@ export const InventoryTransferRequestProductionScreen: FC<InventoryTransferReque
         action: "Rejected",
         activities_name: "Production Approval",
         remark: getRemarkReject,
-        transfer_request: selectedItem.transfer_id
+        transfer_request: selectedItem?.transfer_id
       })
-      if (inventoryRequestStore
+      const approve = await (inventoryRequestStore
         .approveReq(data)
         .approverequest()
         .then()
-        .catch((e) => console.log(e)) &&
-
-        inventoryRequestStore
+        .catch((e) => console.log(e)))
+      if (approve == 'Success') {
+        const acti = await inventoryRequestStore
           .addActivites(activities)
           .addactivities()
           .then()
-          .catch((e) => console.log(e))) {
-        setModalRejectVisible(false)
-        setSelectedItem(null)
-        setSeletedStatus(null)
-        setGetRemarkReject('')
-        refresh()
-        setRejectNotiVisible(true)
-        sendNotification('Rejected', 'Your transfer request has been rejected', requesterFcm)
-        // setRequesterFcm([])
+          .catch((e) => console.log(e))
+        if (acti == 'Success') {
+          setModalRejectVisible(false)
+          setSelectedItem(null)
+          setSeletedStatus(null)
+          setGetRemarkReject('')
+          refresh()
+          setRejectNotiVisible(true)
+          sendNotification('Rejected', 'Your transfer request has been rejected', requesterFcm)
+          // setRequesterFcm([])
+          Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'ជោគជ័យ',
+            textBody: 'រក្សាទុកបានជោគជ័យ',
+            // button: 'close',
+            autoClose: 100
+          })
+        } else {
+          Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: 'បរាជ័យ',
+            textBody: "សូមព្យាយាមម្ដងទៀត",
+            autoClose: 100,
+          })
+        }
+      } else {
         Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: 'ជោគជ័យ',
-          textBody: 'រក្សាទុកបានជោគជ័យ',
-          // button: 'close',
-          autoClose: 100
+          type: ALERT_TYPE.DANGER,
+          title: 'បរាជ័យ',
+          textBody: "សូមព្យាយាមម្ដងទៀត",
+          autoClose: 100,
         })
       }
-
     }
     catch (e: any) {
       showErrorMessage('ទិន្នន័យមិនអាចទាញយកបាន', e.message)

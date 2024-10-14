@@ -82,41 +82,8 @@ export const HACCPMonitoringOzoneScreen: FC<HACCPMonitoringOzoneProps> = observe
         ])
 
         const invalidDate = (created_date: any) =>
-            // console.log('moment(Date.now()).format("LL")=======', moment(Date.now()).format("YYYY-MM-DD"))
-            // console.log(created_date)
-            // console.log('moment(created_date).format("LL")=======', moment.utc(created_date).format("YYYY-MM-DD"))
-
             moment(Date.now()).format("YYYY-MM-DD") === moment.utc(created_date).format("YYYY-MM-DD")
 
-
-        // const isValidShift = (time: any) =>
-        //     getCurrentTime() > cleanTimeCurrent(!time.includes("(") ? time : time?.split(" ")[1]) &&
-        //     getCurrentTime().localeCompare(
-        //         cleanTimePreWtp(!time.includes("(") ? time : time?.split(" ")[1]),
-        //     )
-
-        // const isValidShift = (time: string) => {
-        //     // Extract and clean the time from the input
-        //     const cleanedInputTime = !time.includes("(") ? time : time.split(" ")[1];
-        //     const cleanedCurrentTime = cleanTimeCurrent(cleanedInputTime);
-        //     const cleanedPreWtpTime = cleanTimePreWtp(cleanedInputTime);
-        //   console.log(cleanedInputTime)
-        //     // Get the current time
-        //     const currentTime = getCurrentTime();
-
-        //     console.log('Current Time:', currentTime);
-        //     console.log('Cleaned Current Time:', cleanedCurrentTime);
-        //     console.log('Cleaned PreWtp Time:', cleanedPreWtpTime);
-
-        //     // Compare the current time with cleaned times
-        //     const isAfterCurrent = currentTime > cleanedCurrentTime;
-        //     const isBeforePreWtp = currentTime.localeCompare(cleanedPreWtpTime) < 0;
-
-        //     console.log('Is After Current Time:', isAfterCurrent);
-        //     console.log('Is Before PreWtp Time:', isBeforePreWtp);
-
-        //     return isAfterCurrent && isBeforePreWtp;
-        //   };
 
         const timeRanges = {
             "07:00": "11:00",

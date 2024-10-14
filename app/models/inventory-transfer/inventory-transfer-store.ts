@@ -56,8 +56,9 @@ export const TransferModel = types
                     self.shift,
                     self.items
                 )
-                if (rs.kind === 'ok') {
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
                 }
                 else {
                     console.log('Error')
@@ -85,8 +86,10 @@ export const ReceiveStatusChangeModel = types
                     self.id,
                     self.transfer_request
                 )
-                if (rs.kind === 'ok')
+                if (rs.kind === 'ok'){
                     console.log('Success')
+                    return ('Success')
+                }
                 else {
                     console.log('Error')
                     throw Error(rs.kind)

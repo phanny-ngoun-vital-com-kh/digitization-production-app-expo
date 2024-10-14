@@ -164,26 +164,8 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
             transfer_request: selectedItem.transfer_id,
             docEntry: selectedItem.sapDocEntry
         })
-        // const activities = ActivitiesModel.create({
-        //     action: "Rejected",
-        //     activities_name: "Warehouse Approval",
-        //     remark: getRemarkReject,
-        //     transfer_request: selectedItem.transfer_id
-        // })
-        if (
-            // inventoryRequestStore
-            //     .approveReq(data)
-            //     .approverequest()
-            //     .then()
-            //     .catch((e) => console.log(e)) &&
-
-            // inventoryRequestStore
-            //     .addActivites(activities)
-            //     .addactivities()
-            //     .then()
-            //     .catch((e) => console.log(e))
-            inventoryRequestStore.approveReq(data).closerequest().then().catch((e) => console.log(e))
-        ) {
+        const rs = await inventoryRequestStore.approveReq(data).closerequest().then().catch((e) => console.log(e))
+        if (rs == 'Success') {
             setModalRejectVisible(false)
             setSelectedItem(null)
             setSeletedStatus(null)
@@ -200,6 +182,13 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                 textBody: 'រក្សាទុកបានជោគជ័យ',
                 // button: 'close',
                 autoClose: 100
+            })
+        } else {
+            Dialog.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'បរាជ័យ',
+                textBody: "សូមព្យាយាមម្ដងទៀត",
+                autoClose: 100,
             })
         }
     }
@@ -284,26 +273,45 @@ export const InventoryTransferRequestWarehouseScreen: FC<InventoryTransferReques
                 statusChange: "request-warehouse-approve"
             })
 
-            await inventoryRequestStore.approveReq(status).approverequest().then().catch((e) => console.log(e))
-            await inventoryRequestStore.addActivites(activities).addactivities().then().catch((e) => console.log(e))
-            setModalApproveVisible(false)
-            setSelectedItem(null)
-            setSeletedStatus(null)
-            setNewItem([])
-            // setGetRemarkReject('')
-            refresh()
-            setNotiVisible(true)
-            sendNotification('Accepted', 'Your transfer request has been accept', prodAdmFcm)
-            sendNotification('Accepted', 'Warehouse accepted your transfer request', requesterFcm)
-            // setProdAdmFcm([])
-            // setRequesterFcm([])
-            Dialog.show({
-                type: ALERT_TYPE.SUCCESS,
-                title: 'ជោគជ័យ',
-                textBody: 'រក្សាទុកបានជោគជ័យ',
-                // button: 'close',
-                autoClose: 100
-            })
+            const approve = await inventoryRequestStore.approveReq(status).approverequest().then().catch((e) => console.log(e))
+            if (approve == 'Success') {
+                const acti = await inventoryRequestStore.addActivites(activities).addactivities().then().catch((e) => console.log(e))
+                if (acti == 'Success') {
+                    setModalApproveVisible(false)
+                    setSelectedItem(null)
+                    setSeletedStatus(null)
+                    setNewItem([])
+                    // setGetRemarkReject('')
+                    refresh()
+                    setNotiVisible(true)
+                    sendNotification('Accepted', 'Your transfer request has been accept', prodAdmFcm)
+                    sendNotification('Accepted', 'Warehouse accepted your transfer request', requesterFcm)
+                    // setProdAdmFcm([])
+                    // setRequesterFcm([])
+                    Dialog.show({
+                        type: ALERT_TYPE.SUCCESS,
+                        title: 'ជោគជ័យ',
+                        textBody: 'រក្សាទុកបានជោគជ័យ',
+                        // button: 'close',
+                        autoClose: 100
+                    })
+                } else {
+                    Dialog.show({
+                        type: ALERT_TYPE.DANGER,
+                        title: 'បរាជ័យ',
+                        textBody: "សូមព្យាយាមម្ដងទៀត",
+                        autoClose: 100,
+                    })
+                }
+            } else {
+                Dialog.show({
+                    type: ALERT_TYPE.DANGER,
+                    title: 'បរាជ័យ',
+                    textBody: "សូមព្យាយាមម្ដងទៀត",
+                    autoClose: 100,
+                })
+            }
+
 
         } catch (e) {
             console.log(e)

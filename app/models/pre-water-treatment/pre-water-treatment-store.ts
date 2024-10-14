@@ -70,6 +70,15 @@ export const PreWaterTreatmentStoreModel = types
           throw Error(rs.kind)
         }
       },
+      getPlantList: async()=>{
+        const rs = await prewaterTreatmentApi.getPlant()
+        if (rs.kind === "ok") {
+          return rs.payload
+        } else {
+          console.log("Error")
+          throw Error(rs.kind)
+        }
+      },
       assignMachine :async (
         id:number ,
         assign_to_user:string,

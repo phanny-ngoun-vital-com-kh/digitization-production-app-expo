@@ -18,7 +18,7 @@
 // const PORT = '8080'
 
 // Local
-export const IP = '10.0.20.196'
+export const IP = '10.0.20.180'
 const PORT = '8080'
 
 const PROTOCOL = 'http'

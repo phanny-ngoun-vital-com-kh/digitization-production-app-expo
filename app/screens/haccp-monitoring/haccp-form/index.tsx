@@ -26,12 +26,13 @@ import { HaccpActionType, LinesItemModel } from "app/models/haccp-monitoring/hac
 import { styles } from "./styles"
 import { translate } from "../../../i18n/translate"
 import IconAntDesign from "react-native-vector-icons/AntDesign"
+import AlertDialog from "app/components/v2/AlertDialog"
 
 interface HaccpLineFormScreenProps extends AppStackScreenProps<"HaccpLineForm"> { }
 export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
   function HaccpLineFormScreen() {
     const route = useRoute().params
-    const { haccpLinesStore, authStore ,inventoryRequestStore} = useStores()
+    const { haccpLinesStore, authStore, inventoryRequestStore } = useStores()
     const [activityLogs, setActivityLogs] = useState<HaccpActionType[]>([])
     const navigation = useNavigation()
     const [showinstruction, setShowInstruction] = useState(true)
@@ -46,6 +47,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
     const [fg, setFg] = useState(route?.item?.fg || '')
     const [smell, setSmell] = useState(route?.item?.smell != null ? parseFloat(route?.item?.smell) : null)
     const [activities, setActivities] = useState(route?.item?.activity_control != null ? parseFloat(route?.item?.activity_control) : null)
+    const [opo, setOpo] = useState(route?.item?.opo != null ? (route?.item?.opo) : null)
     const [takeAction, setTakeAction] = useState(route?.item?.take_action || '')
     const [other, setOther] = useState(route?.item?.other || '')
     const [isEdit, setIsEdit] = useState()
@@ -53,7 +55,10 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
     const [airPressure, setAirPressure] = useState(route?.item?.air_pressure || '')
     const [temperaturePreform, setTemperaturePreform] = useState(route?.item?.temperature_preform || '')
     const [treatedWaterPressure, setTreatedWaterPressure] = useState(route?.item?.treated_water_pressure || '')
+    const [uvLamp, setUvLamp] = useState(route?.item?.uv_lamp || '')
+    const [temperature, setTemperature] = useState(route?.item?.temperature || '')
     const [allFcm, setAllFcm] = useState([])
+    const [visible, setVisible] = useState<{ visible: boolean }>({ visible: false })
 
     const [formLineA, setFormLineA] = useState({
       side_wall: "",
@@ -261,7 +266,8 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
         try {
           const rs = await authStore.getUserInfo();
           const admin = rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
-          const edit = (route?.isvalidDate || route?.assign) || admin
+          const adminWTP = rs.data.authorities.includes('ROLE_PROD_WTP_ADMIN')
+          const edit = (route?.isvalidDate && route?.assign && route.isValidTime) || admin || adminWTP
           setIsEdit(edit)
           // Modify the list based on the user's role
           // setGetRole(rs)
@@ -273,6 +279,9 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           // Extract fcm_token from the filtered user object
           const fcmTokens = usersWithRole.map(user => user.fcm_token);
           setAllFcm(fcmTokens)
+
+          const acti = await haccpLinesStore.getActivitiesLog(route?.item?.haccp_id, route?.item?.id)
+          setActivityLogs(acti)
         } catch (e) {
           console.log(e);
         }
@@ -284,6 +293,68 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       navigation.setOptions({
         headerShown: true,
         title: "Line - " + route?.line?.toString(),
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => {
+              const change1 =
+                ((route?.item?.water_pressure == null ? "" : route?.item?.water_pressure) !== (waterPressure)) ||
+                (route?.item?.nozzles_rinser?.toString() !== (nozzlesRinser?.toString())) ||
+                ((route?.item?.fg == null ? "" : route?.item?.fg) !== (fg)) ||
+                (route?.item?.smell?.toString() !== (smell?.toString())) ||
+                (route?.item?.activity_control?.toString() !== (activities?.toString())) ||
+                ((route?.item?.take_action == null ? "" : route?.item?.take_action) !== (takeAction)) ||
+                ((route?.item?.other == null ? "" : route?.item?.other) !== other);
+
+              const change2 =
+                ((route?.item?.side_wall == null ? "" : route?.item?.side_wall) !== (sideWall)) ||
+                ((route?.item?.air_pressure == null ? "" : route?.item?.air_pressure) !== (airPressure)) ||
+                ((route?.item?.temperature_preform == null ? "" : route?.item?.temperature_preform) !== (temperaturePreform)) ||
+                ((route?.item?.fg == null ? "" : route?.item?.fg) !== (fg)) ||
+                ((route?.item?.treated_water_pressure == null ? "" : route?.item?.treated_water_pressure) !== (treatedWaterPressure)) ||
+                (route?.item?.activity_control?.toString() !== (activities?.toString())) ||
+                ((route?.item?.take_action == null ? "" : route?.item?.take_action) !== (takeAction)) ||
+                ((route?.item?.other == null ? "" : route?.item?.other) !== other);
+
+              const change3 =
+                ((route?.item?.uv_lamp == null ? "" : route?.item?.uv_lamp) !== (uvLamp)) ||
+                ((route?.item?.temperature == null ? "" : route?.item?.temperature) !== (temperature)) ||
+                ((route?.item?.water_pressure == null ? "" : route?.item?.water_pressure) !== (waterPressure)) ||
+                ((route?.item?.fg == null ? "" : route?.item?.fg) !== (fg)) ||
+                (route?.item?.activity_control?.toString() !== (activities?.toString())) ||
+                ((route?.item?.take_action == null ? "" : route?.item?.take_action) !== (takeAction)) ||
+                ((route?.item?.other == null ? "" : route?.item?.other) !== other);
+
+              if ([2].includes(+route?.line)) {
+                if (change1) {
+                  setVisible({ visible: true })
+                } else {
+                  navigation.goBack()
+                }
+              } else if ([3].includes(+route?.line)) {
+                if (change1 || (route?.item?.opo !== (opo))) {
+                  setVisible({ visible: true })
+                } else {
+                  navigation.goBack()
+                }
+              } else if ([4, 5, 6].includes(+route?.line)) {
+                if (change2) {
+                  setVisible({ visible: true })
+                } else {
+                  navigation.goBack()
+                }
+              } else if (route?.line == 'Barrel') {
+                if (change3) {
+                  setVisible({ visible: true })
+                } else {
+                  navigation.goBack()
+                }
+              }
+            }}
+            style={{ flexDirection: "row", alignItems: "center", marginRight: 30 }}
+          >
+            <Icon name="arrow-back-sharp" size={24} />
+          </TouchableOpacity>
+        ),
         headerRight: () =>
           (isEdit) ? (
             <TouchableOpacity
@@ -300,6 +371,9 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                 if ([2, 3].includes(+route?.line)) {
                   line23Submit();
                 }
+                if (route?.line == 'Barrel') {
+                  linebarrelSubmit()
+                }
               }}
             >
               <Icon name="checkmark-sharp" size={24} color={"#0081F8"} />
@@ -311,7 +385,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             <></>
           ),
       });
-    }, [route, navigation, waterPressure, nozzlesRinser, fg, smell, activities, takeAction, other, sideWall, airPressure, temperaturePreform, treatedWaterPressure, isEdit,allFcm]);
+    }, [route, navigation, waterPressure, nozzlesRinser, fg, smell, activities, takeAction, other, sideWall, airPressure, temperaturePreform, treatedWaterPressure, isEdit, allFcm, opo, uvLamp, temperature]);
 
     async function sendNotification(title: string, body: string, deviceTokens, sound = 'default') {
       const SERVER_KEY = 'AAAAOOy0KJ8:APA91bFo9GbcJoCq9Jyv2iKsttPa0qxIif32lUnDmYZprkFHGyudIlhqtbvkaA1Nj9Gzr2CC3aiuw4L-8DP1GDWh3olE1YV4reA3PJwVMTXbSzquIVl4pk-XrDaqZCoAhmsN5apvkKUm';
@@ -383,6 +457,10 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
         alert('បរាជ័យ', 'សូ​មបំពេញ Take action')
         return
       }
+      if (route?.line == '3' && opo == null) {
+        alert('បរាជ័យ', 'សូ​មជ្រើសរើស OPO')
+        return
+      }
 
       let status = 'normal'
       if (parseFloat(waterPressure) < 1.0) {
@@ -406,7 +484,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
       let entity
       try {
         setLoading(true)
-        if (route?.item == undefined) {
+        if (route?.item.status == 'pending') {
           entity = LinesItemModel.create({
             id: route?.item?.id ?? null,
             line: "Line" + " " + route?.line,
@@ -420,10 +498,12 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             take_action: takeAction,
             other: other,
             haccp_id: route?.haccp_id,
+            opo: opo,
             activities: [{ action: "Add Monitoring " }],
           })
-        } else if (route?.item) {
+        } else if (route?.item.status != 'pending') {
           const changes = [
+            route?.item?.opo != opo ? `OPO from ${route?.item?.opo} to ${opo}` : '',
             route?.item?.water_pressure != waterPressure ? `Water Pressure from ${route?.item?.water_pressure} to ${waterPressure}` : '',
             parseFloat(route?.item?.nozzles_rinser) != parseFloat(nozzlesRinser) ? `Nozzles Rinser from ${parseFloat(route?.item?.nozzles_rinser) == 1 ? 'Yes' : 'No'} to ${parseFloat(nozzlesRinser) == 1 ? 'Yes' : 'No'}` : '',
             route?.item?.fg != fg ? `FG from ${route?.item?.fg} to ${fg}` : '',
@@ -447,27 +527,36 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
             take_action: takeAction,
             other: other,
             haccp_id: route?.haccp_id,
+            opo: opo,
             activities: [{ action: `has modified ${actionString}` }],
           })
         }
-
-        await (haccpLinesStore
+        const rs = await (haccpLinesStore
           .addHaccpLines(entity)
           .saveHaccpLine23()
           .then()
           .catch((e) => console.log(e)))
         {
           if (nozzlesRinser == 0) {
-            sendNotification(`Critical Warning Line - ${+ route?.line?.toString()}`, `Nozzles are clog now, Please take action.`,allFcm)
+            sendNotification(`Critical Warning Line - ${+ route?.line?.toString()}`, `Nozzles are clog now, Please take action.`, allFcm)
           }
-          Dialog.show({
-            type: ALERT_TYPE.SUCCESS,
-            title: 'ជោគជ័យ',
-            textBody: 'រក្សាទុកបានជោគជ័យ',
-            // button: 'close',
-            autoClose: 100
-          })
-          console.log(entity)
+          if (rs == 'Success') {
+            Dialog.show({
+              type: ALERT_TYPE.SUCCESS,
+              title: 'ជោគជ័យ',
+              textBody: 'រក្សាទុកបានជោគជ័យ',
+              // button: 'close',
+              autoClose: 100
+            })
+            navigation.goBack()
+          } else {
+            Dialog.show({
+              type: ALERT_TYPE.DANGER,
+              title: 'បរាជ័យ',
+              textBody: "សូមព្យាយាមម្ដងទៀត",
+              autoClose: 100,
+            })
+          }
         }
       } catch (error) {
         console.log(error);
@@ -480,7 +569,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
         });
       } finally {
         setLoading(false); // Reset loading state regardless of success or failure
-        route?.onReload()
+        route?.onRefresh()
       }
     }
 
@@ -585,22 +674,30 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
           })
         }
 
-        await (haccpLinesStore
+        const rs = await (haccpLinesStore
           .addHaccpLines(entity)
           .saveHaccpLine456()
           .then()
           .catch((e) => console.log(e)))
         {
-          Dialog.show({
-            type: ALERT_TYPE.SUCCESS,
-            title: 'ជោគជ័យ',
-            textBody: 'រក្សាទុកបានជោគជ័យ',
-            // button: 'close',
-            autoClose: 100
-          })
-          console.log(entity)
+          if (rs == 'Success') {
+            Dialog.show({
+              type: ALERT_TYPE.SUCCESS,
+              title: 'ជោគជ័យ',
+              textBody: 'រក្សាទុកបានជោគជ័យ',
+              // button: 'close',
+              autoClose: 100
+            })
+            navigation.goBack()
+          } else {
+            Dialog.show({
+              type: ALERT_TYPE.DANGER,
+              title: 'បរាជ័យ',
+              textBody: "សូមព្យាយាមម្ដងទៀត",
+              autoClose: 100,
+            })
+          }
         }
-        console.log(entity)
       } catch (error) {
         console.log(error);
         // Show error dialog
@@ -612,7 +709,136 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
         });
       } finally {
         setLoading(false); // Reset loading state regardless of success or failure
-        route?.onReload()
+        route?.onRefresh()
+      }
+    }
+
+    const linebarrelSubmit = async () => {
+
+      let updatedWarningCount = 0;
+      if (uvLamp == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ UV Lamp')
+        return
+      }
+      if (temperature == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ Temperature')
+        return
+      }
+      if (waterPressure == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ O₃ water pressure')
+        return
+      }
+      if (fg == '') {
+        alert('បរាជ័យ', 'សូ​មបំពេញ FG [O₃]')
+        return
+      }
+      if (activities == null) {
+        alert('បរាជ័យ', 'សូ​មជ្រើសរើស Control')
+        return
+      }
+
+      let status = 'normal'
+      if (parseFloat(uvLamp) < 10) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(temperature) < 55 || parseFloat(temperature) > 75) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(waterPressure) < 1) {
+        updatedWarningCount++;
+      }
+      if (parseFloat(fg) < 0.05 || parseFloat(fg) > 0.4) {
+        updatedWarningCount++;
+      }
+      if (activities == 0) {
+        updatedWarningCount++;
+      }
+      if (updatedWarningCount > 0) {
+        status = 'warning'
+      }
+      let entity
+      try {
+        setLoading(true)
+        if (route?.item.status == 'pending') {
+          entity = LinesItemModel.create({
+            id: route?.item?.id ?? null,
+            line: "Line" + " " + route?.line,
+            warning_count: updatedWarningCount,
+            status: status,
+            water_pressure: waterPressure,
+            fg: fg,
+            uv_lamp: uvLamp,
+            temperature: temperature,
+            activity_control: (activities).toString(),
+            take_action: takeAction,
+            other: other,
+            haccp_id: route?.haccp_id,
+            activities: [{ action: "Add Monitoring " }],
+          })
+        } else if (route?.item.status != 'pending') {
+          const changes = [
+            route?.item?.uv_lamp != uvLamp ? `UV Lamp from ${route?.item?.uv_lamp} to ${uvLamp}` : '',
+            route?.item?.temperature != temperature ? `Temperature from ${route?.item?.temperature} to ${temperature}` : '',
+            route?.item?.water_pressure != waterPressure ? `O₃ water pressure from ${route?.item?.water_pressure} to ${waterPressure}` : '',
+            route?.item?.fg != fg ? `FG [O₃] from ${route?.item?.fg} to ${fg}` : '',
+            parseFloat(route?.item?.activity_control) != parseFloat(activities) ? `Control from ${parseFloat(route?.item?.activity_control) == 1 ? 'Yes' : 'No'} to ${parseFloat(activities) == 1 ? 'Yes' : 'No'}` : '',
+            route?.item?.take_action != takeAction ? `Take Action from ${route?.item?.take_action} to ${takeAction}` : '',
+            route?.item?.other != other ? `Other from ${route?.item?.other} to ${other}` : '',
+          ];
+          const actionString = changes.filter(change => change !== '').join(', ');
+
+          entity = LinesItemModel.create({
+            id: route?.item?.id ?? null,
+            line: "Line" + " " + route?.line,
+            warning_count: updatedWarningCount,
+            status: status,
+            water_pressure: waterPressure,
+            fg: fg,
+            uv_lamp: uvLamp,
+            temperature: temperature,
+            activity_control: (activities).toString(),
+            take_action: takeAction,
+            other: other,
+            haccp_id: route?.haccp_id,
+            activities: [{ action: `has modified ${actionString}` }],
+          })
+        }
+        const rs = await (haccpLinesStore
+          .addHaccpLines(entity)
+          .saveHaccpLine23()
+          .then()
+          .catch((e) => console.log(e)))
+        {
+          if (rs == 'Success') {
+            Dialog.show({
+              type: ALERT_TYPE.SUCCESS,
+              title: 'ជោគជ័យ',
+              textBody: 'រក្សាទុកបានជោគជ័យ',
+              // button: 'close',
+              autoClose: 100
+            })
+            navigation.goBack()
+          } else {
+            Dialog.show({
+              type: ALERT_TYPE.DANGER,
+              title: 'បរាជ័យ',
+              textBody: "សូមព្យាយាមម្ដងទៀត",
+              autoClose: 100,
+            })
+          }
+        }
+      } catch (error) {
+        console.log(error);
+        // Show error dialog
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'បរាជ័យ',
+          textBody: 'សូមបំពេញទិន្នន័យអោយបានត្រឹមត្រូវ',
+          button: 'បិទ',
+        });
+      } finally {
+        setLoading(false); // Reset loading state regardless of success or failure
+        route?.onRefresh()
       }
     }
 
@@ -648,6 +874,54 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       handleToggle={onShowInstruction}
                       group_list="1"
                     />
+                    {route?.line == '3' ? <View style={$width}>
+                      <View style={{ marginRight: 10 }}>
+                        {/* <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                          <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                          <Text style={{ marginRight: 5, fontSize: 16 }}>OPO</Text>
+                        </View> */}
+                        <View style={{ flexDirection: 'row' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                opo === null
+                                  ? "unchecked"
+                                  : opo == 'OPO 1'
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setOpo('OPO 1')
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>OPO 1</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Checkbox
+                              disabled={!isEdit}
+                              status={
+                                opo === null
+                                  ? "unchecked"
+                                  : opo == 'OPO 2'
+                                    ? "checked"
+                                    : "unchecked"
+                              }
+                              onPress={() => {
+                                setOpo('OPO 2')
+                              }}
+                              color="#0081F8"
+                            />
+                            <Text>OPO 2 </Text>
+                          </View>
+
+                        </View>
+                        {opo == null ?
+                          <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស OPO</Text>
+                          : <></>}
+                      </View>
+                    </View> : <></>}
 
                     <View style={[$containerHorizon, { justifyContent: "space-between" }]}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -655,7 +929,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                         <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(oPRP7 & 8 and CCP10 & 11)</Text>
                       </View>
 
-                      {route?.isvalidDate && route?.assign && (
+                      {route?.isvalidDate && isEdit && (
                         <ActivityBar
                           disable
                           direction="end"
@@ -707,7 +981,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                             <View style={{ flexDirection: 'row' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
                                   status={
                                     nozzlesRinser === null
                                       ? "unchecked"
@@ -724,7 +998,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                               </View>
                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
                                   status={
                                     nozzlesRinser === null
                                       ? "unchecked"
@@ -758,7 +1032,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                           <View style={{ marginRight: 10 }}>
                             <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
                               <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
-                              <Text style={{ marginRight: 5, fontSize: 16 }}>FG [ O3 ]</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>FG [O₃]</Text>
                               <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.05-0.4 ppm)</Text>
                               {(parseFloat(fg) < 0.05 || parseFloat(fg) > 0.4) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
 
@@ -786,7 +1060,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                             <View style={{ flexDirection: 'row' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
                                   status={
                                     smell === null
                                       ? "unchecked"
@@ -803,7 +1077,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                               </View>
                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
                                   status={
                                     smell === null
                                       ? "unchecked"
@@ -841,7 +1115,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                             <View style={{ flexDirection: 'row' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
                                   status={
                                     activities === null
                                       ? "unchecked"
@@ -858,7 +1132,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                               </View>
                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
                                   status={
                                     activities === null
                                       ? "unchecked"
@@ -927,7 +1201,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                       handleToggle={onShowInstruction}
                       group_list="2"
                     />
-                    {route?.isvalidDate && route?.assign && (
+                    {route?.isvalidDate && isEdit && (
                       <ActivityBar
                         direction="end"
                         showInfo
@@ -1107,7 +1381,7 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                             <View style={{ flexDirection: 'row' }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
                                   status={
                                     activities === null
                                       ? "unchecked"
@@ -1124,7 +1398,244 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                               </View>
                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Checkbox
-                                  disabled={!route?.assign}
+                                  disabled={!isEdit}
+                                  status={
+                                    activities === null
+                                      ? "unchecked"
+                                      : activities == 0
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setActivities(0)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Over Control</Text>
+                              </View>
+
+                            </View>
+                            {activities == null ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមជ្រើសរើស Control</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              {/* {takeAction == '' && (nozzlesRinser == 0 || smell == 0) ?
+                                <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                                : <></>} */}
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Take action</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(Instruction 4)</Text>
+                            </View>
+                            <TextInput
+                              value={takeAction}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setTakeAction(text)}>
+                            </TextInput>
+                            {/* {takeAction == '' && (nozzlesRinser == 0 || smell == 0) ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Take Action</Text>
+                              : <></>} */}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={$containerHorizon}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Other</Text>
+                            </View>
+                            <TextInput
+                              value={other}
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setOther(text)}>
+                            </TextInput>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                )}
+                {route?.line == 'Barrel' && (
+                  <>
+                    <InstructionList
+                      showinstruction={showinstruction}
+                      handleToggle={onShowInstruction}
+                      group_list="3"
+                    />
+                    {/* {route?.isvalidDate && isEdit && ( */}
+                    <ActivityBar
+                      direction="end"
+                      showInfo
+                      disable
+                      onAttachment={onlaunchGallery}
+                      onScanCamera={onlaunchCamera}
+                      onClickinfo={() => {
+                        setShowActivitylog(true)
+                      }}
+                      onActivity={() => {
+                        setDisableSave(true)
+                        setShowActivitylog(true)
+                      }}
+                    />
+                    {/* )} */}
+
+                    <View style={{ rowGap: 15 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center' }}>
+                          <Text title3>UV Cabinet</Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(oPRP7)</Text>
+                        </View>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+                          <Text title3>Display Barrel filling </Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(oPRP8)</Text>
+                        </View>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+                      <View style={[$containerHorizon, { gap: 10 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>UV Lamp</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(Store cap &gt; 10minutes)</Text>
+                              {(parseFloat(uvLamp) < 10) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={uvLamp}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setUvLamp(text)}>
+                            </TextInput>
+                            {uvLamp == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ UV Lamp</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Temperature</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(55-75 °C)</Text>
+                              {(parseFloat(temperature) < 55 || parseFloat(temperature) > 75) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={temperature}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setTemperature(text)}>
+                            </TextInput>
+                            {temperature == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ Temperature</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center' }}>
+                          <Text title3>Barrel Cleaning</Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(oPRP8 & CCP10)</Text>
+                        </View>
+                        <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+                          <Text title3>Barrel Filling and Capping </Text>
+                          <Text style={{ marginLeft: 15, fontSize: 15, color: 'gray' }}>(CCP11 & 12)</Text>
+                        </View>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+
+                      <View style={[$containerHorizon, { gap: 10 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>O₃ water pressure</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(&gt; 1 bar)</Text>
+                              {(parseFloat(waterPressure) < 1) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={waterPressure}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setWaterPressure(text)}>
+                            </TextInput>
+                            {waterPressure == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ O₃ water pressure</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15, alignItems: 'center' }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>FG [O₃]</Text>
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>(0.05-0.4 ppm)</Text>
+                              {(parseFloat(fg) < 0.05 || parseFloat(fg) > 0.4) ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+
+                            </View>
+                            <TextInput
+                              value={fg}
+                              keyboardType="decimal-pad"
+                              readOnly={!isEdit}
+                              style={[styles.input, { width: '100%' }]}
+                              placeholder="Please Enter"
+                              onChangeText={(text) => setFg(text)}>
+                            </TextInput>
+                            {fg == '' ?
+                              <Text style={{ marginRight: 5, fontSize: 12, color: 'red' }}>សូមបំពេញ FG</Text>
+                              : <></>}
+                          </View>
+                        </View>
+                      </View>
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <Text title3>Activity control when exceeding critical limit</Text>
+                      </View>
+                      <Divider style={{ marginVertical: 5, backgroundColor: "#A49B9B" }} />
+
+                      <View style={[$containerHorizon, { gap: 10 }]}>
+                        <View style={$width}>
+                          <View style={{ marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                              <Text style={{ marginRight: 5, fontSize: 16, color: 'red' }}>*</Text>
+                              <Text style={{ marginRight: 5, fontSize: 16 }}>Control</Text>
+                              {(activities) == 0 ? <IconAntDesign name="exclamationcircle" color={'red'} size={18} style={{ marginBottom: 18 }} /> : <></>}
+                            </View>
+                            <View style={{ flexDirection: 'row' }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}>
+                                <Checkbox
+                                  disabled={!isEdit}
+                                  status={
+                                    activities === null
+                                      ? "unchecked"
+                                      : activities == 1
+                                        ? "checked"
+                                        : "unchecked"
+                                  }
+                                  onPress={() => {
+                                    setActivities(1)
+                                  }}
+                                  color="#0081F8"
+                                />
+                                <Text>Under Control</Text>
+                              </View>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Checkbox
+                                  disabled={!isEdit}
                                   status={
                                     activities === null
                                       ? "unchecked"
@@ -1198,6 +1709,12 @@ export const HaccpLineFormScreen: FC<HaccpLineFormScreenProps> = observer(
                 setShowActivitylog(false)
               }}
             />
+            <AlertDialog
+              visible={visible.visible}
+              content="អ្នកមិនទាន់បានរក្សាទុកទេ, ច្បាស់ទេថានឹងចាក់ចេញ?"
+              hideDialog={() => setVisible({ visible: false })}
+              onPositive={() => navigation.goBack()}
+              onNegative={() => setVisible({ visible: false })} isLoading={false} />
           </KeyboardAvoidingView>
         </Portal>
       </Provider>

@@ -56,6 +56,7 @@ export const PreTreatmentListItemModel = types
         })
         if (rs.kind === "ok") {
           console.log("Successfully saved")
+          return("Success")
         } else {
           console.log("Error")
           throw Error(rs.kind)
@@ -84,6 +85,7 @@ export const PreTreatmentListItemModel = types
         })
         if (rs.kind === "ok") {
           console.log("Successfully saved")
+          return("Success")
         } else {
           console.log("Error")
           throw Error(rs.kind)

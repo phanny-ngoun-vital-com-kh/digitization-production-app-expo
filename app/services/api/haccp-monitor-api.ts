@@ -81,6 +81,19 @@ export class HaccpMonitoringApi extends BaseApi {
     }
   }
 
+  async getLineActivities(haccp_id: string): Promise<GetHaccpLineResult> {
+    try {
+      const rs = await this.requestService.list<HaccpAction>(ApiURL.haccpActivitiesList, {
+        haccp_id,
+      })
+
+      return DataResponseList(rs)
+    } catch (e: any) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data" }
+    }
+  }
+
   async saveLines(params: {
     id: number
     line: string
@@ -98,6 +111,9 @@ export class HaccpMonitoringApi extends BaseApi {
     status: string
     warning_count: number
     water_pressure: string
+    opo:string
+    uv_lamp: string
+    temperature: string
   }): Promise<any> {
     try {
       const rs = await this.requestService.exec(ApiURL.haccpExce, {

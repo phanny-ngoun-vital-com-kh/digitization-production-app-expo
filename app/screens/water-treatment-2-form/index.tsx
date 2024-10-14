@@ -85,7 +85,8 @@ export const WaterTreatmentPlant2FormScreen: FC<WaterTreatmentPlant2FormScreenPr
         try {
           const rs = await authStore.getUserInfo();
           const admin=rs.data.authorities.includes('ROLE_PROD_PRO_ADMIN')
-          const edit = (route?.isvalidDate && isUserAssigned && route?.isValidShift) || admin
+          const adminWTP = rs.data.authorities.includes('ROLE_PROD_WTP_ADMIN')
+          const edit = (route?.isvalidDate && isUserAssigned && route?.isValidShift) || admin || adminWTP
           setEditable(edit)
           // Modify the list based on the user's role
           // setGetRole(rs)
